@@ -12,12 +12,15 @@ ALTER TABLE IF EXISTS property_members ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies to avoid conflicts
 DROP POLICY IF EXISTS "Users can create properties" ON properties;
+DROP POLICY IF EXISTS "properties_insert" ON properties;
 DROP POLICY IF EXISTS "Property members can update their properties" ON properties;
+DROP POLICY IF EXISTS "Authenticated users can create properties" ON properties;
 
--- Allow authenticated users to create properties
-CREATE POLICY "Users can create properties"
+-- Allow authenticated users to create properties (simple policy)
+CREATE POLICY "Authenticated users can create properties"
 ON properties FOR INSERT
-WITH CHECK (auth.uid() IS NOT NULL);
+TO authenticated
+WITH CHECK (true);
 
 -- Allow property members to update their properties
 CREATE POLICY "Property members can update their properties"
