@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, Loader2, Calendar, Clock } from "lucide-react";
+import { FileUpload } from "@/components/ui/file-upload";
+import { ArrowLeft, Loader2, Calendar, Clock, Camera } from "lucide-react";
 import Link from "next/link";
 import type { Property } from "@/types/database";
 
@@ -44,6 +45,8 @@ export default function NewRequestPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [services, setServices] = useState<ServiceOption[]>([]);
   const [propertiesLoading, setPropertiesLoading] = useState(true);
+
+  const [photos, setPhotos] = useState<File[]>([]);
 
   const [formData, setFormData] = useState({
     property_id: "",
@@ -166,6 +169,43 @@ export default function NewRequestPage() {
       setError(createError.message);
       setLoading(false);
       return;
+    }
+
+    // Upload photos if any
+    if (photos.length > 0) {
+      for (const photo of photos) {
+        try {
+          const fileExt = photo.name.split(".").pop();
+          const fileName = `${user.id}/${booking.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+          const { error: uploadError } = await supabase.storage
+            .from("documents")
+            .upload(fileName, photo);
+
+          if (!uploadError) {
+            const { data: urlData } = supabase.storage
+              .from("documents")
+              .getPublicUrl(fileName);
+
+            // Save as document associated with booking
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase as any).from("documents").insert({
+              booking_id: booking.id,
+              property_id: formData.property_id,
+              category: "photo",
+              title: `Request Photo - ${photo.name}`,
+              file_url: urlData.publicUrl,
+              file_name: photo.name,
+              file_type: photo.type,
+              file_size: photo.size,
+              uploaded_by: user.id,
+            });
+          }
+        } catch {
+          // Continue even if photo upload fails
+          console.error("Failed to upload photo");
+        }
+      }
     }
 
     router.push(`/app/requests/${booking.id}`);
@@ -305,6 +345,24 @@ export default function NewRequestPage() {
                 value={formData.description}
                 onChange={(e) => updateField("description", e.target.value)}
                 rows={3}
+              />
+            </div>
+
+            {/* Photo Upload */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Photos (optional)
+              </Label>
+              <FileUpload
+                value={photos}
+                onChange={setPhotos}
+                accept="image/*"
+                multiple
+                maxFiles={5}
+                maxSize={10 * 1024 * 1024}
+                label="Add photos of the issue"
+                description="Photos help providers understand the problem"
               />
             </div>
 
