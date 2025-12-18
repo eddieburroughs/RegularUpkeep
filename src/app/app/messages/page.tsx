@@ -1,0 +1,179 @@
+import { createClient } from "@/lib/supabase/server";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import {
+  MessageSquare,
+  Plus,
+  Clock,
+  User,
+  Home,
+  ClipboardList,
+} from "lucide-react";
+
+type ThreadWithDetails = {
+  id: string;
+  subject: string | null;
+  thread_type: string;
+  last_message_at: string;
+  is_archived: boolean;
+  properties: { nickname: string | null; address_line1: string } | null;
+  bookings: { booking_number: string; services: { name: string } | null } | null;
+  messages: { content: string; sender_id: string; is_read: boolean }[];
+};
+
+export default async function MessagesPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Get message threads where user is a participant
+  const { data: threads } = await supabase
+    .from("message_threads")
+    .select(`
+      id,
+      subject,
+      thread_type,
+      last_message_at,
+      is_archived,
+      properties(nickname, address_line1),
+      bookings(booking_number, services(name)),
+      messages(content, sender_id, is_read)
+    `)
+    .eq("is_active", true)
+    .order("last_message_at", { ascending: false })
+    .limit(50) as { data: ThreadWithDetails[] | null };
+
+  // Count unread messages
+  const unreadCount = threads?.reduce((count, thread) => {
+    const unreadMessages = thread.messages.filter(
+      (m) => !m.is_read && m.sender_id !== user?.id
+    ).length;
+    return count + unreadMessages;
+  }, 0) || 0;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Messages</h1>
+          <p className="text-muted-foreground">
+            Communicate with service providers
+          </p>
+        </div>
+        {unreadCount > 0 && (
+          <Badge variant="default">
+            {unreadCount} unread
+          </Badge>
+        )}
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Conversations</CardTitle>
+          <CardDescription>Your message threads with providers</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {threads && threads.length > 0 ? (
+            <div className="space-y-2">
+              {threads.map((thread) => {
+                const lastMessage = thread.messages[thread.messages.length - 1];
+                const unreadMessages = thread.messages.filter(
+                  (m) => !m.is_read && m.sender_id !== user?.id
+                ).length;
+                const hasUnread = unreadMessages > 0;
+
+                // Determine thread title
+                let title = thread.subject;
+                let subtitle = "";
+                let Icon = MessageSquare;
+
+                if (thread.bookings) {
+                  title = thread.bookings.services?.name || `Booking #${thread.bookings.booking_number}`;
+                  subtitle = `Booking #${thread.bookings.booking_number}`;
+                  Icon = ClipboardList;
+                } else if (thread.properties) {
+                  title = thread.properties.nickname || thread.properties.address_line1;
+                  subtitle = "Property inquiry";
+                  Icon = Home;
+                }
+
+                return (
+                  <Link
+                    key={thread.id}
+                    href={`/app/messages/${thread.id}`}
+                    className={`flex items-start gap-4 p-4 rounded-lg transition-colors ${
+                      hasUnread
+                        ? "bg-primary/5 hover:bg-primary/10"
+                        : "bg-muted/50 hover:bg-muted"
+                    }`}
+                  >
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+                      hasUnread ? "bg-primary/10" : "bg-background"
+                    }`}>
+                      <Icon className={`h-5 w-5 ${hasUnread ? "text-primary" : "text-muted-foreground"}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className={`font-medium truncate ${hasUnread ? "text-primary" : ""}`}>
+                          {title || "Conversation"}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          {hasUnread && (
+                            <Badge variant="default" className="text-xs">
+                              {unreadMessages}
+                            </Badge>
+                          )}
+                          <span className="text-xs text-muted-foreground whitespace-nowrap">
+                            {formatRelativeTime(thread.last_message_at)}
+                          </span>
+                        </div>
+                      </div>
+                      {subtitle && (
+                        <p className="text-xs text-muted-foreground mb-1">{subtitle}</p>
+                      )}
+                      {lastMessage && (
+                        <p className={`text-sm truncate ${hasUnread ? "font-medium" : "text-muted-foreground"}`}>
+                          {lastMessage.content}
+                        </p>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-12 text-muted-foreground">
+              <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-medium mb-1">No messages yet</p>
+              <p className="text-sm mb-4">
+                Messages with service providers will appear here
+              </p>
+              <Button asChild>
+                <Link href="/app/requests">
+                  View Requests
+                </Link>
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return date.toLocaleDateString();
+}
