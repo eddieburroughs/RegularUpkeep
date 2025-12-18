@@ -11,6 +11,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock,
+  ClipboardCheck,
 } from "lucide-react";
 
 // Type definitions for joined queries
@@ -144,6 +145,26 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Home Inspection CTA */}
+      <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+        <CardContent className="flex items-center gap-4 py-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <ClipboardCheck className="h-6 w-6 text-primary" />
+          </div>
+          <div className="flex-1">
+            <p className="font-semibold text-lg">Run a Home Inspection</p>
+            <p className="text-sm text-muted-foreground">
+              Walk through your property and document the condition of each area
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/app/inspection/new">
+              Start Inspection <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* Content Sections */}
       <div className="grid gap-6 lg:grid-cols-2">

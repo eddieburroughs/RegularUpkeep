@@ -428,6 +428,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
           uploaded_by: string | null;
+          meta: Json;
         };
         Insert: {
           id?: string;
@@ -439,6 +440,7 @@ export interface Database {
           description?: string | null;
           file_url: string;
           file_name: string;
+          meta?: Json;
           file_type?: string | null;
           file_size?: number | null;
           thumbnail_url?: string | null;
@@ -461,6 +463,7 @@ export interface Database {
           is_archived?: boolean;
           visibility?: string;
           updated_at?: string;
+          meta?: Json;
         };
       };
       message_threads: {
