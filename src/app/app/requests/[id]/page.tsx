@@ -14,6 +14,9 @@ import {
   MessageSquare,
   CheckCircle2,
   XCircle,
+  Circle,
+  Truck,
+  Wrench,
 } from "lucide-react";
 import type { BookingStatus, QuoteStatus } from "@/types/database";
 
@@ -64,6 +67,77 @@ const quoteStatusColors: Record<QuoteStatus, "default" | "secondary" | "destruct
   rejected: "destructive",
   expired: "outline",
 };
+
+// Status tracker steps for booking confirmation
+const bookingSteps = [
+  { key: "pending", label: "Requested", icon: Circle },
+  { key: "confirmed", label: "Confirmed", icon: CheckCircle2 },
+  { key: "in_progress", label: "In Progress", icon: Wrench },
+  { key: "completed", label: "Completed", icon: CheckCircle2 },
+];
+
+function StatusTracker({ status }: { status: BookingStatus }) {
+  if (status === "cancelled") {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="py-4">
+          <div className="flex items-center justify-center gap-2 text-red-700">
+            <XCircle className="h-5 w-5" />
+            <span className="font-medium">This booking has been cancelled</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const currentIndex = bookingSteps.findIndex((step) => step.key === status);
+
+  return (
+    <Card>
+      <CardContent className="py-4">
+        <div className="flex items-center justify-between">
+          {bookingSteps.map((step, index) => {
+            const isActive = index <= currentIndex;
+            const isCurrent = step.key === status;
+            const StepIcon = step.icon;
+
+            return (
+              <div key={step.key} className="flex flex-1 items-center">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors ${
+                      isActive
+                        ? isCurrent
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-primary bg-primary/10 text-primary"
+                        : "border-muted bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    <StepIcon className="h-5 w-5" />
+                  </div>
+                  <span
+                    className={`mt-2 text-xs font-medium ${
+                      isActive ? "text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                </div>
+                {index < bookingSteps.length - 1 && (
+                  <div
+                    className={`mx-2 h-0.5 flex-1 ${
+                      index < currentIndex ? "bg-primary" : "bg-muted"
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default async function RequestDetailPage({
   params,
@@ -132,6 +206,9 @@ function BookingView({ booking }: { booking: BookingDetails }) {
           </div>
         </div>
       </div>
+
+      {/* Status Tracker */}
+      <StatusTracker status={booking.status} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">

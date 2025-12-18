@@ -5,22 +5,23 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Home,
-  Building2,
   Calendar,
+  Wrench,
   ClipboardList,
+  User,
   MessageSquare,
   FolderOpen,
-  Settings,
   LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+// Homeowner navigation with wireframe labels
 const navigation = [
-  { name: "Dashboard", href: "/app", icon: Home },
-  { name: "Properties", href: "/app/properties", icon: Building2 },
-  { name: "Calendar", href: "/app/calendar", icon: Calendar },
-  { name: "Requests", href: "/app/requests", icon: ClipboardList },
+  { name: "Home", href: "/app", icon: Home },
+  { name: "Plan", href: "/app/calendar", icon: Calendar },
+  { name: "Book", href: "/app/requests/new", icon: Wrench },
+  { name: "History", href: "/app/requests", icon: ClipboardList },
   { name: "Messages", href: "/app/messages", icon: MessageSquare },
   { name: "Binder", href: "/app/binder", icon: FolderOpen },
 ];
@@ -71,16 +72,16 @@ export function Sidebar() {
       {/* Bottom actions */}
       <div className="border-t px-3 py-4 space-y-1">
         <Link
-          href="/app/settings"
+          href="/app/profile"
           className={cn(
             "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-            pathname === "/app/settings"
+            pathname === "/app/profile" || pathname.startsWith("/app/properties")
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
           )}
         >
-          <Settings className="h-5 w-5" />
-          Settings
+          <User className="h-5 w-5" />
+          Profile
         </Link>
         <button
           onClick={handleSignOut}

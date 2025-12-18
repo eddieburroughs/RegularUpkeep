@@ -14,11 +14,17 @@ export default async function AppLayout({
     redirect("/auth/login");
   }
 
-  // Fetch user's properties
+  // Fetch user's properties (check if user has any property memberships)
   const { data: properties } = await supabase
     .from("properties")
-    .select("*")
+    .select("*, property_members!inner(user_id)")
+    .eq("property_members.user_id", user.id)
     .order("created_at", { ascending: false });
+
+  // If user has no properties, redirect to onboarding
+  if (!properties || properties.length === 0) {
+    redirect("/onboarding/home-details");
+  }
 
   // Fetch unread notification count
   const { count: unreadCount } = await supabase
