@@ -58,7 +58,6 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: "/favicon.ico",
-    shortcut: "/favicon-16x16.png",
     apple: "/apple-touch-icon.png",
   },
 };
@@ -77,7 +76,8 @@ const organizationSchema = {
     "@type": "Place",
     name: brand.serviceArea,
   },
-  sameAs: [],
+  // Add social media links here when available:
+  // sameAs: ["https://facebook.com/...", "https://twitter.com/..."],
 };
 
 export default function RootLayout({
