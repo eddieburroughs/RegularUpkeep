@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar, Users, Headphones, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader, HowItWorksSection, CtaBand } from "@/components/marketing";
+import { PageHeader, HowItWorksSection, CtaBand , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -64,6 +64,7 @@ const detailedSteps = [
 
 export default function HowItWorksPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="How RegularUpkeep Works"
@@ -143,5 +144,6 @@ export default function HowItWorksPage() {
         primaryHref="/contact"
       />
     </>
+    </MarketingLayout>
   );
 }

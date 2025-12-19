@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageHeader, ServicesSection, CtaBand } from "@/components/marketing";
+import { PageHeader, ServicesSection, CtaBand , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 export default function ServicesPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="Services We Help You Manage"
@@ -52,5 +53,6 @@ export default function ServicesPage() {
         subtitle="Get started with RegularUpkeep and let us help you stay on top of everything."
       />
     </>
+    </MarketingLayout>
   );
 }

@@ -13,56 +13,66 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Briefcase,
+  Wrench,
   DollarSign,
   User,
   Bell,
   Power,
   BellOff,
   MessageSquare,
-  Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { Provider } from "@/types/database";
 
-// Provider bottom nav items
-const providerNavItems = [
-  { name: "Jobs", href: "/provider/jobs", icon: Briefcase },
-  { name: "Messages", href: "/provider/messages", icon: MessageSquare },
-  { name: "Team", href: "/provider/team", icon: Users },
-  { name: "Money", href: "/provider/money", icon: DollarSign },
-  { name: "Profile", href: "/provider/profile", icon: User },
-];
-
-interface ProviderShellProps {
-  children: React.ReactNode;
-  provider: Provider | null;
+interface Handyman {
+  id: string;
+  is_available: boolean;
+  bio: string | null;
+  skills: string[] | null;
+  hourly_rate: number | null;
+  provider_id: string | null;
 }
 
-export function ProviderShell({ children, provider }: ProviderShellProps) {
+interface ProviderInfo {
+  id: string;
+  business_name: string;
+}
+
+const handymanNavItems = [
+  { name: "Jobs", href: "/handyman/jobs", icon: Wrench },
+  { name: "Messages", href: "/handyman/messages", icon: MessageSquare },
+  { name: "Money", href: "/handyman/money", icon: DollarSign },
+  { name: "Profile", href: "/handyman/profile", icon: User },
+];
+
+interface HandymanShellProps {
+  children: React.ReactNode;
+  handyman: Handyman | null;
+  provider: ProviderInfo | null;
+}
+
+export function HandymanShell({ children, handyman, provider }: HandymanShellProps) {
   const pathname = usePathname();
-  const [isOnline, setIsOnline] = useState(provider?.is_online ?? false);
+  const [isAvailable, setIsAvailable] = useState(handyman?.is_available ?? false);
   const [updating, setUpdating] = useState(false);
 
-  const isOnboarding = pathname.startsWith("/provider/onboarding");
+  const isOnboarding = pathname.startsWith("/handyman/onboarding");
 
-  const handleOnlineToggle = async (checked: boolean) => {
-    if (!provider) return;
+  const handleAvailabilityToggle = async (checked: boolean) => {
+    if (!handyman) return;
     setUpdating(true);
 
     const supabase = createClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.from("providers") as any)
-      .update({ is_online: checked })
-      .eq("id", provider.id);
+    await (supabase.from("handymen") as any)
+      .update({ is_available: checked })
+      .eq("id", handyman.id);
 
-    setIsOnline(checked);
+    setIsAvailable(checked);
     setUpdating(false);
   };
 
   const isActiveRoute = (href: string) => {
-    if (href === "/provider/jobs") {
-      return pathname === "/provider/jobs" || pathname.startsWith("/provider/jobs/");
+    if (href === "/handyman/jobs") {
+      return pathname === "/handyman/jobs" || pathname.startsWith("/handyman/jobs/");
     }
     return pathname.startsWith(href);
   };
@@ -77,7 +87,7 @@ export function ProviderShell({ children, provider }: ProviderShellProps) {
               RegularUpkeep
             </Link>
             <Badge variant="secondary" className="ml-2">
-              Provider
+              Handyman
             </Badge>
           </div>
         </header>
@@ -88,30 +98,30 @@ export function ProviderShell({ children, provider }: ProviderShellProps) {
     );
   }
 
-  // Main provider app layout
+  // Main handyman app layout
   return (
     <div className="flex min-h-screen flex-col bg-muted/30">
       {/* Header */}
       <header className="sticky top-0 z-50 border-b bg-background">
         <div className="flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-3">
-            <Link href="/provider/jobs" className="text-xl font-bold text-primary">
-              RegularUpkeep
+            <Link href="/handyman/jobs" className="text-xl font-bold text-primary">
+              {provider ? provider.business_name : "RegularUpkeep"}
             </Link>
-            <Badge variant="secondary">Pro</Badge>
+            <Badge variant="outline">{provider ? "Employee" : "Independent"}</Badge>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Online/Offline Toggle */}
+            {/* Available Toggle */}
             <div className="flex items-center gap-2">
-              <Power className={cn("h-4 w-4", isOnline ? "text-green-500" : "text-muted-foreground")} />
+              <Power className={cn("h-4 w-4", isAvailable ? "text-green-500" : "text-muted-foreground")} />
               <span className="text-sm font-medium hidden sm:inline">
-                {isOnline ? "Online" : "Offline"}
+                {isAvailable ? "Available" : "Unavailable"}
               </span>
               <Switch
-                checked={isOnline}
-                onCheckedChange={handleOnlineToggle}
-                disabled={updating || !provider}
+                checked={isAvailable}
+                onCheckedChange={handleAvailabilityToggle}
+                disabled={updating || !handyman}
               />
             </div>
 
@@ -132,7 +142,7 @@ export function ProviderShell({ children, provider }: ProviderShellProps) {
                       No new notifications
                     </p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      You&apos;ll see job alerts and messages here
+                      You&apos;ll see job assignments here
                     </p>
                   </div>
                 </div>
@@ -150,7 +160,7 @@ export function ProviderShell({ children, provider }: ProviderShellProps) {
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-background border-t z-50">
         <div className="flex items-center justify-around h-16">
-          {providerNavItems.map((item) => {
+          {handymanNavItems.map((item) => {
             const isActive = isActiveRoute(item.href);
             return (
               <Link

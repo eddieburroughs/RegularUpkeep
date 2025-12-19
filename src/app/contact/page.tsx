@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PageHeader } from "@/components/marketing";
+import { PageHeader , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 function ContactForm() {
@@ -31,6 +31,7 @@ ${formData.get("message")}
   };
 
   return (
+    <MarketingLayout>
     <Card className="border-border/50">
       <CardHeader>
         <CardTitle>Send Us a Message</CardTitle>
@@ -91,6 +92,7 @@ ${formData.get("message")}
         </form>
       </CardContent>
     </Card>
+    </MarketingLayout>
   );
 }
 
@@ -123,6 +125,7 @@ const contactInfo = [
 
 export default function ContactPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="Get in Touch"
@@ -221,5 +224,6 @@ export default function ContactPage() {
         </div>
       </section>
     </>
+    </MarketingLayout>
   );
 }

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Header, Footer, MobileCtaBar } from "@/components/marketing";
 import { brand, seo } from "@/content/site";
 import "./globals.css";
 
@@ -99,12 +98,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <div className="flex min-h-screen flex-col">
-          <Header />
-          <main className="flex-1 pb-16 md:pb-0">{children}</main>
-          <Footer />
-          <MobileCtaBar />
-        </div>
+        {children}
       </body>
     </html>
   );

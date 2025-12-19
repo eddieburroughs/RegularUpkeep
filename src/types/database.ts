@@ -7,6 +7,8 @@ export type Json =
   | Json[];
 
 export type UserRole = "customer" | "provider" | "handyman" | "admin" | "territory_manager" | "franchisee";
+export type ProviderMemberRole = "owner" | "manager" | "technician";
+export type ProviderMemberStatus = "pending" | "active" | "inactive";
 export type PropertyType = "single_family" | "condo" | "townhouse" | "apartment" | "multi_family" | "commercial";
 export type PropertyMemberRole = "owner" | "manager" | "tenant" | "viewer";
 export type BookingStatus = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled";
@@ -687,3 +689,32 @@ export type Message = Tables<"messages">;
 export type Service = Tables<"services">;
 export type Provider = Tables<"providers">;
 export type Notification = Tables<"notifications">;
+
+// Provider team types (not in generated types yet)
+export interface ProviderMember {
+  id: string;
+  provider_id: string;
+  profile_id: string;
+  role: ProviderMemberRole;
+  status: ProviderMemberStatus;
+  invited_by: string | null;
+  invite_id: string | null;
+  joined_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProviderInvite {
+  id: string;
+  provider_id: string;
+  invite_code: string;
+  email: string | null;
+  role: "manager" | "technician";
+  created_by: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  use_count: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}

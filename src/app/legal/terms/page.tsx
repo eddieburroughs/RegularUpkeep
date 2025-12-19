@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/marketing";
+import { PageHeader , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 import { Separator } from "@/components/ui/separator";
 
@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="Terms of Service"
@@ -187,5 +188,6 @@ export default function TermsPage() {
         </div>
       </section>
     </>
+    </MarketingLayout>
   );
 }

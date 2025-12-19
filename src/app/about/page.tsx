@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Home, Users, Award, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader, TestimonialsSection, CtaBand } from "@/components/marketing";
+import { PageHeader, TestimonialsSection, CtaBand , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -40,6 +40,7 @@ const values = [
 
 export default function AboutPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="About RegularUpkeep"
@@ -157,5 +158,6 @@ export default function AboutPage() {
         primaryHref="/contact"
       />
     </>
+    </MarketingLayout>
   );
 }

@@ -14,6 +14,15 @@ export default async function AppLayout({
     redirect("/auth/login");
   }
 
+  // Check user role - admins don't need properties
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single() as { data: { role: string } | null };
+
+  const isAdmin = profile?.role === "admin";
+
   // Fetch user's properties (check if user has any property memberships)
   const { data: properties } = await supabase
     .from("properties")
@@ -21,8 +30,8 @@ export default async function AppLayout({
     .eq("property_members.user_id", user.id)
     .order("created_at", { ascending: false });
 
-  // If user has no properties, redirect to onboarding
-  if (!properties || properties.length === 0) {
+  // If user has no properties and is not an admin, redirect to onboarding
+  if (!isAdmin && (!properties || properties.length === 0)) {
     redirect("/onboarding/home-details");
   }
 

@@ -9,5 +9,8 @@ export const config = {
   matcher: [
     "/app/:path*",
     "/auth/:path*",
+    "/provider/:path*",
+    "/handyman/:path*",
+    "/onboarding/:path*",
   ],
 };

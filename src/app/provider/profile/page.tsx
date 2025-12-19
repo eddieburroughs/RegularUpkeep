@@ -14,6 +14,7 @@ import {
   FileCheck,
   ChevronRight,
   LogOut,
+  Pencil,
 } from "lucide-react";
 import type { MaintenanceCategory, VerificationStatus } from "@/types/database";
 
@@ -73,11 +74,19 @@ export default async function ProviderProfilePage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">
-          Manage your business profile
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Profile</h1>
+          <p className="text-muted-foreground">
+            Manage your business profile
+          </p>
+        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/provider/profile/edit">
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </Link>
+        </Button>
       </div>
 
       {/* Business Card */}

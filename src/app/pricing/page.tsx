@@ -8,6 +8,7 @@ import {
   PricingAddons,
   FaqAccordion,
   CtaBand,
+  MarketingLayout,
 } from "@/components/marketing";
 import { brand, pricing, faqs } from "@/content/site";
 
@@ -33,6 +34,7 @@ const allPlansInclude = [
 
 export default function PricingPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="Simple, Transparent Pricing"
@@ -106,5 +108,6 @@ export default function PricingPage() {
         subtitle="Get started today and take the first step toward stress-free home ownership."
       />
     </>
+    </MarketingLayout>
   );
 }

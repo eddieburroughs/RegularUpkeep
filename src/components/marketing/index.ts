@@ -11,3 +11,4 @@ export { FaqAccordion, FaqSection } from "./faq-accordion";
 export { ServicesGrid, ServicesSection } from "./services-grid";
 export { MobileCtaBar } from "./mobile-cta-bar";
 export { ProviderBenefitsGrid } from "./provider-benefits";
+export { MarketingLayout } from "./marketing-layout";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageHeader } from "@/components/marketing";
+import { PageHeader , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 import { Separator } from "@/components/ui/separator";
 
@@ -10,6 +10,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="Privacy Policy"
@@ -157,5 +158,6 @@ export default function PrivacyPage() {
         </div>
       </section>
     </>
+    </MarketingLayout>
   );
 }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PageHeader, FaqAccordion, CtaBand } from "@/components/marketing";
+import { PageHeader, FaqAccordion, CtaBand , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -11,6 +11,7 @@ export const metadata: Metadata = {
 
 export default function FaqPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="Frequently Asked Questions"
@@ -49,5 +50,6 @@ export default function FaqPage() {
         subtitle="Take the first step toward simpler home maintenance today."
       />
     </>
+    </MarketingLayout>
   );
 }

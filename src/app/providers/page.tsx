@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PageHeader, ProviderBenefitsGrid, CtaBand } from "@/components/marketing";
+import { PageHeader, ProviderBenefitsGrid, CtaBand , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 function ProviderApplicationForm() {
@@ -33,6 +33,7 @@ Additional Information: ${formData.get("additional")}
   };
 
   return (
+    <MarketingLayout>
     <Card className="border-border/50">
       <CardHeader>
         <CardTitle>Apply to Join Our Network</CardTitle>
@@ -131,11 +132,13 @@ Additional Information: ${formData.get("additional")}
         </form>
       </CardContent>
     </Card>
+    </MarketingLayout>
   );
 }
 
 export default function ProvidersPage() {
   return (
+    <MarketingLayout>
     <>
       <PageHeader
         title="Join Our Provider Network"
@@ -255,5 +258,6 @@ export default function ProvidersPage() {
         showPhone={false}
       />
     </>
+    </MarketingLayout>
   );
 }
