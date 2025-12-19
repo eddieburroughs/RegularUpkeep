@@ -17,7 +17,7 @@ type ThreadWithDetails = {
   is_archived: boolean;
   properties: { nickname: string | null; address_line1: string } | null;
   bookings: { booking_number: string; services: { name: string } | null } | null;
-  messages: { content: string; sender_id: string; is_read: boolean }[];
+  messages: { body: string; sender_user_id: string; created_at: string }[];
 };
 
 export default async function HandymanMessagesPage() {
@@ -60,7 +60,7 @@ export default async function HandymanMessagesPage() {
         is_archived,
         properties(nickname, address_line1),
         bookings(booking_number, services(name)),
-        messages(content, sender_id, is_read)
+        messages(body, sender_user_id, created_at)
       `)
       .in("booking_id", bookingIds)
       .eq("is_active", true)
@@ -70,12 +70,9 @@ export default async function HandymanMessagesPage() {
     threads = threadData || [];
   }
 
-  // Count unread messages
-  const unreadCount = threads.reduce((count, thread) => {
-    const unreadMessages = thread.messages.filter(
-      (m) => !m.is_read && m.sender_id !== user.id
-    ).length;
-    return count + unreadMessages;
+  // Count messages (simplified - no is_read tracking yet)
+  const totalMessages = threads.reduce((count, thread) => {
+    return count + thread.messages.length;
   }, 0);
 
   return (
@@ -87,9 +84,9 @@ export default async function HandymanMessagesPage() {
             Communicate with homeowners
           </p>
         </div>
-        {unreadCount > 0 && (
-          <Badge variant="default">
-            {unreadCount} unread
+        {totalMessages > 0 && (
+          <Badge variant="outline">
+            {totalMessages} messages
           </Badge>
         )}
       </div>
@@ -104,10 +101,7 @@ export default async function HandymanMessagesPage() {
             <div className="space-y-2">
               {threads.map((thread) => {
                 const lastMessage = thread.messages[thread.messages.length - 1];
-                const unreadMessages = thread.messages.filter(
-                  (m) => !m.is_read && m.sender_id !== user.id
-                ).length;
-                const hasUnread = unreadMessages > 0;
+                const messageCount = thread.messages.length;
 
                 // Determine thread title
                 let title = thread.subject;
@@ -128,26 +122,20 @@ export default async function HandymanMessagesPage() {
                   <Link
                     key={thread.id}
                     href={`/handyman/messages/${thread.id}`}
-                    className={`flex items-start gap-4 p-4 rounded-lg transition-colors ${
-                      hasUnread
-                        ? "bg-primary/5 hover:bg-primary/10"
-                        : "bg-muted/50 hover:bg-muted"
-                    }`}
+                    className="flex items-start gap-4 p-4 rounded-lg transition-colors bg-muted/50 hover:bg-muted"
                   >
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                      hasUnread ? "bg-primary/10" : "bg-background"
-                    }`}>
-                      <Icon className={`h-5 w-5 ${hasUnread ? "text-primary" : "text-muted-foreground"}`} />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background">
+                      <Icon className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">
-                        <p className={`font-medium truncate ${hasUnread ? "text-primary" : ""}`}>
+                        <p className="font-medium truncate">
                           {title || "Conversation"}
                         </p>
                         <div className="flex items-center gap-2">
-                          {hasUnread && (
-                            <Badge variant="default" className="text-xs">
-                              {unreadMessages}
+                          {messageCount > 0 && (
+                            <Badge variant="outline" className="text-xs">
+                              {messageCount}
                             </Badge>
                           )}
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -159,8 +147,8 @@ export default async function HandymanMessagesPage() {
                         <p className="text-xs text-muted-foreground mb-1">{subtitle}</p>
                       )}
                       {lastMessage && (
-                        <p className={`text-sm truncate ${hasUnread ? "font-medium" : "text-muted-foreground"}`}>
-                          {lastMessage.content}
+                        <p className="text-sm truncate text-muted-foreground">
+                          {lastMessage.body}
                         </p>
                       )}
                     </div>
