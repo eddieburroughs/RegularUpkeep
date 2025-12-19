@@ -2,12 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
   ArrowLeft,
   Printer,
-  Download,
   CheckCircle2,
   AlertTriangle,
   AlertCircle,
@@ -33,13 +31,6 @@ type InspectionDocument = {
     city: string;
     state: string;
   } | null;
-};
-
-const statusConfig: Record<FindingStatus, { label: string; icon: typeof CheckCircle2; color: string; bg: string }> = {
-  pass: { label: "Pass", icon: CheckCircle2, color: "text-green-600", bg: "bg-green-100" },
-  attention: { label: "Needs Attention", icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-100" },
-  urgent: { label: "Urgent", icon: AlertCircle, color: "text-red-600", bg: "bg-red-100" },
-  na: { label: "N/A", icon: MinusCircle, color: "text-gray-500", bg: "bg-gray-100" },
 };
 
 export default async function InspectionReportPage({

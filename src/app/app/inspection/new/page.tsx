@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -70,7 +69,6 @@ const sectionIcons: Record<string, typeof Shield> = {
 };
 
 export default function NewInspectionPage() {
-  const router = useRouter();
   const supabase = createClient();
 
   const [step, setStep] = useState<"setup" | "walkthrough" | "review" | "success">("setup");
@@ -89,11 +87,7 @@ export default function NewInspectionPage() {
   const [createTasks, setCreateTasks] = useState(true);
   const [createRequests, setCreateRequests] = useState(true);
 
-  useEffect(() => {
-    loadProperties();
-  }, []);
-
-  const loadProperties = async () => {
+  const loadProperties = useCallback(async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -110,7 +104,11 @@ export default function NewInspectionPage() {
         setSelectedPropertyId(props[0].id);
       }
     }
-  };
+  }, [supabase]);
+
+  useEffect(() => {
+    loadProperties();
+  }, [loadProperties]);
 
   const sections = INSPECTION_SECTIONS[inspectionType];
   const currentSection = sections[currentSectionIndex];
@@ -157,7 +155,7 @@ export default function NewInspectionPage() {
     });
   };
 
-  const uploadPhotos = async (docId: string): Promise<string[]> => {
+  const _uploadPhotos = async (docId: string): Promise<string[]> => {
     if (photoFiles.length === 0) return [];
 
     const paths: string[] = [];
@@ -272,8 +270,8 @@ export default function NewInspectionPage() {
       setCreatedDocId(docId);
 
       // Upload photos and update findings with real paths
-      for (const [sectionKey, sectionFindings] of Object.entries(findings)) {
-        for (const [itemKey, finding] of Object.entries(sectionFindings)) {
+      for (const [_sectionKey, sectionFindings] of Object.entries(findings)) {
+        for (const [_itemKey, finding] of Object.entries(sectionFindings)) {
           const pendingPhotos = finding.photos.filter(p => p.startsWith("pending:"));
           if (pendingPhotos.length > 0) {
             // We'd need the actual files here - simplified for now
