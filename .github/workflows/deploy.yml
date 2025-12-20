@@ -1,70 +1,42 @@
-  name: Deploy to Production                                                                                                              
-                                                                                                                                          
-  on:                                                                                                                                     
-    push:                                                                                                                                 
-      branches:                                                                                                                           
-        - main                                                                                                                            
-    workflow_dispatch:                                                                                                                    
-                                                                                                                                          
-  jobs:                                                                                                                                   
-    deploy:                                                                                                                               
-      runs-on: ubuntu-latest                                                                                                              
-      name: Deploy to Production Server                                                                                                   
-                                                                                                                                          
-      steps:                                                                                                                              
-        - name: Checkout code                                                                                                             
-          uses: actions/checkout@v4                                                                                                       
-                                                                                                                                          
-        - name: Deploy via SSH                                                                                                            
-          uses: appleboy/ssh-action@v1.0.3                                                                                                
-          with:                                                                                                                           
-            host: ${{ secrets.SERVER_HOST }}                                                                                              
-            username: ${{ secrets.SERVER_USER }}                                                                                          
-            key: ${{ secrets.SERVER_SSH_KEY }}                                                                                            
-            port: ${{ secrets.SERVER_PORT }}                                                                                              
-            script: |                                                                                                                     
-              cd /root/RegularUpkeep-app                                                                                                  
-              git pull origin main                                                                                                        
-              ./scripts/deploy.sh                                                                                                         
-                                                                                                                                          
-        - name: Notify on Success                                                                                                         
-          if: success()                                                                                                                   
-          run: echo "Deployment successful!"                                                                                              
-                                                                                                                                          
-        - name: Notify Slack on Failure                                                                                                   
-          if: failure()                                                                                                                   
-          env:                                                                                                                            
-            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}                                                                           
-          run: |                                                                                                                          
-            curl -X POST -H 'Content-type: application/json' \                                                                            
-              --data '{                                                                                                                   
-                "blocks": [                                                                                                               
-                  {                                                                                                                       
-                    "type": "header",                                                                                                     
-                    "text": {"type": "plain_text", "text": "🚨 Deployment Failed", "emoji": true}                                         
-                  },                                                                                                                      
-                  {                                                                                                                       
-                    "type": "section",                                                                                                    
-                    "fields": [                                                                                                           
-                      {"type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}"},                                              
-                      {"type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}"},                                                    
-                      {"type": "mrkdwn", "text": "*Commit:*\n`${{ github.sha }}`"},                                                       
-                      {"type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}"}                                                        
-                    ]                                                                                                                     
-                  },                                                                                                                      
-                  {                                                                                                                       
-                    "type": "section",                                                                                                    
-                    "text": {"type": "mrkdwn", "text": "*Recovery:* SSH to server and run `./scripts/emergency-rollback.sh`"}             
-                  },                                                                                                                      
-                  {                                                                                                                       
-                    "type": "actions",                                                                                                    
-                    "elements": [                                                                                                         
-                      {                                                                                                                   
-                        "type": "button",                                                                                                 
-                        "text": {"type": "plain_text", "text": "View Workflow Run"},                                                      
-                        "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"                      
-                      }                                                                                                                   
-                    ]                                                                                                                     
+  name: Deploy to Production
+
+  on:
+    push:
+      branches:
+        - main
+    workflow_dispatch:
+
+  jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      name: Deploy to Production Server
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Deploy via SSH
+          uses: appleboy/ssh-action@v1.0.3
+          with:
+            host: ${{ secrets.SERVER_HOST }}
+            username: ${{ secrets.SERVER_USER }}
+            key: ${{ secrets.SERVER_SSH_KEY }}
+            port: ${{ secrets.SERVER_PORT }}
+            script: |
+              cd /root/RegularUpkeep-app
+              git pull origin main
+              ./scripts/deploy.sh
+
+        - name: Notify on Success
+          if: success()
+          run: echo "Deployment successful!"
+
+        - name: Notify Slack on Failure
+          if: failure()
+          run: |
+            curl -X POST -H 'Content-type: application/json' \
+              --data '{"text":"🚨 Deployment Failed\nRepo: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\nAuthor: ${{ github.actor }}\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+              "${{ secrets.SLACK_WEBHOOK_URL }}"                                                                                                                     
                   }                                                                                                                       
                 ]                                                                                                                         
               }' \                                                                                                                        
