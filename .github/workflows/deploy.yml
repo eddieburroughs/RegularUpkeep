@@ -33,11 +33,4 @@
 
         - name: Notify Slack on Failure
           if: failure()
-          run: |
-            curl -X POST -H 'Content-type: application/json' \
-              --data '{"text":"🚨 Deployment Failed\nRepo: ${{ github.repository }}\nBranch: ${{ github.ref_name }}\nCommit: ${{ github.sha }}\nAuthor: ${{ github.actor }}\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
-              "${{ secrets.SLACK_WEBHOOK_URL }}"                                                                                                                     
-                  }                                                                                                                       
-                ]                                                                                                                         
-              }' \                                                                                                                        
-              "$SLACK_WEBHOOK_URL"
+          run: 'curl -X POST -H "Content-type: application/json" --data "{\"text\":\"🚨 Deployment Failed - ${{ github.repository }} - ${{ github.ref_name }} by ${{ github.actor }}\"}" "${{ secrets.SLACK_WEBHOOK_URL }}"'
