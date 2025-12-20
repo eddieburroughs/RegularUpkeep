@@ -1,0 +1,339 @@
+# RegularUpkeep Project Context
+
+This file provides comprehensive context for Claude Code when working on this project.
+
+## Project Overview
+
+**RegularUpkeep** is a home maintenance platform connecting homeowners with service providers. Think of it as a concierge service that helps homeowners stay on top of maintenance with reminders, trusted provider connections, and coordination support.
+
+### Business Model
+- Homeowners pay a monthly subscription ($19-$79/month)
+- Providers join the network to receive quality leads
+- RegularUpkeep coordinates between homeowners and providers
+
+### Service Area
+Eastern North Carolina (and growing)
+
+### User Types
+1. **Homeowners (customers)** - Schedule and manage home maintenance
+2. **Providers** - Professional service companies (plumbing, HVAC, electrical, etc.)
+3. **Handymen** - Individual contractors for general maintenance
+4. **Admins** - Internal staff managing the platform
+5. **Territory Managers** - Regional oversight
+6. **Franchisees** - Future franchise operators
+
+## Brand Information
+
+```
+Name: RegularUpkeep
+Tagline: "One place to manage home maintenance"
+Phone: 888-502-UPKEEP (8753)
+Email: info@regularupkeep.com
+Website: https://regularupkeep.com
+App: https://app.regularupkeep.com
+```
+
+### Brand Assets
+- Logo with text: `/public/brand/regularupkeep-logo1.svg`
+- Mascot only: `/public/brand/regularupkeep-mascot.png` (1024x1024)
+- Favicon: `/src/app/favicon.ico` (synced with marketing site)
+
+## Technical Architecture
+
+### Stack
+- **Framework**: Next.js 16 with App Router
+- **Database/Auth**: Supabase (self-hosted)
+- **UI Components**: shadcn/ui with Tailwind CSS
+- **Validation**: Zod schemas
+- **Deployment**: PM2 on VPS with nginx reverse proxy
+
+### Domains & Servers
+
+| Domain | Purpose | Port | PM2 Process |
+|--------|---------|------|-------------|
+| `regularupkeep.com` | Marketing site (static) | - | `regularupkeep-app` (3001) |
+| `app.regularupkeep.com` | Main application | 3002 | `regularupkeep-main-app` |
+| `api.regularupkeep.com` | Supabase API (Kong) | - | Docker containers |
+
+### Server Paths
+- **Main App Code**: `/root/RegularUpkeep-app/`
+- **Marketing App Code**: `/home/regularupkeep/apps/regularupkeep-app/`
+- **Marketing Static Files**: `/home/regularupkeep/htdocs/regularupkeep.com/`
+- **Nginx Configs**: `/etc/nginx/sites-enabled/`
+- **PM2 Logs**: `/root/.pm2/logs/`
+
+## Directory Structure
+
+```
+/root/RegularUpkeep-app/
+├── src/
+│   ├── app/                    # Next.js App Router pages
+│   │   ├── (marketing)/        # Marketing pages (grouped route)
+│   │   ├── about/
+│   │   ├── api/                # API routes
+│   │   ├── app/                # Homeowner dashboard
+│   │   │   ├── admin/          # Admin section
+│   │   │   ├── binder/         # Home binder (documents)
+│   │   │   ├── calendar/       # Maintenance calendar
+│   │   │   ├── inspection/     # Home inspections
+│   │   │   ├── messages/       # Messaging
+│   │   │   ├── profile/        # User profile
+│   │   │   ├── properties/     # Property management
+│   │   │   └── requests/       # Service requests
+│   │   ├── auth/               # Authentication pages
+│   │   │   ├── callback/       # OAuth callback
+│   │   │   ├── login/
+│   │   │   ├── register/
+│   │   │   └── signout/
+│   │   ├── contact/
+│   │   ├── faq/
+│   │   ├── get-started/        # Role selection page
+│   │   ├── handyman/           # Handyman portal
+│   │   │   ├── inspection/
+│   │   │   ├── jobs/
+│   │   │   ├── messages/
+│   │   │   ├── money/
+│   │   │   ├── onboarding/
+│   │   │   └── profile/
+│   │   ├── how-it-works/
+│   │   ├── join/[code]/        # Referral/invite codes
+│   │   ├── legal/
+│   │   │   ├── privacy/
+│   │   │   └── terms/
+│   │   ├── onboarding/         # Homeowner onboarding
+│   │   │   ├── home-details/
+│   │   │   ├── plan-preview/
+│   │   │   ├── systems/
+│   │   │   └── welcome/
+│   │   ├── pricing/
+│   │   ├── provider/           # Provider portal
+│   │   │   ├── inspection/
+│   │   │   ├── jobs/
+│   │   │   ├── messages/
+│   │   │   ├── money/
+│   │   │   ├── onboarding/
+│   │   │   ├── profile/
+│   │   │   └── team/           # Team management
+│   │   ├── providers/          # Marketing: provider benefits
+│   │   └── services/           # Marketing: services list
+│   │
+│   ├── components/
+│   │   ├── ui/                 # shadcn/ui components
+│   │   └── marketing/          # Marketing-specific components
+│   │       ├── header.tsx
+│   │       ├── footer.tsx
+│   │       ├── hero.tsx
+│   │       ├── cta-band.tsx
+│   │       ├── mobile-cta-bar.tsx
+│   │       └── pricing-cards.tsx
+│   │
+│   ├── content/
+│   │   └── site.ts             # SINGLE SOURCE OF TRUTH for all site content
+│   │                           # (brand info, pricing, services, FAQs, etc.)
+│   │
+│   ├── lib/
+│   │   ├── supabase/
+│   │   │   ├── client.ts       # Browser client
+│   │   │   ├── server.ts       # Server client
+│   │   │   └── middleware.ts   # Auth middleware
+│   │   ├── validations/        # Zod schemas
+│   │   └── utils.ts            # Utility functions
+│   │
+│   └── types/
+│       ├── database.ts         # Supabase database types
+│       └── inspection.ts       # Inspection-specific types
+│
+├── public/
+│   └── brand/                  # Brand assets
+│
+├── scripts/
+│   ├── deploy.sh               # Deployment with backup
+│   ├── rollback.sh             # Standard rollback
+│   └── emergency-rollback.sh   # Quick rollback
+│
+├── next.config.ts              # Next.js config (includes CSP headers)
+├── tailwind.config.ts
+├── package.json
+└── CLAUDE.md                   # This file
+```
+
+## Database Schema (Key Tables)
+
+### User-Related
+- `profiles` - User accounts (all roles)
+- `customers` - Homeowner-specific data
+- `providers` - Provider company data
+- `provider_members` - Provider team members
+
+### Property-Related
+- `properties` - Homes/buildings
+- `property_members` - Property access (owner, manager, tenant)
+- `property_systems` - HVAC, plumbing, etc. for each property
+
+### Maintenance-Related
+- `maintenance_tasks` - Scheduled maintenance items
+- `service_requests` - Requests from homeowners
+- `bookings` - Scheduled service appointments
+- `quotes` - Price quotes from providers
+
+### Documents
+- `documents` - Receipts, warranties, manuals, etc.
+- `inspections` - Home inspection reports
+
+### Key Enums
+```typescript
+UserRole = "customer" | "provider" | "handyman" | "admin" | "territory_manager" | "franchisee"
+PropertyType = "single_family" | "condo" | "townhouse" | "apartment" | "multi_family" | "commercial"
+BookingStatus = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled"
+MaintenanceCategory = "hvac" | "plumbing" | "electrical" | "appliances" | "exterior" | "interior" | "landscaping" | "pest_control" | "safety" | "other"
+```
+
+## Authentication Flow
+
+### Entry Points
+1. **Get Started Page** (`/get-started`)
+   - "I'm a Homeowner" → `/auth/register`
+   - "I'm a Service Provider" → `/provider/onboarding/signup`
+
+2. **Login** (`/auth/login`)
+   - Email/password authentication
+   - Redirects based on user role
+
+3. **Provider Signup** (`/provider/onboarding/signup`)
+   - Multi-step: Business info → Services & coverage
+   - Creates auth user + provider record
+
+4. **Handyman Signup** (`/handyman/onboarding/signup`)
+   - Similar flow for individual contractors
+
+### Post-Login Routing
+- Customers → `/app` (homeowner dashboard)
+- Providers → `/provider/jobs`
+- Handymen → `/handyman/jobs`
+
+### TODO: Social Login
+Social OAuth (Google, Facebook, Apple) needs to be:
+1. Configured in Supabase dashboard
+2. Added to login/register pages with `signInWithOAuth`
+
+## Deployment Commands
+
+### Main App (app.regularupkeep.com)
+```bash
+cd /root/RegularUpkeep-app
+npm run build
+pm2 restart regularupkeep-main-app
+```
+
+### Marketing Site (regularupkeep.com)
+```bash
+# Update source
+cd /home/regularupkeep/apps/regularupkeep-app
+npm run build
+pm2 restart regularupkeep-app
+
+# If static files need updating
+# Edit files in /home/regularupkeep/htdocs/regularupkeep.com/
+```
+
+### Full Deploy with Backup
+```bash
+./scripts/deploy.sh
+```
+
+### Rollback
+```bash
+./scripts/rollback.sh           # With confirmation
+./scripts/emergency-rollback.sh # Immediate
+```
+
+### View Logs
+```bash
+pm2 logs regularupkeep-main-app --lines 50
+pm2 logs regularupkeep-app --lines 50
+```
+
+## Configuration Notes
+
+### Content-Security-Policy (next.config.ts)
+The CSP must include these for the app to work:
+```
+connect-src: 'self', https://*.supabase.co, wss://*.supabase.co, https://api.regularupkeep.com
+img-src: 'self', data:, blob:, https://*.supabase.co, https://api.regularupkeep.com
+```
+
+### Environment Variables (.env.local)
+```
+NEXT_PUBLIC_SUPABASE_URL=https://api.regularupkeep.com
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
+```
+
+### Nginx Configs
+- `/etc/nginx/sites-enabled/app.regularupkeep.com.conf` - Main app
+- `/etc/nginx/sites-enabled/regularupkeep.com.conf` - Marketing (static)
+- `/etc/nginx/sites-enabled/api.regularupkeep.com.conf` - Supabase API
+
+## Pricing Plans (from site.ts)
+
+| Plan | Price | Properties | Key Features |
+|------|-------|------------|--------------|
+| Essential | $19/mo | Up to 2 | Calendar, reminders, recommendations |
+| Standard | $39/mo | Up to 4 | + Concierge, priority scheduling |
+| Premium | $79/mo | Up to 8 | + Dedicated manager, emergency line |
+
+Add-ons:
+- Additional Properties: +$5/property/mo
+- Rental Property Add-on: +$5/rental/mo
+
+## Service Categories
+
+1. HVAC & Climate
+2. Plumbing
+3. Electrical
+4. Exterior & Roofing
+5. Lawn & Landscape
+6. Appliances
+7. Pest Control
+8. Safety & Security
+9. General Repairs
+
+## Important Files to Know
+
+| File | Purpose |
+|------|---------|
+| `src/content/site.ts` | ALL marketing content, pricing, FAQs, services |
+| `src/lib/supabase/middleware.ts` | Auth route protection |
+| `src/types/database.ts` | Database schema types |
+| `next.config.ts` | Security headers, image domains |
+| `src/app/layout.tsx` | Root layout, metadata, fonts |
+
+## Common Tasks
+
+### Update Marketing Content
+Edit `src/content/site.ts` - it contains all pricing, FAQs, services, testimonials
+
+### Add New Page
+1. Create folder in `src/app/` with `page.tsx`
+2. For protected routes, add to middleware if needed
+
+### Update Branding
+1. Replace files in `public/brand/`
+2. Update references in `site.ts` if filenames change
+
+### Fix CSP Issues
+Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
+
+## Recent Changes Log
+
+### 2025-12-20
+- Fixed CSP blocking API calls (added api.regularupkeep.com to connect-src)
+- Synced favicon.ico and apple-touch-icon.png from marketing site
+- Created `/get-started` page with role selection (Homeowner vs Provider)
+- Updated brand.authUrl and login page to use /get-started
+- Added mascot logo (regularupkeep-mascot.png) above login, register, and get-started pages
+- Logo links back to marketing site (regularupkeep.com)
+- Updated all marketing site "Get Started" links to point to /get-started
+
+---
+
+*Last updated: 2025-12-20*

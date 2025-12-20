@@ -15,7 +15,7 @@ export const brand = {
   url: "https://regularupkeep.com",
   serviceArea: "Eastern North Carolina (and growing)",
   mission: "Making home maintenance simple, predictable, and stress-free for homeowners and property managers.",
-  authUrl: "https://app.regularupkeep.com/auth/register",
+  authUrl: "https://app.regularupkeep.com/get-started",
   loginUrl: "https://app.regularupkeep.com/auth/login",
 } as const;
 

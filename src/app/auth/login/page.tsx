@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Mail, Lock } from "lucide-react";
 import { loginSchema, validateForm } from "@/lib/validations";
+import { brand } from "@/content/site";
 
 function LoginForm() {
   const router = useRouter();
@@ -53,7 +55,18 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-muted/30 px-4 py-12">
+      {/* Mascot Logo */}
+      <Link href={brand.url} className="mb-6 transition-transform hover:scale-105">
+        <Image
+          src="/brand/regularupkeep-mascot.png"
+          alt={brand.name}
+          width={120}
+          height={120}
+          priority
+        />
+      </Link>
+
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome back</CardTitle>
@@ -112,7 +125,7 @@ function LoginForm() {
             </Button>
             <p className="text-sm text-muted-foreground text-center">
               Don&apos;t have an account?{" "}
-              <Link href="/auth/register" className="text-primary hover:underline">
+              <Link href="/get-started" className="text-primary hover:underline">
                 Sign up
               </Link>
             </p>
