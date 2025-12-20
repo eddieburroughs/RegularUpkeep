@@ -31,8 +31,41 @@
           if: success()                                                                                                                   
           run: echo "Deployment successful!"                                                                                              
                                                                                                                                           
-        - name: Notify on Failure                                                                                                         
+        - name: Notify Slack on Failure                                                                                                   
           if: failure()                                                                                                                   
+          env:                                                                                                                            
+            SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}                                                                           
           run: |                                                                                                                          
-            echo "Deployment failed!"                                                                                                     
-            echo "To rollback: ./scripts/emergency-rollback.sh"
+            curl -X POST -H 'Content-type: application/json' \                                                                            
+              --data '{                                                                                                                   
+                "blocks": [                                                                                                               
+                  {                                                                                                                       
+                    "type": "header",                                                                                                     
+                    "text": {"type": "plain_text", "text": "🚨 Deployment Failed", "emoji": true}                                         
+                  },                                                                                                                      
+                  {                                                                                                                       
+                    "type": "section",                                                                                                    
+                    "fields": [                                                                                                           
+                      {"type": "mrkdwn", "text": "*Repository:*\n${{ github.repository }}"},                                              
+                      {"type": "mrkdwn", "text": "*Branch:*\n${{ github.ref_name }}"},                                                    
+                      {"type": "mrkdwn", "text": "*Commit:*\n`${{ github.sha }}`"},                                                       
+                      {"type": "mrkdwn", "text": "*Author:*\n${{ github.actor }}"}                                                        
+                    ]                                                                                                                     
+                  },                                                                                                                      
+                  {                                                                                                                       
+                    "type": "section",                                                                                                    
+                    "text": {"type": "mrkdwn", "text": "*Recovery:* SSH to server and run `./scripts/emergency-rollback.sh`"}             
+                  },                                                                                                                      
+                  {                                                                                                                       
+                    "type": "actions",                                                                                                    
+                    "elements": [                                                                                                         
+                      {                                                                                                                   
+                        "type": "button",                                                                                                 
+                        "text": {"type": "plain_text", "text": "View Workflow Run"},                                                      
+                        "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"                      
+                      }                                                                                                                   
+                    ]                                                                                                                     
+                  }                                                                                                                       
+                ]                                                                                                                         
+              }' \                                                                                                                        
+              "$SLACK_WEBHOOK_URL"
