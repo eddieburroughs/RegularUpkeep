@@ -24,14 +24,16 @@ interface AppShellProps {
   children: React.ReactNode;
   properties: Property[];
   unreadCount: number;
+  isAdmin?: boolean;
 }
 
-export function AppShell({ children, properties, unreadCount }: AppShellProps) {
+export function AppShell({ children, properties, unreadCount, isAdmin = false }: AppShellProps) {
   const pathname = usePathname();
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(
     properties.length === 1 ? properties[0].id : null
   );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   const isActiveRoute = (href: string) => {
     if (href === "/app") return pathname === "/app";
@@ -62,6 +64,9 @@ export function AppShell({ children, properties, unreadCount }: AppShellProps) {
             onPropertyChange={setSelectedPropertyId}
             onMenuClick={() => setMobileMenuOpen(true)}
             unreadCount={unreadCount}
+            isAdmin={isAdmin}
+            selectedUserId={selectedUserId}
+            onUserChange={setSelectedUserId}
           />
           <main className="flex-1 overflow-y-auto p-4 lg:p-6 pb-20 lg:pb-6">
             {children}

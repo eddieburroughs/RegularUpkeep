@@ -46,6 +46,7 @@ export default async function AppLayout({
     <AppShell
       properties={properties || []}
       unreadCount={unreadCount || 0}
+      isAdmin={isAdmin}
     >
       {children}
     </AppShell>
