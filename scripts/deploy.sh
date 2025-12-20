@@ -4,10 +4,6 @@
 
 set -e  # Exit on any error
 
-# TEMPORARY: Force failure to test Slack notification
-echo "Testing Slack notification - forcing failure"
-exit 1
-
 APP_DIR="/root/RegularUpkeep-app"
 BACKUP_DIR="/root/RegularUpkeep-backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
