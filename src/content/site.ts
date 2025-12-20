@@ -11,7 +11,7 @@ export const brand = {
   phoneHref: "tel:+18885028753",
   email: "info@regularupkeep.com",
   emailHref: "mailto:info@regularupkeep.com",
-  logo: "/brand/regularupkeep-logo.svg",
+  logo: "/brand/regularupkeep-logo1.svg",
   url: "https://regularupkeep.com",
   serviceArea: "Eastern North Carolina (and growing)",
   mission: "Making home maintenance simple, predictable, and stress-free for homeowners and property managers.",
