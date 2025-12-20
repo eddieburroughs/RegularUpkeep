@@ -4,9 +4,6 @@
 
 set -e  # Exit on any error
 
-# TEST: Trigger Slack notification
-exit 1
-
 APP_DIR="/root/RegularUpkeep-app"
 BACKUP_DIR="/root/RegularUpkeep-backups"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
