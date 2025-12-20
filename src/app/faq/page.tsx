@@ -15,7 +15,7 @@ export default function FaqPage() {
     <>
       <PageHeader
         title="Frequently Asked Questions"
-        subtitle="Everything you need to know about RegularUpkeep. Can't find what you're looking for? Contact us directly."
+        subtitle="Everything you need to know about RegularUpkeep. Can&apos;t find what you&apos;re looking for? Contact us directly."
       />
 
       <section className="section-padding">
@@ -32,7 +32,7 @@ export default function FaqPage() {
             Still Have Questions?
           </h2>
           <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-            We're happy to help! Reach out and we'll get back to you as soon as possible.
+            We&apos;re happy to help! Reach out and we&apos;ll get back to you as soon as possible.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button asChild size="lg">

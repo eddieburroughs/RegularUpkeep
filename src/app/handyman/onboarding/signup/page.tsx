@@ -5,7 +5,6 @@ import {
   Users,
   Briefcase,
   ArrowRight,
-  UserPlus,
 } from "lucide-react";
 
 export default function HandymanSignupPage() {

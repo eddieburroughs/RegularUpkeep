@@ -36,7 +36,7 @@ ${formData.get("message")}
       <CardHeader>
         <CardTitle>Send Us a Message</CardTitle>
         <CardDescription>
-          Fill out the form below and we'll get back to you within 1 business day.
+          Fill out the form below and we&apos;ll get back to you within 1 business day.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -137,10 +137,10 @@ export default function ContactPage() {
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
             <div>
               <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                Let's Talk
+                Let&apos;s Talk
               </h2>
               <p className="mt-4 text-muted-foreground">
-                Whether you're a homeowner looking to simplify your maintenance, a property manager juggling multiple properties, or a service provider interested in joining our network—we're here to help.
+                Whether you&apos;re a homeowner looking to simplify your maintenance, a property manager juggling multiple properties, or a service provider interested in joining our network—we&apos;re here to help.
               </p>
 
               <div className="mt-8 space-y-6">
@@ -169,7 +169,7 @@ export default function ContactPage() {
               <div className="mt-10 p-6 bg-muted/30 rounded-lg border border-border/50">
                 <h3 className="font-semibold">Looking to Join Our Provider Network?</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  If you're a service provider interested in connecting with quality customers, visit our provider page to learn more and apply.
+                  If you&apos;re a service provider interested in connecting with quality customers, visit our provider page to learn more and apply.
                 </p>
                 <Button asChild variant="outline" className="mt-4">
                   <Link href="/providers">Provider Information</Link>

@@ -13,7 +13,6 @@ import {
   DollarSign,
   Building2,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import type { BookingStatus, QuoteStatus } from "@/types/database";
 

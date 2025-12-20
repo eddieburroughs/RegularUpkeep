@@ -5,9 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
   MessageSquare,
-  Plus,
-  Clock,
-  User,
   Home,
   ClipboardList,
 } from "lucide-react";

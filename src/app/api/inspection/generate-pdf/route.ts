@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { INSPECTION_SECTIONS, INSPECTION_TYPE_LABELS, type InspectionMeta, type FindingStatus } from "@/types/inspection";
+import { rateLimit, getClientIp, rateLimitResponse, rateLimitHeaders } from "@/lib/rate-limit";
 
 type InspectionDocument = {
   id: string;
@@ -29,6 +30,17 @@ const statusLabels: Record<FindingStatus, string> = {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting: 10 requests per minute per IP
+    const clientIp = getClientIp(request);
+    const rateLimitResult = rateLimit(`pdf-generate:${clientIp}`, {
+      limit: 10,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimitResult.success) {
+      return rateLimitResponse(rateLimitResult);
+    }
+
     const { searchParams } = new URL(request.url);
     const docId = searchParams.get("docId");
 
@@ -333,7 +345,10 @@ export async function POST(request: NextRequest) {
       .createSignedUrl(storagePath, 3600); // 1 hour expiry
 
     if (urlData?.signedUrl) {
-      return NextResponse.json({ downloadUrl: urlData.signedUrl });
+      return NextResponse.json(
+        { downloadUrl: urlData.signedUrl },
+        { headers: rateLimitHeaders(rateLimitResult) }
+      );
     }
 
     // Fallback: return PDF directly
@@ -341,6 +356,7 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="inspection-${docId}.pdf"`,
+        ...rateLimitHeaders(rateLimitResult),
       },
     });
   } catch (error) {

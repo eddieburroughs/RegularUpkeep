@@ -51,7 +51,7 @@ export default function AboutPage() {
         <div className="container-marketing">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              The Problem We're Solving
+              The Problem We&apos;re Solving
             </h2>
             <div className="mt-6 space-y-4 text-muted-foreground">
               <p>
@@ -79,7 +79,7 @@ export default function AboutPage() {
                 RegularUpkeep is a home maintenance management service. We help homeowners stay on top of routine maintenance, connect them with vetted local providers, and offer hands-on coordination support.
               </p>
               <p>
-                We're not a contractor—we don't show up at your door with a toolbox. Instead, we're your maintenance partner: reminding you what needs attention, recommending quality help, and handling the back-and-forth coordination when you don't have time.
+                We&apos;re not a contractor—we don&apos;t show up at your door with a toolbox. Instead, we&apos;re your maintenance partner: reminding you what needs attention, recommending quality help, and handling the back-and-forth coordination when you don&apos;t have time.
               </p>
               <p>
                 For property owners with multiple homes or rentals, we provide a single dashboard to manage maintenance across all properties.
@@ -120,10 +120,10 @@ export default function AboutPage() {
             </h2>
             <div className="mt-6 space-y-4 text-muted-foreground">
               <p>
-                We currently serve {brand.serviceArea}. Our provider network is growing, and we're expanding to new areas regularly.
+                We currently serve {brand.serviceArea}. Our provider network is growing, and we&apos;re expanding to new areas regularly.
               </p>
               <p>
-                Even if you're outside our current service area, you can still use our maintenance calendar and reminders—we just may not have local provider recommendations yet.
+                Even if you&apos;re outside our current service area, you can still use our maintenance calendar and reminders—we just may not have local provider recommendations yet.
               </p>
             </div>
           </div>

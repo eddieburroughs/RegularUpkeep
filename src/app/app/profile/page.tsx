@@ -12,7 +12,6 @@ import {
   ChevronRight,
   Plus,
   Settings,
-  LogOut,
 } from "lucide-react";
 import type { Property, Profile } from "@/types/database";
 

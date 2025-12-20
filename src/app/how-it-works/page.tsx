@@ -16,7 +16,7 @@ const detailedSteps = [
     icon: Calendar,
     title: "Personalized Maintenance Calendar",
     description:
-      "We create a maintenance calendar tailored to your home's age, systems, and local climate. You'll know exactly what needs attention and when, with automatic reminders so nothing falls through the cracks.",
+      "We create a maintenance calendar tailored to your home\u0027s age, systems, and local climate. You\u0027ll know exactly what needs attention and when, with automatic reminders so nothing falls through the cracks.",
     details: [
       "Seasonal maintenance reminders",
       "System-specific schedules (HVAC, plumbing, etc.)",
@@ -40,7 +40,7 @@ const detailedSteps = [
     icon: Headphones,
     title: "Concierge Coordination",
     description:
-      "Don't have time to make calls and schedule appointments? Our concierge team can handle communication with providers, coordinate schedules, and follow up on completed work.",
+      "Don\u0027t have time to make calls and schedule appointments? Our concierge team can handle communication with providers, coordinate schedules, and follow up on completed work.",
     details: [
       "Appointment scheduling assistance",
       "Provider communication",
@@ -97,7 +97,7 @@ export default function HowItWorksPage() {
                       <p className="text-muted-foreground">{step.description}</p>
                     </div>
                     <div className="bg-muted/30 p-6 md:p-8">
-                      <h4 className="font-semibold mb-4">What's Included:</h4>
+                      <h4 className="font-semibold mb-4">What&apos;s Included:</h4>
                       <ul className="space-y-3">
                         {step.details.map((detail, i) => (
                           <li key={i} className="flex items-start gap-3">
@@ -121,7 +121,7 @@ export default function HowItWorksPage() {
             Ready to Get Started?
           </h2>
           <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Setting up takes about 15 minutes. Add your property details, and we'll create your personalized maintenance plan.
+            Setting up takes about 15 minutes. Add your property details, and we&apos;ll create your personalized maintenance plan.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button asChild size="lg">
@@ -138,7 +138,7 @@ export default function HowItWorksPage() {
       </section>
 
       <CtaBand
-        title="Questions? We're here to help."
+        title="Questions? We&apos;re here to help."
         subtitle="Reach out to learn more about how RegularUpkeep can work for your home."
         primaryCta="Contact Us"
         primaryHref="/contact"

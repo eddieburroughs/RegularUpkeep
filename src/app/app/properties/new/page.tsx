@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
-import type { PropertyType, Database } from "@/types/database";
+import type { PropertyType } from "@/types/database";
 
 const propertyTypes: { value: PropertyType; label: string }[] = [
   { value: "single_family", label: "Single Family Home" },

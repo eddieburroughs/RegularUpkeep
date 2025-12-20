@@ -40,11 +40,13 @@ type BookingWithDetails = {
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
   // Fetch open items (tasks due soon, unread messages, pending quotes)
-  const today = new Date().toISOString().split("T")[0];
-  const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const now = new Date();
+  const today = now.toISOString().split("T")[0];
+  const nextWeekDate = new Date(now);
+  nextWeekDate.setDate(nextWeekDate.getDate() + 7);
+  const nextWeek = nextWeekDate.toISOString().split("T")[0];
 
   // Get upcoming tasks
   const { data: upcomingTasks } = await supabase

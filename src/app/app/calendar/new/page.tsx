@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,13 +40,16 @@ export default function NewTaskPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertiesLoading, setPropertiesLoading] = useState(true);
 
+  // Get today's date for initial value (computed once)
+  const defaultDueDate = useMemo(() => new Date().toISOString().split("T")[0], []);
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     property_id: "",
     category: "other" as MaintenanceCategory,
     priority: "normal" as MaintenancePriority,
-    due_date: "",
+    due_date: defaultDueDate,
     due_time: "",
     instructions: "",
     estimated_cost: "",
@@ -114,12 +117,6 @@ export default function NewTaskPage() {
   const updateField = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
-
-  // Set default due date to today
-  useEffect(() => {
-    const today = new Date().toISOString().split("T")[0];
-    setFormData((prev) => ({ ...prev, due_date: today }));
-  }, []);
 
   return (
     <div className="space-y-6 max-w-2xl">

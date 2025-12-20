@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -47,19 +47,6 @@ const categoryIcons: Record<MaintenanceCategory, React.ComponentType<{ className
   other: Wrench,
 };
 
-const categoryLabels: Record<MaintenanceCategory, string> = {
-  hvac: "HVAC",
-  plumbing: "Plumbing",
-  electrical: "Electrical",
-  appliances: "Appliances",
-  exterior: "Exterior",
-  interior: "Interior",
-  landscaping: "Landscaping",
-  pest_control: "Pest Control",
-  safety: "Safety",
-  other: "Other",
-};
-
 const statusColors: Record<MaintenanceStatus, "default" | "secondary" | "destructive" | "outline"> = {
   scheduled: "outline",
   upcoming: "secondary",
@@ -69,13 +56,6 @@ const statusColors: Record<MaintenanceStatus, "default" | "secondary" | "destruc
   completed: "outline",
   skipped: "outline",
   cancelled: "outline",
-};
-
-const priorityLabels: Record<MaintenancePriority, string> = {
-  urgent: "Urgent",
-  high: "High",
-  normal: "Normal",
-  low: "Low",
 };
 
 export default async function CalendarPage({

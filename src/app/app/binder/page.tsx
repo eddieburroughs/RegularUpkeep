@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import {
   FileText,
@@ -18,7 +17,6 @@ import {
   Pin,
   Calendar,
   DollarSign,
-  Download,
   Home,
 } from "lucide-react";
 import type { DocumentCategory } from "@/types/database";

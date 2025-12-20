@@ -10,12 +10,10 @@ import {
   Clock,
   Building2,
   Home,
-  DollarSign,
   MessageSquare,
   CheckCircle2,
   XCircle,
   Circle,
-  Truck,
   Wrench,
 } from "lucide-react";
 import type { BookingStatus, QuoteStatus } from "@/types/database";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +39,6 @@ const serviceCategories = [
 
 export default function NewRequestPage() {
   const router = useRouter();
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
@@ -48,12 +47,19 @@ export default function NewRequestPage() {
 
   const [photos, setPhotos] = useState<File[]>([]);
 
+  // Get tomorrow's date for initial value (computed once)
+  const defaultScheduledDate = useMemo(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().split("T")[0];
+  }, []);
+
   const [formData, setFormData] = useState({
     property_id: "",
     category: "",
     service_id: "",
     description: "",
-    scheduled_date: "",
+    scheduled_date: defaultScheduledDate,
     scheduled_time: "09:00",
     priority: "normal",
   });
@@ -86,13 +92,6 @@ export default function NewRequestPage() {
       setServices(servicesData || []);
     }
     loadData();
-  }, []);
-
-  // Set default date to tomorrow
-  useEffect(() => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setFormData((prev) => ({ ...prev, scheduled_date: tomorrow.toISOString().split("T")[0] }));
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

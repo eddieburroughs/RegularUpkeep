@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/popover";
 import {
   Wrench,
-  DollarSign,
   User,
   Bell,
   Power,
   BellOff,
   MessageSquare,
+  ClipboardCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -39,8 +39,8 @@ interface ProviderInfo {
 
 const handymanNavItems = [
   { name: "Jobs", href: "/handyman/jobs", icon: Wrench },
+  { name: "Inspect", href: "/handyman/inspection/new", icon: ClipboardCheck },
   { name: "Messages", href: "/handyman/messages", icon: MessageSquare },
-  { name: "Money", href: "/handyman/money", icon: DollarSign },
   { name: "Profile", href: "/handyman/profile", icon: User },
 ];
 
@@ -73,6 +73,9 @@ export function HandymanShell({ children, handyman, provider }: HandymanShellPro
   const isActiveRoute = (href: string) => {
     if (href === "/handyman/jobs") {
       return pathname === "/handyman/jobs" || pathname.startsWith("/handyman/jobs/");
+    }
+    if (href === "/handyman/inspection/new") {
+      return pathname.startsWith("/handyman/inspection");
     }
     return pathname.startsWith(href);
   };

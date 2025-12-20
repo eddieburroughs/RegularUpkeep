@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ArrowLeft, Loader2, Pencil, Trash2, Home, MapPin, Calendar, Wrench, Clock } from "lucide-react";
 import Link from "next/link";
-import type { Property, PropertyType, MaintenanceTask, Database } from "@/types/database";
+import type { Property, PropertyType, MaintenanceTask } from "@/types/database";
 
 const propertyTypes: { value: PropertyType; label: string }[] = [
   { value: "single_family", label: "Single Family Home" },
