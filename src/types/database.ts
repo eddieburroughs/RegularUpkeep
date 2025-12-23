@@ -56,6 +56,11 @@ export type SponsorStatus = "pending" | "active" | "expired" | "canceled";
 export type FollowUpStatus = "pending" | "completed" | "skipped" | "overdue";
 export type ReviewRequestStatus = "pending" | "sent" | "clicked" | "completed" | "expired";
 
+// AI
+export type AIJobStatus = "queued" | "processing" | "success" | "failed" | "cached";
+export type AIPolicySeverity = "info" | "warning" | "critical";
+export type AIFeedbackRating = "up" | "down";
+
 export interface Database {
   public: {
     Tables: {
@@ -1760,9 +1765,224 @@ export interface Database {
           retry_count?: number;
         };
       };
+
+      // ========================================================================
+      // AI TABLES
+      // ========================================================================
+
+      ai_jobs: {
+        Row: {
+          id: string;
+          task_type: string;
+          actor_user_id: string;
+          entity_type: string;
+          entity_id: string | null;
+          status: AIJobStatus;
+          provider: string | null;
+          model: string | null;
+          latency_ms: number | null;
+          cost_estimate_cents: number;
+          input_tokens: number | null;
+          output_tokens: number | null;
+          input_hash: string | null;
+          used_cache: boolean;
+          cache_source_job_id: string | null;
+          correlation_id: string | null;
+          error_message: string | null;
+          retry_count: number;
+          created_at: string;
+          completed_at: string | null;
+          metadata: Json;
+        };
+        Insert: {
+          id?: string;
+          task_type: string;
+          actor_user_id: string;
+          entity_type: string;
+          entity_id?: string | null;
+          status?: AIJobStatus;
+          provider?: string | null;
+          model?: string | null;
+          latency_ms?: number | null;
+          cost_estimate_cents?: number;
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          input_hash?: string | null;
+          used_cache?: boolean;
+          cache_source_job_id?: string | null;
+          correlation_id?: string | null;
+          error_message?: string | null;
+          retry_count?: number;
+          metadata?: Json;
+        };
+        Update: {
+          status?: AIJobStatus;
+          provider?: string | null;
+          model?: string | null;
+          latency_ms?: number | null;
+          cost_estimate_cents?: number;
+          input_tokens?: number | null;
+          output_tokens?: number | null;
+          error_message?: string | null;
+          retry_count?: number;
+          completed_at?: string | null;
+          metadata?: Json;
+        };
+      };
+
+      ai_outputs: {
+        Row: {
+          id: string;
+          ai_job_id: string;
+          entity_type: string;
+          entity_id: string | null;
+          output_json: Json;
+          version: string;
+          is_current: boolean;
+          superseded_by: string | null;
+          created_at: string;
+          expires_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          ai_job_id: string;
+          entity_type: string;
+          entity_id?: string | null;
+          output_json: Json;
+          version?: string;
+          is_current?: boolean;
+          superseded_by?: string | null;
+          expires_at?: string | null;
+        };
+        Update: {
+          is_current?: boolean;
+          superseded_by?: string | null;
+          expires_at?: string | null;
+        };
+      };
+
+      ai_feedback: {
+        Row: {
+          id: string;
+          ai_job_id: string;
+          ai_output_id: string | null;
+          actor_user_id: string;
+          rating: AIFeedbackRating;
+          reason_code: string | null;
+          comment: string | null;
+          context_snapshot: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ai_job_id: string;
+          ai_output_id?: string | null;
+          actor_user_id: string;
+          rating: AIFeedbackRating;
+          reason_code?: string | null;
+          comment?: string | null;
+          context_snapshot?: Json | null;
+        };
+        Update: {
+          rating?: AIFeedbackRating;
+          reason_code?: string | null;
+          comment?: string | null;
+        };
+      };
+
+      ai_policy_events: {
+        Row: {
+          id: string;
+          ai_job_id: string;
+          event_type: string;
+          severity: AIPolicySeverity;
+          message: string | null;
+          metadata: Json;
+          action_taken: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          ai_job_id: string;
+          event_type: string;
+          severity: AIPolicySeverity;
+          message?: string | null;
+          metadata?: Json;
+          action_taken?: string | null;
+        };
+        Update: {
+          action_taken?: string | null;
+          metadata?: Json;
+        };
+      };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      create_ai_job: {
+        Args: {
+          p_task_type: string;
+          p_actor_user_id: string;
+          p_entity_type: string;
+          p_entity_id: string | null;
+          p_input_hash: string;
+          p_correlation_id: string | null;
+          p_metadata: Json;
+        };
+        Returns: string;
+      };
+      complete_ai_job: {
+        Args: {
+          p_job_id: string;
+          p_status: string;
+          p_provider: string | null;
+          p_model: string | null;
+          p_latency_ms: number | null;
+          p_cost_estimate_cents: number;
+          p_input_tokens: number | null;
+          p_output_tokens: number | null;
+          p_error_message: string | null;
+        };
+        Returns: void;
+      };
+      save_ai_output: {
+        Args: {
+          p_job_id: string;
+          p_entity_type: string;
+          p_entity_id: string | null;
+          p_output_json: Json;
+          p_version: string;
+        };
+        Returns: string;
+      };
+      log_ai_policy_event: {
+        Args: {
+          p_job_id: string;
+          p_event_type: string;
+          p_severity: string;
+          p_message: string | null;
+          p_metadata: Json;
+          p_action_taken: string | null;
+        };
+        Returns: string;
+      };
+      get_cached_ai_output: {
+        Args: {
+          p_task_type: string;
+          p_entity_type: string;
+          p_entity_id: string | null;
+          p_input_hash: string;
+        };
+        Returns: {
+          job_id: string;
+          output_json: Json;
+          created_at: string;
+        }[];
+      };
+      cleanup_expired_ai_data: {
+        Args: Record<string, never>;
+        Returns: void;
+      };
+    };
     Enums: {
       user_role: UserRole;
       property_type: PropertyType;
@@ -1791,6 +2011,10 @@ export interface Database {
       sponsor_status: SponsorStatus;
       follow_up_status: FollowUpStatus;
       review_request_status: ReviewRequestStatus;
+      // AI enums
+      ai_job_status: AIJobStatus;
+      ai_policy_severity: AIPolicySeverity;
+      ai_feedback_rating: AIFeedbackRating;
     };
   };
 }
@@ -1979,4 +2203,78 @@ export interface EstimateLineItem {
   unit_price_cents: number;
   total_cents: number;
   type: "labor" | "material";
+}
+
+// ============================================================================
+// AI Tables Types (convenience interfaces for common use)
+// Note: AIJobStatus, AIPolicySeverity, AIFeedbackRating enums are defined above
+// ============================================================================
+
+export interface AIJob {
+  id: string;
+  task_type: string;
+  actor_user_id: string;
+  entity_type: string;
+  entity_id: string | null;
+  status: AIJobStatus;
+  provider: string | null;
+  model: string | null;
+  latency_ms: number | null;
+  cost_estimate_cents: number;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  input_hash: string | null;
+  used_cache: boolean;
+  cache_source_job_id: string | null;
+  correlation_id: string | null;
+  error_message: string | null;
+  retry_count: number;
+  created_at: string;
+  completed_at: string | null;
+  metadata: Record<string, unknown>;
+}
+
+export interface AIOutput {
+  id: string;
+  ai_job_id: string;
+  entity_type: string;
+  entity_id: string | null;
+  output_json: Record<string, unknown>;
+  version: string;
+  is_current: boolean;
+  superseded_by: string | null;
+  created_at: string;
+  expires_at: string | null;
+}
+
+export interface AIFeedback {
+  id: string;
+  ai_job_id: string;
+  ai_output_id: string | null;
+  actor_user_id: string;
+  rating: AIFeedbackRating;
+  reason_code: string | null;
+  comment: string | null;
+  context_snapshot: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export interface AIPolicyEventRecord {
+  id: string;
+  ai_job_id: string;
+  event_type: string;
+  severity: AIPolicySeverity;
+  message: string | null;
+  metadata: Record<string, unknown>;
+  action_taken: string | null;
+  created_at: string;
+}
+
+// AI Retention Config (stored in admin_config)
+export interface AIRetentionConfig {
+  ai_jobs_retention_days: number;
+  ai_outputs_retention_days: number;
+  ai_feedback_retention_days: number;
+  ai_policy_events_retention_days: number;
+  cache_ttl_hours: number;
 }

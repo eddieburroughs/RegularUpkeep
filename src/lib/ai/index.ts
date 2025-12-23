@@ -106,6 +106,31 @@ export {
   checkRateLimit,
 } from "./observability";
 
+// Database persistence utilities
+export {
+  generateInputHash,
+  createAIJob,
+  markJobProcessing,
+  completeAIJob,
+  saveAIOutput,
+  getCurrentAIOutput,
+  getAIOutputHistory,
+  logPolicyEvents,
+  submitAIFeedback,
+  getFeedbackStats,
+  persistAITaskResponse,
+} from "./db";
+
+// Re-export db types
+export type {
+  AIJob,
+  AIOutput,
+  AIFeedback,
+  AIPolicyEventRecord,
+  CachedOutput,
+  AIJobStatus,
+} from "./db";
+
 // ============================================================================
 // Legacy Support - Backward Compatibility
 // ============================================================================
