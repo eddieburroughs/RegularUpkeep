@@ -417,13 +417,13 @@ export async function getFeedbackStats(taskType: AITaskType): Promise<{
  * Persist a complete AI task response to the database
  * This is the main function to call after ai.runTask() completes
  */
-export async function persistAITaskResponse(params: {
+export async function persistAITaskResponse<TOutput = Record<string, unknown>>(params: {
   taskType: AITaskType;
   actorUserId: string;
   entityType: AIEntityType;
   entityId: string | null;
   inputs: unknown;
-  response: AITaskResponse;
+  response: AITaskResponse<TOutput>;
 }): Promise<{ jobId: string; outputId?: string }> {
   // Create job record
   const { jobId, cached, cachedOutput } = await createAIJob({

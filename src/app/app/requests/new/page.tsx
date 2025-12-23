@@ -4,6 +4,7 @@
  * New Service Request Page
  *
  * Uses AI-assisted intake with mandatory media requirements by category.
+ * Integrates AI classification, follow-up questions, and provider brief generation.
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -19,6 +20,9 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MediaUpload } from "@/components/service-request/media-upload";
 import { AIAssistedDescription } from "@/components/service-request/ai-assisted-description";
+import { AIIntakeFlow, type AIIntakeResult } from "@/components/service-request/ai-intake-flow";
+import { VoiceNoteRecorder } from "@/components/service-request/voice-note-recorder";
+import { EmergencyChecklist } from "@/components/service-request/emergency-checklist";
 import {
   ArrowLeft,
   Loader2,
@@ -27,14 +31,20 @@ import {
   Home,
   AlertTriangle,
   CheckCircle2,
+  Sparkles,
+  Mic,
+  ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import type { Property } from "@/types/database";
+import type { IntakeClassifyOutput, ProviderBriefOutput } from "@/lib/ai/types";
 
 interface MediaRequirement {
   min_photos: number;
   video_required: boolean;
   emergency_exception: boolean;
+  video_min_duration?: number;
+  video_max_duration?: number;
 }
 
 interface UploadedMedia {
@@ -42,7 +52,11 @@ interface UploadedMedia {
   url: string;
   type: "photo" | "video";
   filename: string;
+  duration?: number;
 }
+
+// Emergency alternative type
+type EmergencyAlternative = "none" | "voice_note" | "checklist";
 
 const serviceCategories = [
   { value: "hvac", label: "HVAC / Heating & Cooling" },
@@ -75,6 +89,18 @@ export default function NewRequestPage() {
     video_required: false,
     emergency_exception: true,
   });
+
+  // AI intake state
+  const [aiIntakeComplete, setAiIntakeComplete] = useState(false);
+  const [aiIntakeResult, setAiIntakeResult] = useState<AIIntakeResult | null>(null);
+  const [aiFallbackUsed, setAiFallbackUsed] = useState(false);
+  const [showAiIntake, setShowAiIntake] = useState(false);
+
+  // Emergency alternative state (for when media requirements can't be met)
+  const [emergencyAlternative, setEmergencyAlternative] = useState<EmergencyAlternative>("none");
+  const [voiceNoteUrl, setVoiceNoteUrl] = useState<string | null>(null);
+  const [voiceNoteDuration, setVoiceNoteDuration] = useState<number>(0);
+  const [emergencyChecklistAnswers, setEmergencyChecklistAnswers] = useState<Record<string, boolean>>({});
 
   // Get tomorrow's date for initial value
   const defaultScheduledDate = useMemo(() => {
@@ -148,16 +174,65 @@ export default function NewRequestPage() {
     return photoCount >= minPhotosRequired && (!videoRequired || hasVideo);
   }, [media, category, isEmergency, mediaRequirements]);
 
+  // Check if emergency alternative is complete
+  const hasEmergencyAlternative = useMemo(() => {
+    if (!isEmergency) return false;
+    if (emergencyAlternative === "voice_note" && voiceNoteUrl) return true;
+    if (emergencyAlternative === "checklist" && Object.keys(emergencyChecklistAnswers).length > 0) return true;
+    return false;
+  }, [isEmergency, emergencyAlternative, voiceNoteUrl, emergencyChecklistAnswers]);
+
+  // Should show AI intake flow
+  const shouldShowAiIntake = useMemo(() => {
+    return meetsMediaRequirements && media.length > 0 && !aiIntakeComplete && !aiFallbackUsed;
+  }, [meetsMediaRequirements, media.length, aiIntakeComplete, aiFallbackUsed]);
+
+  // Trigger AI intake when media is ready
+  useEffect(() => {
+    if (shouldShowAiIntake && !showAiIntake) {
+      setShowAiIntake(true);
+    }
+  }, [shouldShowAiIntake, showAiIntake]);
+
+  // Handle AI intake completion
+  const handleAiIntakeComplete = useCallback((result: AIIntakeResult) => {
+    setAiIntakeResult(result);
+    setAiIntakeComplete(true);
+    // Update description with AI summary if empty
+    if (!description && result.classification.summary) {
+      setDescription(result.classification.summary);
+    }
+  }, [description]);
+
+  // Handle AI fallback
+  const handleAiFallback = useCallback(() => {
+    setAiFallbackUsed(true);
+    setShowAiIntake(false);
+  }, []);
+
+  // Handle voice note upload
+  const handleVoiceNoteComplete = useCallback((url: string, duration: number) => {
+    setVoiceNoteUrl(url);
+    setVoiceNoteDuration(duration);
+  }, []);
+
+  // Handle emergency checklist complete
+  const handleEmergencyChecklistComplete = useCallback((answers: Record<string, boolean>) => {
+    setEmergencyChecklistAnswers(answers);
+  }, []);
+
   // Check overall form validity
   const isFormValid = useMemo(() => {
-    return (
-      propertyId &&
-      category &&
-      description.trim().length > 10 &&
-      meetsMediaRequirements &&
-      scheduledDate &&
-      scheduledTime
-    );
+    const hasRequiredFields = propertyId && category && description.trim().length > 10 && scheduledDate && scheduledTime;
+
+    // If emergency with alternative, allow without full media
+    if (isEmergency && hasEmergencyAlternative) {
+      return hasRequiredFields;
+    }
+
+    // Otherwise, need media requirements met
+    // AI intake is optional (form can submit without it, but AI data will be included if available)
+    return hasRequiredFields && meetsMediaRequirements;
   }, [
     propertyId,
     category,
@@ -165,6 +240,8 @@ export default function NewRequestPage() {
     meetsMediaRequirements,
     scheduledDate,
     scheduledTime,
+    isEmergency,
+    hasEmergencyAlternative,
   ]);
 
   const handleMediaChange = useCallback((newMedia: UploadedMedia[]) => {
@@ -219,12 +296,12 @@ export default function NewRequestPage() {
         throw new Error("Selected property not found");
       }
 
-      // Create service request
+      // Create service request with AI data if available
       const serviceRequestData = {
         id: requestId,
         customer_id: customer.id,
         property_id: propertyId,
-        category,
+        category: aiIntakeResult?.classification?.suggestedCategory || category,
         description,
         is_emergency: isEmergency,
         scheduled_date: scheduledDate,
@@ -233,6 +310,15 @@ export default function NewRequestPage() {
         status: "pending",
         media_urls: media.map((m) => m.url),
         service_address: `${selectedProperty.address_line1}, ${selectedProperty.city}, ${selectedProperty.state} ${selectedProperty.postal_code}`,
+        // AI-generated data
+        ai_summary: aiIntakeResult?.classification?.summary || null,
+        ai_processing_status: aiIntakeResult ? "complete" : (aiFallbackUsed ? "fallback" : null),
+        ai_follow_up_answers: aiIntakeResult?.answers || null,
+        ai_provider_brief: aiIntakeResult?.providerBrief || null,
+        // Emergency alternative data
+        emergency_voice_note_url: voiceNoteUrl,
+        emergency_voice_note_duration: voiceNoteDuration > 0 ? voiceNoteDuration : null,
+        emergency_checklist_answers: Object.keys(emergencyChecklistAnswers).length > 0 ? emergencyChecklistAnswers : null,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -383,6 +469,99 @@ export default function NewRequestPage() {
           />
         )}
 
+        {/* Emergency Alternative - when emergency and media requirements not met */}
+        {category && isEmergency && !meetsMediaRequirements && media.length === 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
+                Emergency Without Photos
+              </CardTitle>
+              <CardDescription>
+                Since you can&apos;t provide photos right now, please provide one of these alternatives:
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant={emergencyAlternative === "voice_note" ? "default" : "outline"}
+                  onClick={() => setEmergencyAlternative("voice_note")}
+                  className="flex-1"
+                >
+                  <Mic className="mr-2 h-4 w-4" />
+                  Record Voice Note
+                </Button>
+                <Button
+                  type="button"
+                  variant={emergencyAlternative === "checklist" ? "default" : "outline"}
+                  onClick={() => setEmergencyAlternative("checklist")}
+                  className="flex-1"
+                >
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  Safety Checklist
+                </Button>
+              </div>
+
+              {emergencyAlternative === "voice_note" && (
+                <VoiceNoteRecorder
+                  onRecordingComplete={(blob, duration) => {
+                    // For now, just store the duration.
+                    // In production, this would upload to Supabase storage
+                    setVoiceNoteDuration(duration);
+                  }}
+                  onUploadComplete={handleVoiceNoteComplete}
+                  uploadEndpoint={`/api/service-requests/${requestId}/voice-note`}
+                />
+              )}
+
+              {emergencyAlternative === "checklist" && (
+                <EmergencyChecklist
+                  category={category}
+                  onComplete={handleEmergencyChecklistComplete}
+                />
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* AI Intake Flow - show after media is uploaded */}
+        {category && showAiIntake && meetsMediaRequirements && media.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                AI Analysis
+              </CardTitle>
+              <CardDescription>
+                Our AI is analyzing your photos to help providers understand the issue
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <AIIntakeFlow
+                serviceRequestId={requestId}
+                category={category}
+                media={media.map(m => ({ url: m.url, type: m.type === "photo" ? "image" : "video" as const }))}
+                description={description}
+                isEmergency={isEmergency}
+                onComplete={handleAiIntakeComplete}
+                onFallback={handleAiFallback}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* AI Fallback Notice */}
+        {aiFallbackUsed && (
+          <Alert>
+            <Sparkles className="h-4 w-4" />
+            <AlertDescription>
+              AI analysis is temporarily unavailable. Your request will be processed normally
+              and reviewed by our team.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* AI-Assisted Description - only show after category selected */}
         {category && (
           <AIAssistedDescription
@@ -499,18 +678,20 @@ export default function NewRequestPage() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {meetsMediaRequirements ? (
+              {meetsMediaRequirements || hasEmergencyAlternative ? (
                 <CheckCircle2 className="h-4 w-4 text-green-600" />
               ) : (
                 <div className="h-4 w-4 rounded-full border-2" />
               )}
               <span
                 className={
-                  meetsMediaRequirements ? "" : "text-muted-foreground"
+                  meetsMediaRequirements || hasEmergencyAlternative ? "" : "text-muted-foreground"
                 }
               >
-                Photos uploaded
-                {!meetsMediaRequirements && category && (
+                {hasEmergencyAlternative
+                  ? "Emergency alternative provided"
+                  : "Photos uploaded"}
+                {!meetsMediaRequirements && !hasEmergencyAlternative && category && (
                   <span className="text-xs ml-1">
                     (min {mediaRequirements.min_photos} required)
                   </span>
@@ -531,6 +712,31 @@ export default function NewRequestPage() {
                 Description provided
               </span>
             </div>
+            {/* AI Analysis Status */}
+            {media.length > 0 && (
+              <div className="flex items-center gap-2">
+                {aiIntakeComplete ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                ) : aiFallbackUsed ? (
+                  <Sparkles className="h-4 w-4 text-muted-foreground" />
+                ) : showAiIntake ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                ) : (
+                  <div className="h-4 w-4 rounded-full border-2" />
+                )}
+                <span
+                  className={aiIntakeComplete ? "" : "text-muted-foreground"}
+                >
+                  {aiIntakeComplete
+                    ? "AI analysis complete"
+                    : aiFallbackUsed
+                    ? "AI unavailable (optional)"
+                    : showAiIntake
+                    ? "AI analyzing..."
+                    : "AI analysis pending"}
+                </span>
+              </div>
+            )}
 
             <div className="flex gap-3 pt-4">
               <Button

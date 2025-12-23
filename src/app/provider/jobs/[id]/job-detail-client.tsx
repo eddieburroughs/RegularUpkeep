@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
+import { AIProviderBriefCard } from "@/components/service-request/ai-provider-brief-card";
 import {
   ArrowLeft,
   Calendar,
@@ -30,6 +31,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import type { BookingStatus, TravelStatus } from "@/types/database";
+import type { ProviderBriefOutput } from "@/lib/ai/types";
 
 interface LineItem {
   id: string;
@@ -56,6 +58,7 @@ interface JobDetailClientProps {
     completion_notes: string | null;
     actual_start_time: string | null;
     actual_end_time: string | null;
+    service_request_id: string | null;
     services: { name: string; description: string | null } | null;
     properties: {
       nickname: string | null;
@@ -69,9 +72,10 @@ interface JobDetailClientProps {
     } | null;
   };
   providerId: string;
+  providerBrief: ProviderBriefOutput | null;
 }
 
-export function JobDetailClient({ booking }: JobDetailClientProps) {
+export function JobDetailClient({ booking, providerBrief }: JobDetailClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState(booking.completion_notes || "");
@@ -375,6 +379,11 @@ export function JobDetailClient({ booking }: JobDetailClientProps) {
           </Button>
         </CardContent>
       </Card>
+
+      {/* AI Provider Brief */}
+      {providerBrief && (
+        <AIProviderBriefCard brief={providerBrief} />
+      )}
 
       {/* Invoice Editor (shown when completing) */}
       {(showInvoice || isCompleted) && (

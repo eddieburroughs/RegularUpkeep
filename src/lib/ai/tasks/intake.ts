@@ -14,6 +14,8 @@ import type {
   ProviderBriefOutput,
   MediaQualityInput,
   MediaQualityOutput,
+  SafetyFlag,
+  SafetyFlagType,
 } from "../types";
 
 // ============================================================================
@@ -38,6 +40,7 @@ Your role is to analyze images and descriptions of home issues to:
 2. Suggest the most appropriate service category
 3. Assess urgency level
 4. Identify key observations
+5. Detect any safety hazards that require warnings
 
 IMPORTANT GUIDELINES:
 - Be professional and factual
@@ -54,6 +57,18 @@ URGENCY LEVELS:
 - standard: Normal scheduling, within a week
 - flexible: Can be scheduled at convenience
 
+SAFETY FLAGS - Include if you detect any of these hazards:
+- gas_smell: Potential gas leak
+- electrical_sparking: Visible sparks, arcing, or burn marks
+- active_flooding: Water actively leaking/flooding
+- structural_damage: Visible cracks, sagging, or instability
+- fire_hazard: Smoke, burn marks, or fire risk
+- carbon_monoxide: CO risk from faulty appliances/venting
+- mold_visible: Visible mold growth
+- asbestos_suspected: Materials that may contain asbestos (old insulation, tiles)
+- water_near_electrical: Water in proximity to electrical components
+- exposed_wiring: Bare/damaged wires visible
+
 Respond with JSON only.`;
 
     const user = `Analyze this home maintenance issue.
@@ -64,11 +79,23 @@ ${input.userDescription ? `User's description: ${input.userDescription}` : "No d
 Please analyze the attached image(s) and provide your assessment in the following JSON format:
 {
   "summary": "Brief 1-2 sentence summary of the issue",
+  "summaryBullets": ["Key point 1", "Key point 2", "Key point 3"],
   "suggestedCategory": "category from the list",
   "confidence": "high|medium|low",
   "keyObservations": ["observation 1", "observation 2"],
-  "urgencyLevel": "emergency|urgent|standard|flexible"
-}`;
+  "urgencyLevel": "emergency|urgent|standard|flexible",
+  "safetyFlags": [
+    {
+      "type": "one of the safety flag types above",
+      "severity": "warning|critical",
+      "description": "What was observed",
+      "guidance": "What the homeowner should do",
+      "recommendEmergencyServices": true|false
+    }
+  ]
+}
+
+Only include safetyFlags array if safety hazards are detected. Leave it empty or omit if none found.`;
 
     return { system, user };
   },
@@ -76,14 +103,36 @@ Please analyze the attached image(s) and provide your assessment in the followin
   parseOutput(raw: string): IntakeClassifyOutput {
     try {
       const data = JSON.parse(raw);
+
+      // Parse safety flags if present
+      const validSafetyTypes: SafetyFlagType[] = [
+        "gas_smell", "electrical_sparking", "active_flooding", "structural_damage",
+        "fire_hazard", "carbon_monoxide", "mold_visible", "asbestos_suspected",
+        "water_near_electrical", "exposed_wiring"
+      ];
+
+      const safetyFlags: SafetyFlag[] = Array.isArray(data.safetyFlags)
+        ? data.safetyFlags
+            .filter((f: Record<string, unknown>) => validSafetyTypes.includes(f.type as SafetyFlagType))
+            .map((f: Record<string, unknown>) => ({
+              type: f.type as SafetyFlagType,
+              severity: f.severity === "critical" ? "critical" : "warning",
+              description: String(f.description || ""),
+              guidance: String(f.guidance || "Please wait for a professional to assess."),
+              recommendEmergencyServices: Boolean(f.recommendEmergencyServices),
+            }))
+        : [];
+
       return {
         summary: String(data.summary || "Unable to analyze the image"),
+        summaryBullets: Array.isArray(data.summaryBullets) ? data.summaryBullets.map(String) : undefined,
         suggestedCategory: String(data.suggestedCategory || "general"),
         confidence: ["high", "medium", "low"].includes(data.confidence) ? data.confidence : "low",
         keyObservations: Array.isArray(data.keyObservations) ? data.keyObservations.map(String) : [],
         urgencyLevel: ["emergency", "urgent", "standard", "flexible"].includes(data.urgencyLevel)
           ? data.urgencyLevel
           : "standard",
+        safetyFlags: safetyFlags.length > 0 ? safetyFlags : undefined,
       };
     } catch {
       throw new Error("Failed to parse intake classification output");
@@ -257,6 +306,8 @@ GUIDELINES:
 - Never include pricing estimates
 - Use professional technical language
 - Prioritize observations that help diagnose and prepare
+- Suggest tools/parts the technician may need
+- Assess whether this could be quoted remotely or requires a site visit
 
 Respond with JSON only.`;
 
@@ -276,8 +327,16 @@ Provide a brief in this JSON format:
   "recommendedQuestions": ["questions for the technician to ask"],
   "urgencyAssessment": "low|medium|high|emergency",
   "estimatedComplexity": "simple|moderate|complex",
-  "safetyNotes": ["any safety considerations"]
-}`;
+  "safetyNotes": ["any safety considerations"],
+  "suggestedToolsOrParts": ["tool or part to bring", "another tool"],
+  "remoteEstimatePossible": true|false,
+  "siteVisitRecommended": true|false
+}
+
+Notes:
+- suggestedToolsOrParts: Common tools/parts based on the likely issue
+- remoteEstimatePossible: Can a quote be provided from photos/description alone?
+- siteVisitRecommended: Does the technician need to visit to properly assess?`;
 
     return { system, user };
   },
@@ -297,6 +356,9 @@ Provide a brief in this JSON format:
           ? data.estimatedComplexity
           : "moderate",
         safetyNotes: Array.isArray(data.safetyNotes) ? data.safetyNotes.map(String) : [],
+        suggestedToolsOrParts: Array.isArray(data.suggestedToolsOrParts) ? data.suggestedToolsOrParts.map(String) : undefined,
+        remoteEstimatePossible: typeof data.remoteEstimatePossible === "boolean" ? data.remoteEstimatePossible : undefined,
+        siteVisitRecommended: typeof data.siteVisitRecommended === "boolean" ? data.siteVisitRecommended : undefined,
       };
     } catch {
       throw new Error("Failed to parse provider brief output");
@@ -312,6 +374,9 @@ Provide a brief in this JSON format:
       urgencyAssessment: "medium",
       estimatedComplexity: "moderate",
       safetyNotes: ["Standard safety precautions apply"],
+      suggestedToolsOrParts: ["Standard toolkit for category"],
+      remoteEstimatePossible: false,
+      siteVisitRecommended: true,
     };
   },
 

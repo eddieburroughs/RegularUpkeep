@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { JobDetailClient } from "./job-detail-client";
+import type { ProviderBriefOutput } from "@/lib/ai/types";
 
 type BookingWithDetails = {
   id: string;
@@ -19,6 +20,7 @@ type BookingWithDetails = {
   completion_notes: string | null;
   actual_start_time: string | null;
   actual_end_time: string | null;
+  service_request_id: string | null;
   services: { name: string; description: string | null } | null;
   properties: {
     nickname: string | null;
@@ -63,6 +65,7 @@ export default async function ProviderJobDetailPage({
       id, booking_number, status, travel_status, scheduled_date, scheduled_time,
       service_address, total_amount, invoice_cents, invoice_items, job_photos,
       customer_notes, provider_notes, completion_notes, actual_start_time, actual_end_time,
+      service_request_id,
       services(name, description),
       properties(nickname, address_line1, city, state, access_notes),
       customers(profiles(full_name, phone))
@@ -75,5 +78,25 @@ export default async function ProviderJobDetailPage({
     notFound();
   }
 
-  return <JobDetailClient booking={booking} providerId={provider.id} />;
+  // Fetch AI provider brief if service request exists
+  let providerBrief: ProviderBriefOutput | null = null;
+  if (booking.service_request_id) {
+    const { data: serviceRequest } = await supabase
+      .from("service_requests")
+      .select("ai_provider_brief")
+      .eq("id", booking.service_request_id)
+      .single() as { data: { ai_provider_brief: ProviderBriefOutput | null } | null };
+
+    if (serviceRequest?.ai_provider_brief) {
+      providerBrief = serviceRequest.ai_provider_brief;
+    }
+  }
+
+  return (
+    <JobDetailClient
+      booking={booking}
+      providerId={provider.id}
+      providerBrief={providerBrief}
+    />
+  );
 }

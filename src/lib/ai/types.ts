@@ -148,6 +148,30 @@ export interface AITaskResponse<TOutput = Record<string, unknown>> {
 }
 
 // ============================================================================
+// Safety Flags (for high-risk situations)
+// ============================================================================
+
+export type SafetyFlagType =
+  | "gas_smell"
+  | "electrical_sparking"
+  | "active_flooding"
+  | "structural_damage"
+  | "fire_hazard"
+  | "carbon_monoxide"
+  | "mold_visible"
+  | "asbestos_suspected"
+  | "water_near_electrical"
+  | "exposed_wiring";
+
+export interface SafetyFlag {
+  type: SafetyFlagType;
+  severity: "warning" | "critical";
+  description: string;
+  guidance: string;
+  recommendEmergencyServices: boolean;
+}
+
+// ============================================================================
 // Task-Specific Input/Output Types
 // ============================================================================
 
@@ -164,6 +188,10 @@ export interface IntakeClassifyOutput {
   confidence: "high" | "medium" | "low";
   keyObservations: string[];
   urgencyLevel: "emergency" | "urgent" | "standard" | "flexible";
+  /** Bullet-point summary for quick display */
+  summaryBullets?: string[];
+  /** Safety flags detected in the request */
+  safetyFlags?: SafetyFlag[];
 }
 
 // --- INTAKE_FOLLOWUP_QUESTIONS ---
@@ -197,13 +225,26 @@ export interface ProviderBriefInput {
 }
 
 export interface ProviderBriefOutput {
+  /** Problem summary (1-2 sentences) */
   briefSummary: string;
+  /** Observed symptoms from photos/description */
   keyObservations: string[];
+  /** Likely causes / hypotheses */
   potentialCauses: string[];
+  /** Questions provider should ask customer */
   recommendedQuestions: string[];
+  /** Urgency assessment */
   urgencyAssessment: "low" | "medium" | "high" | "emergency";
+  /** Estimated job complexity */
   estimatedComplexity: "simple" | "moderate" | "complex";
+  /** Safety-related notes and warnings */
   safetyNotes: string[];
+  /** Suggested tools or parts to bring */
+  suggestedToolsOrParts?: string[];
+  /** Whether a remote estimate might be possible */
+  remoteEstimatePossible?: boolean;
+  /** Whether an on-site visit is recommended */
+  siteVisitRecommended?: boolean;
 }
 
 // --- MEDIA_QUALITY_CHECK ---

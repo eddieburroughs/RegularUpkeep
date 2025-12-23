@@ -27,6 +27,8 @@ interface MediaRequirement {
   min_photos: number;
   video_required: boolean;
   emergency_exception: boolean;
+  video_min_duration?: number; // in seconds
+  video_max_duration?: number; // in seconds
 }
 
 interface UploadedMedia {
@@ -34,7 +36,28 @@ interface UploadedMedia {
   url: string;
   type: "photo" | "video";
   filename: string;
+  duration?: number; // in seconds, for videos
 }
+
+// Helper to get video duration
+const getVideoDuration = (file: File): Promise<number> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      resolve(video.duration);
+    };
+
+    video.onerror = () => {
+      window.URL.revokeObjectURL(video.src);
+      reject(new Error("Failed to load video metadata"));
+    };
+
+    video.src = URL.createObjectURL(file);
+  });
+};
 
 interface MediaUploadProps {
   category: string;
@@ -79,6 +102,10 @@ export function MediaUpload({
       const totalFiles = files.length;
       let uploaded = 0;
 
+      // Default video duration constraints
+      const minDuration = requirements.video_min_duration ?? 10;
+      const maxDuration = requirements.video_max_duration ?? 30;
+
       try {
         const newMedia: UploadedMedia[] = [];
 
@@ -97,6 +124,29 @@ export function MediaUpload({
             throw new Error(
               `File too large. Max size: ${type === "video" ? "50MB" : "10MB"}`
             );
+          }
+
+          // Validate video duration
+          let duration: number | undefined;
+          if (type === "video") {
+            try {
+              duration = await getVideoDuration(file);
+              if (duration < minDuration) {
+                throw new Error(
+                  `Video too short. Please record at least ${minDuration} seconds to help us understand the issue.`
+                );
+              }
+              if (duration > maxDuration) {
+                throw new Error(
+                  `Video too long. Please keep videos under ${maxDuration} seconds.`
+                );
+              }
+            } catch (err) {
+              if (err instanceof Error && err.message.includes("seconds")) {
+                throw err; // Re-throw duration errors
+              }
+              console.warn("Could not validate video duration:", err);
+            }
           }
 
           // Generate unique filename
@@ -125,6 +175,7 @@ export function MediaUpload({
             url: urlData.publicUrl,
             type,
             filename: file.name,
+            duration: type === "video" ? duration : undefined,
           });
 
           uploaded++;
@@ -141,7 +192,7 @@ export function MediaUpload({
         setUploadProgress(0);
       }
     },
-    [media, onMediaChange, serviceRequestId, supabase.storage]
+    [media, onMediaChange, serviceRequestId, supabase.storage, requirements.video_min_duration, requirements.video_max_duration]
   );
 
   const handleRemoveMedia = useCallback(
@@ -171,7 +222,7 @@ export function MediaUpload({
         <CardDescription>
           {isEmergency && requirements.emergency_exception
             ? "Media is optional for emergencies, but helpful"
-            : `Upload at least ${minPhotosRequired} photo${minPhotosRequired > 1 ? "s" : ""}${videoRequired ? " and a video" : ""} of the issue`}
+            : `Upload at least ${minPhotosRequired} photo${minPhotosRequired > 1 ? "s" : ""}${videoRequired ? ` and a video (${requirements.video_min_duration ?? 10}-${requirements.video_max_duration ?? 30} seconds)` : ""} of the issue`}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
