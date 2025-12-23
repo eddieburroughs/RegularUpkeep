@@ -18,7 +18,7 @@ import {
   providerMessageTask,
   invoiceNarrativeTask,
 } from "./provider";
-import { disputeTimelineTask, fraudSignalTask } from "./admin";
+import { disputeTimelineTask, fraudSignalTask, providerQualityTask } from "./admin";
 import { crmNextActionTask } from "./crm";
 import { maintenancePlanTask } from "./homeowner";
 import { sponsorTileCopyTask } from "./sponsor";
@@ -40,6 +40,7 @@ taskRegistry.set("PROVIDER_MESSAGE_DRAFT", providerMessageTask);
 taskRegistry.set("INVOICE_NARRATIVE_DRAFT", invoiceNarrativeTask);
 taskRegistry.set("DISPUTE_TIMELINE_SUMMARY", disputeTimelineTask);
 taskRegistry.set("FRAUD_SIGNAL_REFERRALS", fraudSignalTask);
+taskRegistry.set("PROVIDER_QUALITY_SUMMARY", providerQualityTask);
 taskRegistry.set("CRM_NEXT_BEST_ACTION", crmNextActionTask);
 taskRegistry.set("MAINTENANCE_PLAN_SUGGEST", maintenancePlanTask);
 taskRegistry.set("SPONSOR_TILE_COPY", sponsorTileCopyTask);
@@ -119,6 +120,7 @@ export {
   // Admin
   disputeTimelineTask,
   fraudSignalTask,
+  providerQualityTask,
   // CRM
   crmNextActionTask,
   // Homeowner

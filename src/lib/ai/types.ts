@@ -21,6 +21,7 @@ export type AITaskType =
   // Admin Tasks
   | "DISPUTE_TIMELINE_SUMMARY"
   | "FRAUD_SIGNAL_REFERRALS"
+  | "PROVIDER_QUALITY_SUMMARY"
   // CRM Tasks
   | "CRM_NEXT_BEST_ACTION"
   // Homeowner Tasks
@@ -56,6 +57,7 @@ export type AIEntityType =
   | "provider"
   | "customer"
   | "sponsor"
+  | "profile"
   | "none";
 
 // ============================================================================
@@ -333,7 +335,47 @@ export interface DisputeTimelineInput {
   }>;
   invoiceAmount: number;
   disputedAmount: number;
+  /** Booking timeline for context */
+  bookingTimeline?: {
+    created: string;
+    scheduled: string;
+    started?: string;
+    completed?: string;
+  };
+  /** Estimate and change order details */
+  estimateDetails?: {
+    originalAmount: number;
+    changeOrders: Array<{
+      description: string;
+      amount: number;
+      approved: boolean;
+    }>;
+  };
+  /** Message history between parties */
+  messageHistory?: Array<{
+    sender: string;
+    content: string;
+    timestamp: string;
+  }>;
+  /** Media evidence list */
+  mediaList?: Array<{
+    type: string;
+    url: string;
+    uploadedBy: string;
+  }>;
+  /** Platform policy configuration */
+  policyConfig?: {
+    disputeWindowHours: number;
+    autoApprovalThreshold: number;
+  };
 }
+
+export type DisputeRootCauseCategory =
+  | "scope"
+  | "quality"
+  | "billing"
+  | "miscommunication"
+  | "unknown";
 
 export interface DisputeTimelineOutput {
   summary: string;
@@ -344,21 +386,57 @@ export interface DisputeTimelineOutput {
   }>;
   keyIssues: string[];
   recommendedActions: string[];
+  /** Bullet-point timeline for quick display */
+  timelineBullets: string[];
+  /** Likely root cause category */
+  likelyRootCauseCategory: DisputeRootCauseCategory;
+  /** Policy violations detected with evidence references */
+  policyViolationsDetected: Array<{
+    violation: string;
+    evidence: string;
+    severity: "minor" | "major" | "critical";
+  }>;
+  /** Non-binding refund recommendation */
+  refundRecommendation: {
+    type: "none" | "partial" | "full";
+    rationale: string;
+    suggestedAmount?: number;
+  };
+  /** AI confidence level */
+  confidence: "high" | "medium" | "low";
 }
 
 // --- FRAUD_SIGNAL_REFERRALS ---
 export interface FraudSignalInput {
-  referralCode: string;
-  referrerHistory: {
-    totalReferrals: number;
-    conversionRate: number;
-    avgDaysToConvert: number;
+  /** The ID of the referrer being analyzed */
+  referrerId: string;
+  /** Total referral count for this referrer */
+  referralCount: number;
+  /** Conversion rate of referrals (0-1) */
+  conversionRate: number;
+  /** Recent referrals for pattern analysis */
+  recentReferrals: Array<{
+    refereeId: string;
+    timestamp: string;
+    converted: boolean;
+  }>;
+  /** Hashed cluster data for privacy-preserving fraud detection */
+  clusterData: {
+    emailDomainHash: string;
+    ipClusterHash: string;
+    deviceClusterHash: string;
+    addressHash: string;
   };
-  referreeData: {
-    signupDate: string;
-    ipAddress?: string;
-    deviceFingerprint?: string;
-    email: string;
+  /** Payment method fingerprints */
+  paymentFingerprints?: Array<{
+    methodHash: string;
+    last4?: string;
+  }>;
+  /** Time-based patterns for velocity detection */
+  timePatterns: {
+    signupsLast24h: number;
+    signupsLast7d: number;
+    avgTimeBetweenSignups: number;
   };
 }
 
@@ -373,71 +451,225 @@ export interface FraudSignalOutput {
   reviewNotes: string;
 }
 
+// --- PROVIDER_QUALITY_SUMMARY ---
+export interface ProviderQualityInput {
+  providerId: string;
+  providerName: string;
+  metrics: {
+    rating: number;
+    totalJobs: number;
+    disputeRate: number;
+    cancellationRate: number;
+    avgResponseTimeHours: number;
+    onTimeRate: number;
+  };
+  recentIssues?: string[];
+  currentTier: "preferred" | "verified" | "basic";
+}
+
+export interface ProviderQualityOutput {
+  qualitySummary: string;
+  strengths: string[];
+  concerns: string[];
+  tierRecommendation: "preferred" | "verified" | "basic" | "probation";
+  humanReviewRequired: boolean;
+  reviewReason?: string;
+}
+
 // --- CRM_NEXT_BEST_ACTION ---
 export interface CrmNextActionInput {
   customerId: string;
+  customerName: string;
   customerHistory: {
     totalJobs: number;
     totalSpend: number;
     lastJobDate: string;
     avgRating: number;
+    memberSince: string;
+    subscriptionTier?: "essential" | "standard" | "premium";
   };
   recentInteractions: string[];
+  /** Current booking context if viewing from a specific booking */
+  bookingContext?: {
+    bookingId: string;
+    serviceCategory: string;
+    status: string;
+    scheduledDate?: string;
+    completedDate?: string;
+    amount?: number;
+  };
+  /** Provider's service categories for relevance */
+  providerCategories?: string[];
 }
 
+export type CrmActionType =
+  | "follow_up_call"
+  | "send_message"
+  | "schedule_service"
+  | "offer_discount"
+  | "request_review"
+  | "send_maintenance_reminder"
+  | "upsell_service"
+  | "win_back"
+  | "thank_you";
+
 export interface CrmNextActionOutput {
-  suggestedAction: string;
-  priority: "high" | "medium" | "low";
-  reasoning: string;
-  messageTemplate?: string;
-  timing: string;
+  nextActions: Array<{
+    actionType: CrmActionType;
+    suggestedMessage: string;
+    dueInDays: number;
+    reason: string;
+    priority: "high" | "medium" | "low";
+  }>;
+  risks: Array<{
+    type: "churn" | "dissatisfaction" | "missed_opportunity" | "overdue_service";
+    description: string;
+    severity: "high" | "medium" | "low";
+  }>;
+  upsellOpportunities: Array<{
+    service: string;
+    reason: string;
+    estimatedValue: string;
+  }>;
+  customerHealthScore: number; // 0-100
 }
 
 // --- MAINTENANCE_PLAN_SUGGEST ---
 export interface MaintenancePlanInput {
+  propertyId: string;
   propertyType: string;
-  propertyAge: number;
+  propertyAge?: number;
+  yearBuilt?: number;
+  squareFeet?: number;
   systems: Array<{
     type: string;
+    brand?: string;
+    model?: string;
     age?: number;
     lastService?: string;
+    condition?: "excellent" | "good" | "fair" | "poor";
   }>;
   location: {
-    climate: string;
+    timezone: string; // Use timezone to infer season
     region: string;
+    climate?: string; // Optional - derived from timezone if not provided
   };
+  /** User's subscription tier - affects detail level */
+  subscriptionTier: "essential" | "standard" | "premium" | "none";
+  /** Any known issues or recent repairs */
+  recentIssues?: string[];
 }
 
 export interface MaintenancePlanOutput {
-  recommendations: Array<{
-    system: string;
+  /** Tasks specific to current/upcoming season */
+  seasonalTasks: Array<{
     task: string;
-    frequency: string;
-    priority: "high" | "medium" | "low";
+    system: string;
+    urgency: "now" | "this_month" | "this_season";
+    estimatedCost?: string;
+    diyPossible: boolean;
     reasoning: string;
-    seasonalTiming?: string;
   }>;
+  /** High-priority repairs needed */
+  priorityRepairs: Array<{
+    system: string;
+    issue: string;
+    severity: "critical" | "important" | "minor";
+    recommendation: string;
+    estimatedCost?: string;
+  }>;
+  /** Services to consider booking */
+  recommendedServices: Array<{
+    service: string;
+    category: string;
+    frequency: string;
+    nextDue: string;
+    reasoning: string;
+    priority: "high" | "medium" | "low";
+  }>;
+  /** General notes and tips */
+  notes: string[];
+  /** Printable summary (available for premium/standard) */
+  printableSummary?: {
+    title: string;
+    overview: string;
+    quarterlyChecklist: Array<{
+      quarter: "Q1" | "Q2" | "Q3" | "Q4";
+      tasks: string[];
+    }>;
+    annualPlan: string;
+    estimatedAnnualCost?: string;
+  };
+  /** Annual plan summary for all tiers */
   annualPlanSummary: string;
 }
 
 // --- SPONSOR_TILE_COPY ---
 export interface SponsorTileCopyInput {
+  /** Campaign/sponsor ID for tracking */
+  campaignId?: string;
   productName: string;
   productCategory: string;
   targetAudience: string;
   keyFeatures: string[];
   tone: "professional" | "friendly" | "urgent";
+  /** Brand guidelines or restrictions */
+  brandGuidelines?: string;
+  /** Specific words/phrases to avoid */
+  avoidPhrases?: string[];
+  /** Maximum character limits */
+  charLimits?: {
+    headline?: number;
+    description?: number;
+    cta?: number;
+  };
 }
 
+/** Prohibited claims that must be avoided in sponsor copy */
+export const SPONSOR_PROHIBITED_CLAIMS = [
+  "guaranteed lowest",
+  "best price",
+  "cheapest",
+  "number one",
+  "#1",
+  "100% guaranteed",
+  "risk-free",
+  "no obligation",
+  "act now",
+  "limited time only",
+  "free trial",
+  "miracle",
+  "cure",
+  "prevents all",
+] as const;
+
 export interface SponsorTileCopyOutput {
-  headline: string;
-  subheadline: string;
-  bodyText: string;
-  callToAction: string;
-  alternatives: Array<{
-    headline: string;
-    subheadline: string;
+  /** Multiple headline options */
+  headlines: Array<{
+    text: string;
+    charCount: number;
   }>;
+  /** Multiple CTA options */
+  ctas: Array<{
+    text: string;
+    charCount: number;
+  }>;
+  /** Multiple short description options */
+  shortDescriptions: Array<{
+    text: string;
+    charCount: number;
+  }>;
+  /** Compliance notes and warnings */
+  complianceNotes: Array<{
+    type: "warning" | "suggestion" | "approved";
+    message: string;
+  }>;
+  /** Recommended primary copy combination */
+  recommended: {
+    headline: string;
+    description: string;
+    cta: string;
+  };
 }
 
 // ============================================================================

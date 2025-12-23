@@ -242,15 +242,17 @@ describe("Task Fallbacks", () => {
     it("should return standard recommendations", () => {
       const task = getTaskDefinition<MaintenancePlanInput, MaintenancePlanOutput>("MAINTENANCE_PLAN_SUGGEST");
       const fallback = task?.getFallback({
+        propertyId: "test-property",
         propertyType: "single_family",
         propertyAge: 20,
         systems: [{ type: "HVAC", age: 10 }],
-        location: { climate: "humid", region: "Southeast" },
+        location: { timezone: "America/New_York", climate: "humid", region: "Southeast" },
+        subscriptionTier: "essential",
       });
 
-      expect(fallback?.recommendations.length).toBeGreaterThan(0);
+      expect(fallback?.seasonalTasks.length).toBeGreaterThan(0);
       expect(fallback?.annualPlanSummary).toBeDefined();
-      expect(fallback?.recommendations.some((r: { priority: string }) => r.priority === "high")).toBe(true);
+      expect(fallback?.recommendedServices.some((r: { priority: string }) => r.priority === "high" || r.priority === "medium")).toBe(true);
     });
   });
 });
