@@ -1,0 +1,240 @@
+name: Nightly Security & Code Checks
+
+on:
+  schedule:
+    # Run at 1:00 AM UTC daily
+    - cron: '0 1 * * *'
+  workflow_dispatch:  # Allow manual triggers
+
+jobs:
+  security-audit:
+    runs-on: ubuntu-latest
+    name: Security & Code Quality Audit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ============================================
+      # 1. NPM AUDIT - Dependency Vulnerabilities
+      # ============================================
+      - name: Run npm audit
+        id: npm-audit
+        continue-on-error: true
+        run: |
+          echo "## NPM Audit Results" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=moderate 2>&1 | tee audit-output.txt
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "::warning::npm audit found vulnerabilities"
+            echo "⚠️ Vulnerabilities found - see details below" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat audit-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # ============================================
+      # 2. ESLINT - Code Quality
+      # ============================================
+      - name: Run ESLint
+        id: eslint
+        continue-on-error: true
+        run: |
+          echo "## ESLint Results" >> $GITHUB_STEP_SUMMARY
+          npx eslint src/ --format stylish 2>&1 | tee eslint-output.txt
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "::warning::ESLint found issues"
+            echo "⚠️ Linting issues found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No linting issues" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -20 eslint-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # ============================================
+      # 3. TYPESCRIPT - Type Checking
+      # ============================================
+      - name: Run TypeScript Check
+        id: typescript
+        continue-on-error: true
+        run: |
+          echo "## TypeScript Results" >> $GITHUB_STEP_SUMMARY
+          npx tsc --noEmit 2>&1 | tee tsc-output.txt
+          if [ ${PIPESTATUS[0]} -ne 0 ]; then
+            echo "::error::TypeScript found type errors"
+            echo "❌ Type errors found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ No type errors" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          tail -30 tsc-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # ============================================
+      # 4. SECURITY SCANS - Custom Vulnerability Checks
+      # ============================================
+      - name: Security Scans
+        id: security-scans
+        run: |
+          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          ISSUES_FOUND=0
+
+          # XSS Check
+          echo "### XSS Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          XSS=$(grep -r "dangerouslySetInnerHTML\|innerHTML" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l || echo "0")
+          if [ "$XSS" -gt 0 ]; then
+            echo "⚠️ Found $XSS potential XSS vectors" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Found $XSS potential XSS vectors"
+            ISSUES_FOUND=$((ISSUES_FOUND + XSS))
+          else
+            echo "✅ No XSS vulnerabilities detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Eval Check
+          echo "### Eval Usage" >> $GITHUB_STEP_SUMMARY
+          EVAL=$(grep -rE "\beval\b|new Function\(" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l || echo "0")
+          if [ "$EVAL" -gt 0 ]; then
+            echo "❌ Found $EVAL dangerous eval() usages" >> $GITHUB_STEP_SUMMARY
+            echo "::error::Found $EVAL dangerous eval() usages"
+            ISSUES_FOUND=$((ISSUES_FOUND + EVAL))
+          else
+            echo "✅ No eval() usage detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Hardcoded Secrets Check
+          echo "### Hardcoded Secrets" >> $GITHUB_STEP_SUMMARY
+          SECRETS=$(grep -riE "password\s*=\s*['\"][^'\"]+['\"]|api_key\s*=\s*['\"][^'\"]+['\"]|secret\s*=\s*['\"][^'\"]+['\"]" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "process.env\|\.env\|example\|placeholder\|your-" | wc -l || echo "0")
+          if [ "$SECRETS" -gt 0 ]; then
+            echo "❌ Found $SECRETS potential hardcoded secrets" >> $GITHUB_STEP_SUMMARY
+            echo "::error::Found $SECRETS potential hardcoded secrets"
+            ISSUES_FOUND=$((ISSUES_FOUND + SECRETS))
+          else
+            echo "✅ No hardcoded secrets detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Service Role Key Check
+          echo "### Service Role Key Exposure" >> $GITHUB_STEP_SUMMARY
+          SERVICE_KEY=$(grep -r "service_role\|serviceRole\|SUPABASE_SERVICE" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "\.env" | wc -l || echo "0")
+          if [ "$SERVICE_KEY" -gt 0 ]; then
+            echo "❌ Found $SERVICE_KEY service role key references in code" >> $GITHUB_STEP_SUMMARY
+            echo "::error::Found service role key references in code"
+            ISSUES_FOUND=$((ISSUES_FOUND + SERVICE_KEY))
+          else
+            echo "✅ No exposed service role keys" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Raw SQL Check
+          echo "### Raw SQL Queries" >> $GITHUB_STEP_SUMMARY
+          SQL=$(grep -rE "\.raw\(|\.execute\(|sql\`" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l || echo "0")
+          if [ "$SQL" -gt 0 ]; then
+            echo "⚠️ Found $SQL raw SQL queries (review for injection)" >> $GITHUB_STEP_SUMMARY
+            echo "::warning::Found $SQL raw SQL queries"
+          else
+            echo "✅ No raw SQL queries detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo ""
+          echo "### Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Total critical security issues: $ISSUES_FOUND" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$ISSUES_FOUND" -gt 0 ]; then
+            exit 1
+          fi
+
+      # ============================================
+      # 5. DEPENDENCY CHECK
+      # ============================================
+      - name: Check for unused dependencies
+        continue-on-error: true
+        run: |
+          echo "## Dependency Check" >> $GITHUB_STEP_SUMMARY
+          npx depcheck --json > depcheck-output.json 2>/dev/null || true
+          UNUSED=$(cat depcheck-output.json | node -e "
+            const data = require('fs').readFileSync(0, 'utf8');
+            try {
+              const json = JSON.parse(data);
+              const deps = json.dependencies || [];
+              const devDeps = json.devDependencies || [];
+              if (deps.length > 0) console.log('Unused dependencies:', deps.join(', '));
+              if (devDeps.length > 0) console.log('Unused devDependencies:', devDeps.join(', '));
+              if (deps.length === 0 && devDeps.length === 0) console.log('No unused dependencies');
+            } catch(e) { console.log('Could not parse depcheck output'); }
+          ")
+          echo "$UNUSED" >> $GITHUB_STEP_SUMMARY
+
+      # ============================================
+      # 6. BUILD TEST
+      # ============================================
+      - name: Test build
+        continue-on-error: true
+        run: |
+          echo "## Build Test" >> $GITHUB_STEP_SUMMARY
+          if npm run build 2>&1 | tee build-output.txt; then
+            echo "✅ Build successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Build failed" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -50 build-output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      # ============================================
+      # NOTIFICATIONS
+      # ============================================
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🔒 Security Check Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Nightly Security Check Failed
+
+            The automated security and code quality check found issues that need attention.
+
+            **Run ID:** ${context.runId}
+            **Workflow:** ${context.workflow}
+
+            Please review the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for details.
+
+            ### Checklist
+            - [ ] Review npm audit vulnerabilities
+            - [ ] Fix ESLint errors
+            - [ ] Resolve TypeScript errors
+            - [ ] Address security scan findings
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'automated']
+            });
+
+      - name: Slack Notification on Failure
+        if: failure()
+        run: |
+          if [ -n "${{ secrets.SLACK_WEBHOOK_URL }}" ]; then
+            curl -X POST -H "Content-type: application/json" \
+              --data '{"text":"🔒 Nightly Security Check Failed - ${{ github.repository }}\nSee: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"}' \
+              "${{ secrets.SLACK_WEBHOOK_URL }}"
+          fi
+
+      - name: Summary
+        if: always()
+        run: |
+          echo ""
+          echo "## Overall Status" >> $GITHUB_STEP_SUMMARY
+          echo "Check completed at: $(date -u)" >> $GITHUB_STEP_SUMMARY
