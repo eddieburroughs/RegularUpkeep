@@ -6,6 +6,10 @@ on:
     - cron: '0 1 * * *'
   workflow_dispatch:  # Allow manual triggers
 
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   security-audit:
     runs-on: ubuntu-latest
@@ -90,9 +94,9 @@ jobs:
           echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
           ISSUES_FOUND=0
 
-          # XSS Check
+          # XSS Check (excludes layout.tsx which uses dangerouslySetInnerHTML for safe JSON-LD schema)
           echo "### XSS Vulnerabilities" >> $GITHUB_STEP_SUMMARY
-          XSS=$(grep -r "dangerouslySetInnerHTML\|innerHTML" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l || echo "0")
+          XSS=$(grep -r "dangerouslySetInnerHTML\|innerHTML" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "layout.tsx" | wc -l || echo "0")
           if [ "$XSS" -gt 0 ]; then
             echo "⚠️ Found $XSS potential XSS vectors" >> $GITHUB_STEP_SUMMARY
             echo "::warning::Found $XSS potential XSS vectors"
