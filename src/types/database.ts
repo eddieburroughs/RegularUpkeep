@@ -1957,7 +1957,15 @@ export interface MediaRequirementsConfig {
 }
 
 export interface FeatureFlagsConfig {
+  // AI Features
   ai_intake_enabled: boolean;
+  ai_media_quality_enabled: boolean;
+  ai_provider_copilot_enabled: boolean;
+  ai_admin_triage_enabled: boolean;
+  ai_crm_copilot_enabled: boolean;
+  ai_maintenance_coach_enabled: boolean;
+  ai_sponsor_copy_enabled: boolean;
+  // Platform Features
   sponsor_tiles_enabled: boolean;
   marketplace_payments_enabled: boolean;
   provider_crm_enabled: boolean;
