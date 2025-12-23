@@ -11,6 +11,7 @@ import {
   User,
   MessageSquare,
   FolderOpen,
+  CreditCard,
   LogOut,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -24,6 +25,7 @@ const navigation = [
   { name: "History", href: "/app/requests", icon: ClipboardList },
   { name: "Messages", href: "/app/messages", icon: MessageSquare },
   { name: "Binder", href: "/app/binder", icon: FolderOpen },
+  { name: "Billing", href: "/app/billing", icon: CreditCard },
 ];
 
 export function Sidebar() {

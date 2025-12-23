@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Users,
   ClipboardCheck,
+  LayoutDashboard,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Provider } from "@/types/database";
@@ -28,7 +29,7 @@ import type { Provider } from "@/types/database";
 // Provider bottom nav items
 const providerNavItems = [
   { name: "Jobs", href: "/provider/jobs", icon: Briefcase },
-  { name: "Inspect", href: "/provider/inspection/new", icon: ClipboardCheck },
+  { name: "CRM", href: "/provider/crm", icon: LayoutDashboard },
   { name: "Messages", href: "/provider/messages", icon: MessageSquare },
   { name: "Team", href: "/provider/team", icon: Users },
   { name: "Profile", href: "/provider/profile", icon: User },
@@ -64,8 +65,8 @@ export function ProviderShell({ children, provider }: ProviderShellProps) {
     if (href === "/provider/jobs") {
       return pathname === "/provider/jobs" || pathname.startsWith("/provider/jobs/");
     }
-    if (href === "/provider/inspection/new") {
-      return pathname.startsWith("/provider/inspection");
+    if (href === "/provider/crm") {
+      return pathname.startsWith("/provider/crm");
     }
     return pathname.startsWith(href);
   };

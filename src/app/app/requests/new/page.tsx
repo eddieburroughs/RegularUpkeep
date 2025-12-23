@@ -1,39 +1,59 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+/**
+ * New Service Request Page
+ *
+ * Uses AI-assisted intake with mandatory media requirements by category.
+ */
+
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { FileUpload } from "@/components/ui/file-upload";
-import { ArrowLeft, Loader2, Calendar, Clock, Camera } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { MediaUpload } from "@/components/service-request/media-upload";
+import { AIAssistedDescription } from "@/components/service-request/ai-assisted-description";
+import {
+  ArrowLeft,
+  Loader2,
+  Calendar,
+  Clock,
+  Home,
+  AlertTriangle,
+  CheckCircle2,
+} from "lucide-react";
 import Link from "next/link";
 import type { Property } from "@/types/database";
 
-type ServiceOption = {
+interface MediaRequirement {
+  min_photos: number;
+  video_required: boolean;
+  emergency_exception: boolean;
+}
+
+interface UploadedMedia {
   id: string;
-  name: string;
-  description: string | null;
-  base_price: number;
-  duration_minutes: number | null;
-  provider_id: string;
-  providers: { business_name: string } | null;
-};
+  url: string;
+  type: "photo" | "video";
+  filename: string;
+}
 
 const serviceCategories = [
   { value: "hvac", label: "HVAC / Heating & Cooling" },
   { value: "plumbing", label: "Plumbing" },
   { value: "electrical", label: "Electrical" },
   { value: "appliances", label: "Appliance Repair" },
+  { value: "exterior", label: "Exterior / Roofing" },
+  { value: "interior", label: "Interior Repairs" },
   { value: "landscaping", label: "Landscaping" },
   { value: "pest_control", label: "Pest Control" },
-  { value: "cleaning", label: "Cleaning" },
-  { value: "handyman", label: "General Handyman" },
+  { value: "safety", label: "Safety & Security" },
   { value: "other", label: "Other" },
 ];
 
@@ -42,33 +62,39 @@ export default function NewRequestPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [services, setServices] = useState<ServiceOption[]>([]);
   const [propertiesLoading, setPropertiesLoading] = useState(true);
 
-  const [photos, setPhotos] = useState<File[]>([]);
+  // Form state
+  const [propertyId, setPropertyId] = useState("");
+  const [category, setCategory] = useState("");
+  const [description, setDescription] = useState("");
+  const [isEmergency, setIsEmergency] = useState(false);
+  const [media, setMedia] = useState<UploadedMedia[]>([]);
+  const [mediaRequirements, setMediaRequirements] = useState<MediaRequirement>({
+    min_photos: 1,
+    video_required: false,
+    emergency_exception: true,
+  });
 
-  // Get tomorrow's date for initial value (computed once)
+  // Get tomorrow's date for initial value
   const defaultScheduledDate = useMemo(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split("T")[0];
   }, []);
 
-  const [formData, setFormData] = useState({
-    property_id: "",
-    category: "",
-    service_id: "",
-    description: "",
-    scheduled_date: defaultScheduledDate,
-    scheduled_time: "09:00",
-    priority: "normal",
-  });
+  const [scheduledDate, setScheduledDate] = useState(defaultScheduledDate);
+  const [scheduledTime, setScheduledTime] = useState("09:00");
+  const [priority, setPriority] = useState("normal");
 
+  // Request ID for media uploads (generate once)
+  const [requestId] = useState(() => crypto.randomUUID());
+
+  // Fetch properties on mount
   useEffect(() => {
-    async function loadData() {
+    async function loadProperties() {
       const supabase = createClient();
 
-      // Load properties
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: propertiesData } = await (supabase as any)
         .from("properties")
@@ -77,25 +103,82 @@ export default function NewRequestPage() {
 
       setProperties(propertiesData || []);
       if (propertiesData?.length === 1) {
-        setFormData((prev) => ({ ...prev, property_id: propertiesData[0].id }));
+        setPropertyId(propertiesData[0].id);
       }
       setPropertiesLoading(false);
-
-      // Load services (available in the area)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: servicesData } = await (supabase as any)
-        .from("services")
-        .select("id, name, description, base_price, duration_minutes, provider_id, providers(business_name)")
-        .eq("is_active", true)
-        .order("name", { ascending: true });
-
-      setServices(servicesData || []);
     }
-    loadData();
+    loadProperties();
+  }, []);
+
+  // Fetch media requirements when category changes
+  useEffect(() => {
+    async function loadMediaRequirements() {
+      if (!category) return;
+
+      try {
+        const response = await fetch(
+          `/api/config/media-requirements?category=${category}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setMediaRequirements(data);
+        }
+      } catch {
+        // Use defaults on error
+      }
+    }
+    loadMediaRequirements();
+  }, [category]);
+
+  // Check if media requirements are met
+  const meetsMediaRequirements = useMemo(() => {
+    if (!category) return true;
+
+    const photoCount = media.filter((m) => m.type === "photo").length;
+    const hasVideo = media.some((m) => m.type === "video");
+    const minPhotosRequired =
+      isEmergency && mediaRequirements.emergency_exception
+        ? 0
+        : mediaRequirements.min_photos;
+    const videoRequired =
+      isEmergency && mediaRequirements.emergency_exception
+        ? false
+        : mediaRequirements.video_required;
+
+    return photoCount >= minPhotosRequired && (!videoRequired || hasVideo);
+  }, [media, category, isEmergency, mediaRequirements]);
+
+  // Check overall form validity
+  const isFormValid = useMemo(() => {
+    return (
+      propertyId &&
+      category &&
+      description.trim().length > 10 &&
+      meetsMediaRequirements &&
+      scheduledDate &&
+      scheduledTime
+    );
+  }, [
+    propertyId,
+    category,
+    description,
+    meetsMediaRequirements,
+    scheduledDate,
+    scheduledTime,
+  ]);
+
+  const handleMediaChange = useCallback((newMedia: UploadedMedia[]) => {
+    setMedia(newMedia);
+  }, []);
+
+  const handleDescriptionChange = useCallback((newDescription: string) => {
+    setDescription(newDescription);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isFormValid) return;
+
     setLoading(true);
     setError(null);
 
@@ -108,118 +191,68 @@ export default function NewRequestPage() {
       return;
     }
 
-    // Get user's customer record
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: customer } = await (supabase as any)
-      .from("customers")
-      .select("id")
-      .eq("profile_id", user.id)
-      .single();
-
-    if (!customer) {
-      // Create customer record if it doesn't exist
+    try {
+      // Get or create customer record
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error: customerError } = await (supabase as any)
+      let { data: customer } = await (supabase as any)
         .from("customers")
-        .insert({ profile_id: user.id })
-        .select()
+        .select("id")
+        .eq("profile_id", user.id)
         .single();
 
-      if (customerError) {
-        setError("Failed to create customer profile");
-        setLoading(false);
-        return;
-      }
-    }
+      if (!customer) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: newCustomer, error: customerError } = await (supabase as any)
+          .from("customers")
+          .insert({ profile_id: user.id })
+          .select()
+          .single();
 
-    const customerId = customer?.id;
-    const selectedService = services.find((s) => s.id === formData.service_id);
-    const selectedProperty = properties.find((p) => p.id === formData.property_id);
-
-    if (!selectedService || !selectedProperty) {
-      setError("Please select a service and property");
-      setLoading(false);
-      return;
-    }
-
-    const bookingData = {
-      customer_id: customerId || user.id,
-      provider_id: selectedService.provider_id,
-      service_id: formData.service_id,
-      property_id: formData.property_id,
-      scheduled_date: formData.scheduled_date,
-      scheduled_time: formData.scheduled_time,
-      service_address: `${selectedProperty.address_line1}, ${selectedProperty.city}, ${selectedProperty.state} ${selectedProperty.postal_code}`,
-      base_price: selectedService.base_price,
-      total_amount: selectedService.base_price,
-      customer_notes: formData.description || null,
-      priority: formData.priority,
-      status: "pending",
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: booking, error: createError } = await (supabase as any)
-      .from("bookings")
-      .insert(bookingData)
-      .select()
-      .single();
-
-    if (createError) {
-      setError(createError.message);
-      setLoading(false);
-      return;
-    }
-
-    // Upload photos if any
-    if (photos.length > 0) {
-      for (const photo of photos) {
-        try {
-          const fileExt = photo.name.split(".").pop();
-          const fileName = `${user.id}/${booking.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-          const { error: uploadError } = await supabase.storage
-            .from("documents")
-            .upload(fileName, photo);
-
-          if (!uploadError) {
-            const { data: urlData } = supabase.storage
-              .from("documents")
-              .getPublicUrl(fileName);
-
-            // Save as document associated with booking
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase as any).from("documents").insert({
-              booking_id: booking.id,
-              property_id: formData.property_id,
-              category: "photo",
-              title: `Request Photo - ${photo.name}`,
-              file_url: urlData.publicUrl,
-              file_name: photo.name,
-              file_type: photo.type,
-              file_size: photo.size,
-              uploaded_by: user.id,
-            });
-          }
-        } catch {
-          // Continue even if photo upload fails
-          console.error("Failed to upload photo");
+        if (customerError) {
+          throw new Error("Failed to create customer profile");
         }
+        customer = newCustomer;
       }
+
+      const selectedProperty = properties.find((p) => p.id === propertyId);
+      if (!selectedProperty) {
+        throw new Error("Selected property not found");
+      }
+
+      // Create service request
+      const serviceRequestData = {
+        id: requestId,
+        customer_id: customer.id,
+        property_id: propertyId,
+        category,
+        description,
+        is_emergency: isEmergency,
+        scheduled_date: scheduledDate,
+        scheduled_time: scheduledTime,
+        priority: isEmergency ? "urgent" : priority,
+        status: "pending",
+        media_urls: media.map((m) => m.url),
+        service_address: `${selectedProperty.address_line1}, ${selectedProperty.city}, ${selectedProperty.state} ${selectedProperty.postal_code}`,
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: createError } = await (supabase as any)
+        .from("service_requests")
+        .insert(serviceRequestData);
+
+      if (createError) {
+        throw createError;
+      }
+
+      router.push(`/app/requests/${requestId}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit request");
+      setLoading(false);
     }
-
-    router.push(`/app/requests/${booking.id}`);
   };
-
-  const updateField = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const filteredServices = formData.category
-    ? services.filter((s) => s.name.toLowerCase().includes(formData.category.toLowerCase()))
-    : services;
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-2xl mx-auto pb-8">
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/app/requests">
@@ -229,154 +262,160 @@ export default function NewRequestPage() {
         <div>
           <h1 className="text-2xl font-bold">New Service Request</h1>
           <p className="text-muted-foreground">
-            Request a service from our network of providers
+            Tell us what you need help with
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Property Selection */}
         <Card>
           <CardHeader>
-            <CardTitle>Request Details</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Home className="h-5 w-5" />
+              Property
+            </CardTitle>
             <CardDescription>
-              Tell us what you need help with
+              Which property needs service?
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 rounded-md">
-                {error}
+          <CardContent>
+            {propertiesLoading ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading properties...
               </div>
-            )}
-
-            {/* Property Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="property_id">Property *</Label>
-              {propertiesLoading ? (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading properties...
-                </div>
-              ) : properties.length > 0 ? (
-                <Select
-                  value={formData.property_id}
-                  onValueChange={(value) => updateField("property_id", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a property" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {properties.map((property) => (
-                      <SelectItem key={property.id} value={property.id}>
-                        {property.nickname || property.address_line1}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              ) : (
-                <div className="text-sm text-muted-foreground">
-                  No properties found.{" "}
-                  <Link href="/app/properties/new" className="text-primary hover:underline">
-                    Add a property first
-                  </Link>
-                </div>
-              )}
-            </div>
-
-            {/* Category Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="category">Service Category</Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) => updateField("category", value)}
-              >
+            ) : properties.length > 0 ? (
+              <Select value={propertyId} onValueChange={setPropertyId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
+                  <SelectValue placeholder="Select a property" />
                 </SelectTrigger>
                 <SelectContent>
-                  {serviceCategories.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
+                  {properties.map((property) => (
+                    <SelectItem key={property.id} value={property.id}>
+                      {property.nickname || property.address_line1}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Service Selection */}
-            {services.length > 0 && (
-              <div className="space-y-2">
-                <Label htmlFor="service_id">Service *</Label>
-                <Select
-                  value={formData.service_id}
-                  onValueChange={(value) => updateField("service_id", value)}
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                No properties found.{" "}
+                <Link
+                  href="/app/properties/new"
+                  className="text-primary hover:underline"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a service" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredServices.map((service) => (
-                      <SelectItem key={service.id} value={service.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{service.name}</span>
-                          <span className="text-muted-foreground ml-2">
-                            ${(service.base_price / 100).toFixed(2)}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {formData.service_id && (
-                  <p className="text-sm text-muted-foreground">
-                    Provider: {services.find((s) => s.id === formData.service_id)?.providers?.business_name}
-                  </p>
-                )}
+                  Add a property first
+                </Link>
               </div>
             )}
+          </CardContent>
+        </Card>
 
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                placeholder="Describe what you need help with..."
-                value={formData.description}
-                onChange={(e) => updateField("description", e.target.value)}
-                rows={3}
+        {/* Category & Emergency */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Service Category</CardTitle>
+            <CardDescription>
+              What type of service do you need?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {serviceCategories.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="emergency" className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  Emergency Service
+                </Label>
+                <p className="text-sm text-muted-foreground">
+                  Is this an urgent issue that needs immediate attention?
+                </p>
+              </div>
+              <Switch
+                id="emergency"
+                checked={isEmergency}
+                onCheckedChange={setIsEmergency}
               />
             </div>
 
-            {/* Photo Upload */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Camera className="h-4 w-4" />
-                Photos (optional)
-              </Label>
-              <FileUpload
-                value={photos}
-                onChange={setPhotos}
-                accept="image/*"
-                multiple
-                maxFiles={5}
-                maxSize={10 * 1024 * 1024}
-                label="Add photos of the issue"
-                description="Photos help providers understand the problem"
-              />
-            </div>
+            {isEmergency && (
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Emergency requests will be prioritized and sent to available
+                  providers immediately. Media requirements may be relaxed for
+                  true emergencies.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
 
-            {/* Date & Time */}
+        {/* Media Upload - only show after category selected */}
+        {category && (
+          <MediaUpload
+            category={category}
+            requirements={mediaRequirements}
+            isEmergency={isEmergency}
+            serviceRequestId={requestId}
+            onMediaChange={handleMediaChange}
+            initialMedia={media}
+          />
+        )}
+
+        {/* AI-Assisted Description - only show after category selected */}
+        {category && (
+          <AIAssistedDescription
+            category={category}
+            mediaUrls={media.map((m) => m.url)}
+            initialDescription={description}
+            onDescriptionChange={handleDescriptionChange}
+          />
+        )}
+
+        {/* Scheduling */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Scheduling
+            </CardTitle>
+            <CardDescription>
+              When would you like the service?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="scheduled_date">Preferred Date *</Label>
+                <Label htmlFor="scheduled_date">Preferred Date</Label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="scheduled_date"
                     type="date"
                     className="pl-10"
-                    value={formData.scheduled_date}
-                    onChange={(e) => updateField("scheduled_date", e.target.value)}
+                    value={scheduledDate}
+                    onChange={(e) => setScheduledDate(e.target.value)}
                     min={new Date().toISOString().split("T")[0]}
                     required
                   />
@@ -384,52 +423,120 @@ export default function NewRequestPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="scheduled_time">Preferred Time *</Label>
+                <Label htmlFor="scheduled_time">Preferred Time</Label>
                 <div className="relative">
                   <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="scheduled_time"
                     type="time"
                     className="pl-10"
-                    value={formData.scheduled_time}
-                    onChange={(e) => updateField("scheduled_time", e.target.value)}
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
                     required
                   />
                 </div>
               </div>
             </div>
 
-            {/* Priority */}
-            <div className="space-y-3">
-              <Label>Priority</Label>
-              <RadioGroup
-                value={formData.priority}
-                onValueChange={(value) => updateField("priority", value)}
-                className="flex gap-4"
+            {!isEmergency && (
+              <div className="space-y-3">
+                <Label>Priority</Label>
+                <RadioGroup
+                  value={priority}
+                  onValueChange={setPriority}
+                  className="flex flex-wrap gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="low" id="low" />
+                    <Label htmlFor="low" className="cursor-pointer">
+                      Low
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="normal" id="normal" />
+                    <Label htmlFor="normal" className="cursor-pointer">
+                      Normal
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="high" id="high" />
+                    <Label htmlFor="high" className="cursor-pointer">
+                      High
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Submission Checklist */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Ready to Submit?</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              {propertyId ? (
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              ) : (
+                <div className="h-4 w-4 rounded-full border-2" />
+              )}
+              <span
+                className={propertyId ? "" : "text-muted-foreground"}
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="low" id="low" />
-                  <Label htmlFor="low" className="cursor-pointer">Low</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="normal" id="normal" />
-                  <Label htmlFor="normal" className="cursor-pointer">Normal</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="high" id="high" />
-                  <Label htmlFor="high" className="cursor-pointer">High</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="urgent" id="urgent" />
-                  <Label htmlFor="urgent" className="cursor-pointer text-red-600">Urgent</Label>
-                </div>
-              </RadioGroup>
+                Property selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {category ? (
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              ) : (
+                <div className="h-4 w-4 rounded-full border-2" />
+              )}
+              <span className={category ? "" : "text-muted-foreground"}>
+                Category selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {meetsMediaRequirements ? (
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              ) : (
+                <div className="h-4 w-4 rounded-full border-2" />
+              )}
+              <span
+                className={
+                  meetsMediaRequirements ? "" : "text-muted-foreground"
+                }
+              >
+                Photos uploaded
+                {!meetsMediaRequirements && category && (
+                  <span className="text-xs ml-1">
+                    (min {mediaRequirements.min_photos} required)
+                  </span>
+                )}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {description.trim().length > 10 ? (
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+              ) : (
+                <div className="h-4 w-4 rounded-full border-2" />
+              )}
+              <span
+                className={
+                  description.trim().length > 10 ? "" : "text-muted-foreground"
+                }
+              >
+                Description provided
+              </span>
             </div>
 
             <div className="flex gap-3 pt-4">
               <Button
                 type="submit"
-                disabled={loading || properties.length === 0 || !formData.service_id}
+                disabled={loading || !isFormValid}
+                className="flex-1"
               >
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Submit Request
