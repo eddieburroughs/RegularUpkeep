@@ -27,7 +27,9 @@ import {
   ChevronRight,
   ArrowUpRight,
   ArrowDownRight,
+  Bot,
 } from "lucide-react";
+import { AIOpsPanel } from "@/components/admin/ai-ops-panel";
 
 type KPIData = {
   // User metrics
@@ -295,6 +297,10 @@ export default async function AdminDashboardPage() {
           <TabsTrigger value="revenue">Revenue</TabsTrigger>
           <TabsTrigger value="providers">Providers</TabsTrigger>
           <TabsTrigger value="operations">Operations</TabsTrigger>
+          <TabsTrigger value="ai-ops">
+            <Bot className="h-4 w-4 mr-1" />
+            AI Ops
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -649,6 +655,11 @@ export default async function AdminDashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* AI Ops Tab */}
+        <TabsContent value="ai-ops" className="space-y-4">
+          <AIOpsPanel />
         </TabsContent>
       </Tabs>
     </div>

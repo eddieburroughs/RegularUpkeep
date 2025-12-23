@@ -17,6 +17,7 @@ import type {
   MarketplacePaymentsConfig,
   MediaRequirementsConfig,
   FeatureFlagsConfig,
+  AIOperationsConfig,
 } from "@/types/database";
 
 // Config keys
@@ -31,6 +32,7 @@ export const CONFIG_KEYS = {
   MARKETPLACE_PAYMENTS: "marketplace_payments",
   MEDIA_REQUIREMENTS: "media_requirements",
   FEATURE_FLAGS: "feature_flags",
+  AI_OPERATIONS: "ai_operations",
 } as const;
 
 export type ConfigKey = (typeof CONFIG_KEYS)[keyof typeof CONFIG_KEYS];
@@ -47,6 +49,7 @@ export interface ConfigTypeMap {
   marketplace_payments: MarketplacePaymentsConfig;
   media_requirements: MediaRequirementsConfig;
   feature_flags: FeatureFlagsConfig;
+  ai_operations: AIOperationsConfig;
 }
 
 // Default values (fallbacks if DB not populated)
@@ -145,6 +148,28 @@ export const DEFAULT_CONFIG: ConfigTypeMap = {
     marketplace_payments_enabled: true,
     provider_crm_enabled: true,
     realtor_referral_enabled: true,
+  },
+  ai_operations: {
+    rate_limits: {
+      customer_daily_limit: 50,  // 50 AI calls per customer per day
+      provider_daily_limit: 100, // 100 AI calls per provider per day
+      admin_daily_limit: 500,    // 500 AI calls per admin per day
+    },
+    cost_budgets: {
+      daily_budget_cents: 10000, // $100/day platform budget
+      alert_threshold_cents: 7500, // Alert at $75/day
+    },
+    privacy: {
+      media_retention_days: 30,   // Keep media references for 30 days
+      prompt_retention_days: 7,   // Keep prompt hashes for 7 days
+      hash_sensitive_inputs: true,
+      require_explicit_consent: false, // Default ON but visible toggle
+    },
+    retention: {
+      ai_jobs_retention_days: 180,    // 6 months
+      ai_outputs_retention_days: 180, // 6 months
+      keep_aggregate_metrics: true,   // Keep aggregate stats after cleanup
+    },
   },
 };
 
@@ -346,4 +371,30 @@ export async function calculateHomeownerSubscription(params: {
     sponsorFreeYearly,
     totalMonthly,
   };
+}
+
+/**
+ * Get AI operations config
+ */
+export async function getAIOperationsConfig(): Promise<AIOperationsConfig> {
+  return getConfig("ai_operations");
+}
+
+/**
+ * Get rate limit for a user role
+ */
+export async function getAIRateLimit(
+  role: "customer" | "provider" | "admin"
+): Promise<number> {
+  const config = await getConfig("ai_operations");
+  switch (role) {
+    case "customer":
+      return config.rate_limits.customer_daily_limit;
+    case "provider":
+      return config.rate_limits.provider_daily_limit;
+    case "admin":
+      return config.rate_limits.admin_daily_limit;
+    default:
+      return config.rate_limits.customer_daily_limit;
+  }
 }

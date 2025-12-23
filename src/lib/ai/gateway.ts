@@ -25,6 +25,12 @@ import {
   recordMetrics,
   checkRateLimit,
 } from "./observability";
+import {
+  checkDailyRateLimit,
+  isAIEnabledForUser,
+  sanitizeInputsForStorage,
+} from "./ops";
+import { createAIJob, completeAIJob, persistAITaskResponse } from "./db";
 
 // ============================================================================
 // Configuration
@@ -89,7 +95,28 @@ export async function runTask<TInput = Record<string, unknown>, TOutput = Record
   );
 
   try {
-    // Check rate limit
+    // Check if user has AI enabled (consent check)
+    const actor = request.flags?.skipSafetyChecks ? "system" : await determineActorAsync(request.actorUserId);
+    if (actor !== "system" && !request.flags?.skipSafetyChecks) {
+      const aiEnabled = await isAIEnabledForUser(request.actorUserId);
+      if (!aiEnabled) {
+        policyEvents.push({
+          type: "LOW_CONFIDENCE",
+          severity: "info",
+          message: "AI features disabled by user preference",
+        });
+        return createFallbackResponse(
+          taskDef,
+          request.inputs,
+          correlationId,
+          startTime,
+          policyEvents,
+          "AI features disabled"
+        );
+      }
+    }
+
+    // Check per-minute burst rate limit (in-memory)
     const rateLimit = checkRateLimit(request.actorUserId, request.taskType);
     if (!rateLimit.allowed) {
       policyEvents.push({
@@ -107,8 +134,30 @@ export async function runTask<TInput = Record<string, unknown>, TOutput = Record
       );
     }
 
-    // Check actor permissions (skip for system calls)
-    const actor = request.flags?.skipSafetyChecks ? "system" : determineActor(request.actorUserId);
+    // Check daily rate limit (database-backed, per user role)
+    if (actor !== "system") {
+      const dailyRateLimit = await checkDailyRateLimit(
+        request.actorUserId,
+        actor as "customer" | "provider" | "admin"
+      );
+      if (!dailyRateLimit.allowed) {
+        policyEvents.push({
+          type: "FRAUD_SIGNAL_VELOCITY",
+          severity: "warning",
+          message: dailyRateLimit.reason || "Daily AI call limit reached",
+        });
+        return createFallbackResponse(
+          taskDef,
+          request.inputs,
+          correlationId,
+          startTime,
+          policyEvents,
+          dailyRateLimit.reason || "Daily limit exceeded"
+        );
+      }
+    }
+
+    // Check actor permissions (actor determined above)
     if (!canActorExecuteTask(actor, request.taskType)) {
       return {
         success: false,
@@ -454,8 +503,8 @@ function repairJson(text: string): string {
 }
 
 /**
- * Determine actor type from user ID
- * In production, this would query user roles
+ * Determine actor type from user ID (sync version - uses defaults)
+ * @deprecated Use determineActorAsync for database-backed role lookup
  */
 function determineActor(
   userId: string
@@ -463,9 +512,39 @@ function determineActor(
   // System calls use a special prefix
   if (userId.startsWith("system-")) return "system";
 
-  // In production, look up user role from database
-  // For now, default to customer (most restrictive)
+  // Default to customer (most restrictive)
   return "customer";
+}
+
+/**
+ * Determine actor type from user ID by looking up role in database
+ */
+async function determineActorAsync(
+  userId: string
+): Promise<"customer" | "provider" | "admin" | "system"> {
+  // System calls use a special prefix
+  if (userId.startsWith("system-")) return "system";
+
+  try {
+    // Dynamic import to avoid circular dependencies
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .single() as { data: { role: string } | null };
+
+    if (profile?.role === "admin") return "admin";
+    if (profile?.role === "provider") return "provider";
+    if (profile?.role === "handyman") return "provider"; // Treat handymen as providers for AI purposes
+
+    return "customer";
+  } catch (error) {
+    console.warn("Failed to determine actor role, defaulting to customer:", error);
+    return "customer";
+  }
 }
 
 // ============================================================================

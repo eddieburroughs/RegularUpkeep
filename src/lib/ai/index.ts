@@ -121,6 +121,27 @@ export {
   persistAITaskResponse,
 } from "./db";
 
+// AI Operations utilities
+export {
+  checkDailyRateLimit,
+  getDailyUsage,
+  getDailyCostSummary,
+  checkDailyBudget,
+  getCostTrend,
+  hashSensitiveInput,
+  sanitizeInputsForStorage,
+  isAIEnabledForUser,
+  setAIEnabledForUser,
+  runRetentionCleanup,
+  getRetentionPolicy,
+} from "./ops";
+
+export type {
+  RateLimitResult,
+  DailyCostSummary,
+  CleanupResult,
+} from "./ops";
+
 // Re-export db types
 export type {
   AIJob,

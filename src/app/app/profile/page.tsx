@@ -14,6 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import type { Property, Profile } from "@/types/database";
+import { AISettings } from "@/components/app/ai-settings";
 
 type PropertyWithMember = Property & {
   property_members: { member_role: string }[];
@@ -198,6 +199,9 @@ export default async function ProfilePage() {
           </Link>
         </CardContent>
       </Card>
+
+      {/* AI Settings */}
+      <AISettings userId={user.id} />
     </div>
   );
 }

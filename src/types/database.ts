@@ -2196,6 +2196,33 @@ export interface FeatureFlagsConfig {
   realtor_referral_enabled: boolean;
 }
 
+export interface AIOperationsConfig {
+  /** Rate limits per user role per day */
+  rate_limits: {
+    customer_daily_limit: number;
+    provider_daily_limit: number;
+    admin_daily_limit: number;
+  };
+  /** Cost budget in cents per day */
+  cost_budgets: {
+    daily_budget_cents: number;
+    alert_threshold_cents: number;
+  };
+  /** Privacy and consent settings */
+  privacy: {
+    media_retention_days: number;
+    prompt_retention_days: number;
+    hash_sensitive_inputs: boolean;
+    require_explicit_consent: boolean;
+  };
+  /** Data retention settings */
+  retention: {
+    ai_jobs_retention_days: number;
+    ai_outputs_retention_days: number;
+    keep_aggregate_metrics: boolean;
+  };
+}
+
 // Estimate line item type
 export interface EstimateLineItem {
   description: string;
