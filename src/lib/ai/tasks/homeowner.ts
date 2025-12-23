@@ -98,7 +98,7 @@ ${isPremium ? `PREMIUM FEATURES:
 
 Respond with JSON only.`;
 
-    let userPrompt = `Create a maintenance plan for this property:
+    const userPrompt = `Create a maintenance plan for this property:
 
 Property ID: ${input.propertyId}
 Property Type: ${input.propertyType}
