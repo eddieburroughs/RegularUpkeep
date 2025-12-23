@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { FileUpload } from "@/components/ui/file-upload";
 import { AIProviderBriefCard } from "@/components/service-request/ai-provider-brief-card";
+import { AIInvoiceNarrative } from "@/components/provider";
 import {
   ArrowLeft,
   Calendar,
@@ -474,6 +475,19 @@ export function JobDetailClient({ booking, providerBrief }: JobDetailClientProps
             <CardTitle className="text-base">Job Notes & Photos</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* AI Work Summary Generator */}
+            {!isCompleted && lineItems.some((i) => i.description) && (
+              <AIInvoiceNarrative
+                bookingId={booking.id}
+                category={booking.services?.name || "service"}
+                scopeOfWork={booking.services?.description || booking.services?.name || "Service work"}
+                completedWork={lineItems
+                  .filter((i) => i.description)
+                  .map((i) => i.description)}
+                onNarrativeGenerated={(narrative) => setNotes(narrative)}
+              />
+            )}
+
             <div className="space-y-2">
               <Label>Completion Notes</Label>
               <Textarea

@@ -31,14 +31,17 @@ export const providerEstimateTask: TaskDefinition<ProviderEstimateInput, Provide
   buildPrompt(input: ProviderEstimateInput) {
     const system = `You are an assistant helping home service providers create professional estimates.
 
-Your role is to suggest scope of work items and line items based on the job description.
+Your role is to suggest scope of work items, line items, exclusions, and assumptions based on the job description.
 
 IMPORTANT GUIDELINES:
 - NEVER include specific dollar amounts or prices
 - Focus on describing the work clearly
 - Include both labor and material items where appropriate
+- List clear exclusions (what is NOT included)
+- State assumptions you're making
 - Suggest warranty considerations
 - Ask clarifying questions if information is missing
+- Indicate if a remote estimate is possible or if an on-site visit is required
 
 Respond with JSON only.`;
 
@@ -55,9 +58,14 @@ Provide suggestions in this JSON format:
   "lineItemSuggestions": [
     { "description": "Item description", "type": "labor|material", "note": "optional note" }
   ],
-  "clarifyingQuestions": ["Questions for the customer or technician"],
+  "exclusions": ["What is explicitly NOT included in this estimate"],
+  "assumptions": ["Assumptions made when creating this estimate"],
+  "clarifyingQuestions": ["Questions for the customer"],
   "estimatedDurationRange": "e.g., 2-4 hours",
-  "warrantyConsiderations": ["Warranty notes"]
+  "warrantyConsiderations": ["Warranty notes"],
+  "remoteEstimateOk": true/false,
+  "requiresSiteVisit": true/false,
+  "missingInfoRequests": ["What additional information would improve this estimate"]
 }`;
 
     return { system, user };
@@ -82,6 +90,21 @@ Provide suggestions in this JSON format:
         warrantyConsiderations: Array.isArray(data.warrantyConsiderations)
           ? data.warrantyConsiderations.map(String)
           : [],
+        exclusions: Array.isArray(data.exclusions)
+          ? data.exclusions.map(String)
+          : [],
+        assumptions: Array.isArray(data.assumptions)
+          ? data.assumptions.map(String)
+          : [],
+        remoteEstimateOk: typeof data.remoteEstimateOk === "boolean"
+          ? data.remoteEstimateOk
+          : undefined,
+        requiresSiteVisit: typeof data.requiresSiteVisit === "boolean"
+          ? data.requiresSiteVisit
+          : undefined,
+        missingInfoRequests: Array.isArray(data.missingInfoRequests)
+          ? data.missingInfoRequests.map(String)
+          : [],
       };
     } catch {
       throw new Error("Failed to parse provider estimate output");
@@ -99,6 +122,11 @@ Provide suggestions in this JSON format:
       clarifyingQuestions: ["Please confirm access to the work area", "Any scheduling preferences?"],
       estimatedDurationRange: "To be determined after assessment",
       warrantyConsiderations: ["Standard workmanship warranty applies"],
+      exclusions: ["Additional repairs discovered during work", "Permits if required"],
+      assumptions: ["Standard access to work area", "No hidden damage"],
+      remoteEstimateOk: false,
+      requiresSiteVisit: true,
+      missingInfoRequests: [],
     };
   },
 

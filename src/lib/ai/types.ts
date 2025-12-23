@@ -281,6 +281,16 @@ export interface ProviderEstimateOutput {
   clarifyingQuestions: string[];
   estimatedDurationRange: string;
   warrantyConsiderations: string[];
+  /** What is explicitly NOT included in the estimate */
+  exclusions?: string[];
+  /** Assumptions made in the estimate */
+  assumptions?: string[];
+  /** Whether a remote estimate might be sufficient */
+  remoteEstimateOk?: boolean;
+  /** Whether an on-site visit is required */
+  requiresSiteVisit?: boolean;
+  /** Missing info that would improve the estimate */
+  missingInfoRequests?: string[];
 }
 
 // --- PROVIDER_MESSAGE_DRAFT ---

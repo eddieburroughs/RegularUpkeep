@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { AIMessageDraft } from "@/components/provider";
 import Link from "next/link";
 
 type ThreadDetails = {
@@ -33,11 +34,29 @@ interface ProviderMessageThreadProps {
   messages: MessageDetails[];
   currentUserId: string;
   title: string;
+  customerName?: string;
+  serviceCategory?: string;
 }
 
-export function ProviderMessageThread({ thread, messages, currentUserId, title }: ProviderMessageThreadProps) {
+export function ProviderMessageThread({
+  thread,
+  messages,
+  currentUserId,
+  title,
+  customerName = "Customer",
+  serviceCategory = "service",
+}: ProviderMessageThreadProps) {
   const router = useRouter();
   const [newMessage, setNewMessage] = useState("");
+  const [showAIDraft, setShowAIDraft] = useState(false);
+
+  // Determine context based on message history
+  const getMessageContext = (): "introduction" | "update" | "scheduling" | "completion" | "followup" => {
+    if (messages.length === 0) return "introduction";
+    const lastMessageIsOwn = messages[messages.length - 1]?.sender_id === currentUserId;
+    if (lastMessageIsOwn) return "followup";
+    return "update";
+  };
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -167,36 +186,65 @@ export function ProviderMessageThread({ thread, messages, currentUserId, title }
         </CardContent>
 
         {/* Input */}
-        <div className="border-t p-4">
+        <div className="border-t p-4 space-y-3">
           {error && (
             <div className="mb-2 text-sm text-red-600">{error}</div>
           )}
-          <div className="flex gap-2">
-            <Textarea
-              placeholder="Type a message..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              className="min-h-[44px] max-h-32 resize-none"
-              rows={1}
-              disabled={sending}
+
+          {/* AI Message Draft */}
+          {showAIDraft ? (
+            <AIMessageDraft
+              threadId={thread.id}
+              context={getMessageContext()}
+              customerName={customerName}
+              serviceCategory={serviceCategory}
+              onDraftGenerated={(draft) => {
+                setNewMessage(draft);
+                setShowAIDraft(false);
+              }}
             />
-            <Button
-              onClick={handleSend}
-              disabled={!newMessage.trim() || sending}
-              size="icon"
-              className="shrink-0"
-            >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Textarea
+                placeholder="Type a message..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="min-h-[44px] max-h-32 resize-none"
+                rows={1}
+                disabled={sending}
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!newMessage.trim() || sending}
+                size="icon"
+                className="shrink-0"
+              >
+                {sending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">
+              Press Enter to send, Shift+Enter for new line
+            </p>
+            {!showAIDraft && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAIDraft(true)}
+                className="text-xs"
+              >
+                <span className="mr-1">✨</span>
+                AI Draft
+              </Button>
+            )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Press Enter to send, Shift+Enter for new line
-          </p>
         </div>
       </Card>
     </div>
