@@ -1,17 +1,125 @@
 /**
  * AI Module
  *
- * Central export for all AI functionality.
- * Provides abstraction layer for AI providers.
+ * Centralized AI gateway for RegularUpkeep.
+ *
+ * @example
+ * ```typescript
+ * import { ai } from "@/lib/ai";
+ *
+ * const result = await ai.runTask({
+ *   taskType: "INTAKE_CLASSIFY_AND_SUMMARIZE",
+ *   actorUserId: userId,
+ *   entityType: "service_request",
+ *   entityId: requestId,
+ *   inputs: {
+ *     imageUrls: ["https://..."],
+ *     category: "plumbing",
+ *   }
+ * });
+ *
+ * if (result.success) {
+ *   console.log(result.outputJson.summary);
+ * }
+ * ```
  */
 
-export * from "./types";
-export * from "./openai";
-export * from "./prompts/intake";
+// Main gateway export
+export { ai, runTask } from "./gateway";
+
+// Types - new gateway types
+export type {
+  AITaskType,
+  AIProvider,
+  AIModel,
+  AIEntityType,
+  AIPolicyEventType,
+  AIPolicyEvent,
+  AITaskRequest,
+  AITaskResponse,
+  AITaskFlags,
+  // Input/Output types for all tasks
+  IntakeClassifyInput,
+  IntakeClassifyOutput,
+  IntakeFollowupInput,
+  IntakeFollowupOutput,
+  ProviderBriefInput,
+  ProviderBriefOutput,
+  MediaQualityInput,
+  MediaQualityOutput,
+  ProviderEstimateInput,
+  ProviderEstimateOutput,
+  ProviderMessageInput,
+  ProviderMessageOutput,
+  InvoiceNarrativeInput,
+  InvoiceNarrativeOutput,
+  DisputeTimelineInput,
+  DisputeTimelineOutput,
+  FraudSignalInput,
+  FraudSignalOutput,
+  CrmNextActionInput,
+  CrmNextActionOutput,
+  MaintenancePlanInput,
+  MaintenancePlanOutput,
+  SponsorTileCopyInput,
+  SponsorTileCopyOutput,
+} from "./types";
+
+// Task registry utilities
+export {
+  getTaskDefinition,
+  isValidTaskType,
+  getAllTaskTypes,
+  getTaskTypesForActor,
+  canActorExecuteTask,
+  getVisionTasks,
+} from "./tasks";
+
+// Provider utilities
+export {
+  getConfiguredProvider,
+  getProviderAdapter,
+  getBestAvailableProvider,
+  mapModelToProvider,
+} from "./providers";
+
+// Safety utilities
+export {
+  checkInputSafety,
+  checkOutputSafety,
+  sanitizeOutput,
+  addUncertaintyLanguage,
+  generateSafetyNotes,
+  checkForEmergency,
+  getCategorySafetyFlags,
+} from "./safety";
+
+// Observability utilities
+export {
+  generateCorrelationId,
+  logAITask,
+  trackCost,
+  getDailyCost,
+  isWithinBudget,
+  recordMetrics,
+  getMetricsSummary,
+  checkRateLimit,
+} from "./observability";
+
+// ============================================================================
+// Legacy Support - Backward Compatibility
+// ============================================================================
+
+// Re-export legacy types for existing code
+export type {
+  AIAnalysisResult,
+  AIImageAnalysisRequest,
+  MaintenanceCategory,
+} from "./types";
 
 import { isFeatureEnabled } from "@/lib/config/admin-config";
 import { isOpenAIAvailable, analyzeIntakeImages } from "./openai";
-import { AIAnalysisResult, AIImageAnalysisRequest, MaintenanceCategory } from "./types";
+import type { AIAnalysisResult, AIImageAnalysisRequest, MaintenanceCategory } from "./types";
 
 // Fallback responses when AI is not available
 const fallbackResponses: Record<MaintenanceCategory | "default", AIAnalysisResult> = {
@@ -130,6 +238,8 @@ const fallbackResponses: Record<MaintenanceCategory | "default", AIAnalysisResul
 /**
  * Analyze images for service request intake
  *
+ * @deprecated Use ai.runTask({ taskType: "INTAKE_CLASSIFY_AND_SUMMARIZE", ... }) instead
+ *
  * Uses AI when available and enabled, falls back to static responses otherwise.
  */
 export async function analyzeServiceRequestImages(
@@ -164,6 +274,8 @@ export async function analyzeServiceRequestImages(
 
 /**
  * Get fallback response for a category (useful for testing)
+ *
+ * @deprecated Use getTaskDefinition("INTAKE_CLASSIFY_AND_SUMMARIZE").getFallback() instead
  */
 export function getFallbackResponse(category: string): AIAnalysisResult {
   return (
