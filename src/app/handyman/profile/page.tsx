@@ -8,7 +8,6 @@ import {
   User,
   Mail,
   Phone,
-  Wrench,
   DollarSign,
   Star,
   Briefcase,

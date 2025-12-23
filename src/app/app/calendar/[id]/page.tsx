@@ -22,16 +22,9 @@ export default async function TaskPage({
     notFound();
   }
 
-  // Get user's properties for potential reassignment
-  const { data: properties } = await supabase
-    .from("properties")
-    .select("*")
-    .order("nickname", { ascending: true }) as { data: Property[] | null };
-
   return (
     <TaskDetails
       task={task as MaintenanceTask & { properties: Property | null }}
-      properties={properties || []}
     />
   );
 }

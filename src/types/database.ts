@@ -652,8 +652,8 @@ export interface Database {
         };
       };
     };
-    Views: {};
-    Functions: {};
+    Views: Record<string, never>;
+    Functions: Record<string, never>;
     Enums: {
       user_role: UserRole;
       property_type: PropertyType;

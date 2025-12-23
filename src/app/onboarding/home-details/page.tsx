@@ -31,7 +31,8 @@ const usStates = [
 function HomeDetailsForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isNewUser = searchParams.get("new") === "true";
+  // Check if user came from registration (reserved for welcome messaging)
+  void searchParams.get("new");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

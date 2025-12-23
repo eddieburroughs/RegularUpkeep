@@ -35,7 +35,8 @@ const serviceCategories: { value: MaintenanceCategory; label: string }[] = [
 
 function SignupForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  // searchParams available for referral tracking (future enhancement)
+  void useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(1);

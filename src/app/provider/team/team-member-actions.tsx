@@ -44,6 +44,7 @@ export function TeamMemberActions({ member }: TeamMemberActionsProps) {
     setLoading(true);
     const supabase = createClient();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any)
       .from("provider_members")
       .update({ role: newRole })
@@ -57,6 +58,7 @@ export function TeamMemberActions({ member }: TeamMemberActionsProps) {
     setLoading(true);
     const supabase = createClient();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase as any)
       .from("provider_members")
       .update({ status: "inactive" })

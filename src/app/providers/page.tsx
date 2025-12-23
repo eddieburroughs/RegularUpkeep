@@ -38,7 +38,7 @@ Additional Information: ${formData.get("additional")}
       <CardHeader>
         <CardTitle>Apply to Join Our Network</CardTitle>
         <CardDescription>
-          Fill out the form below and we'll be in touch within 2 business days.
+          Fill out the form below and we&apos;ll be in touch within 2 business days.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -168,7 +168,7 @@ export default function ProvidersPage() {
                 What We Look For
               </h2>
               <p className="mt-4 text-muted-foreground">
-                We're selective about our network because our reputation depends on the quality of work our providers deliver. Here's what we value:
+                We&apos;re selective about our network because our reputation depends on the quality of work our providers deliver. Here&apos;s what we value:
               </p>
               <ul className="mt-6 space-y-4">
                 {[

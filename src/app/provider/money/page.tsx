@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DollarSign,
@@ -20,6 +19,65 @@ type CompletedBooking = {
   actual_end_time: string | null;
   services: { name: string } | null;
 };
+
+const formatCurrency = (cents: number) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+};
+
+const EarningsCard = ({
+  title,
+  amount,
+  icon: Icon,
+  description,
+}: {
+  title: string;
+  amount: number;
+  icon: React.ComponentType<{ className?: string }>;
+  description?: string;
+}) => (
+  <Card>
+    <CardHeader className="flex flex-row items-center justify-between pb-2">
+      <CardTitle className="text-sm font-medium">{title}</CardTitle>
+      <Icon className="h-4 w-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold">{formatCurrency(amount)}</div>
+      {description && (
+        <p className="text-xs text-muted-foreground">{description}</p>
+      )}
+    </CardContent>
+  </Card>
+);
+
+const TransactionRow = ({ booking }: { booking: CompletedBooking }) => (
+  <div className="flex items-center justify-between py-3 border-b last:border-0">
+    <div className="flex items-center gap-3">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+        <CheckCircle2 className="h-5 w-5 text-green-600" />
+      </div>
+      <div>
+        <p className="font-medium text-sm">
+          {booking.services?.name || "Service"}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {new Date(booking.scheduled_date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          })}
+          {" "}#{booking.booking_number}
+        </p>
+      </div>
+    </div>
+    <span className="font-semibold text-green-600">
+      +{formatCurrency(booking.invoice_cents || booking.total_amount)}
+    </span>
+  </div>
+);
 
 export default async function ProviderMoneyPage() {
   const supabase = await createClient();
@@ -86,65 +144,6 @@ export default async function ProviderMoneyPage() {
 
   const completedCount = bookings.length;
   const avgJobValue = completedCount > 0 ? yearEarnings / completedCount : 0;
-
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(cents / 100);
-  };
-
-  const EarningsCard = ({
-    title,
-    amount,
-    icon: Icon,
-    description,
-  }: {
-    title: string;
-    amount: number;
-    icon: React.ComponentType<{ className?: string }>;
-    description?: string;
-  }) => (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{formatCurrency(amount)}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground">{description}</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-
-  const TransactionRow = ({ booking }: { booking: CompletedBooking }) => (
-    <div className="flex items-center justify-between py-3 border-b last:border-0">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle2 className="h-5 w-5 text-green-600" />
-        </div>
-        <div>
-          <p className="font-medium text-sm">
-            {booking.services?.name || "Service"}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {new Date(booking.scheduled_date).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
-            {" "}#{booking.booking_number}
-          </p>
-        </div>
-      </div>
-      <span className="font-semibold text-green-600">
-        +{formatCurrency(booking.invoice_cents || booking.total_amount)}
-      </span>
-    </div>
-  );
 
   return (
     <div className="space-y-6">

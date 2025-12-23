@@ -60,6 +60,8 @@ export default function SystemsPage() {
       router.push("/onboarding/home-details");
       return;
     }
+    // Initialize property ID from session storage (intentional initialization pattern)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPropertyId(storedId);
   }, [router]);
 

@@ -29,7 +29,7 @@ import {
   Play,
   MessageSquare,
 } from "lucide-react";
-import type { BookingStatus, TravelStatus, Json } from "@/types/database";
+import type { BookingStatus, TravelStatus } from "@/types/database";
 
 interface LineItem {
   id: string;
@@ -71,7 +71,7 @@ interface JobDetailClientProps {
   providerId: string;
 }
 
-export function JobDetailClient({ booking, providerId }: JobDetailClientProps) {
+export function JobDetailClient({ booking }: JobDetailClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState(booking.completion_notes || "");
@@ -397,7 +397,7 @@ export function JobDetailClient({ booking, providerId }: JobDetailClientProps) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {lineItems.map((item, index) => (
+            {lineItems.map((item) => (
               <div key={item.id} className="flex gap-2 items-start">
                 <div className="flex-1 space-y-2">
                   <Input

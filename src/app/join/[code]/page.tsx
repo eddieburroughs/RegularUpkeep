@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import Link from "next/link";
 import { JoinForm } from "./join-form";
 
 type InviteWithProvider = {
@@ -27,7 +27,7 @@ export default async function JoinPage({
   const supabase = await createClient();
 
   // Get the invite with provider info
-  const { data: invite, error } = await supabase
+  const { data: invite } = await supabase
     .from("provider_invites")
     .select(`
       id,
@@ -52,9 +52,9 @@ export default async function JoinPage({
           <p className="text-muted-foreground mb-6">
             This invite link is invalid or has been deactivated.
           </p>
-          <a href="/" className="text-primary hover:underline">
+          <Link href="/" className="text-primary hover:underline">
             Go to homepage
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -69,9 +69,9 @@ export default async function JoinPage({
           <p className="text-muted-foreground mb-6">
             This invite link has expired. Please ask for a new invite.
           </p>
-          <a href="/" className="text-primary hover:underline">
+          <Link href="/" className="text-primary hover:underline">
             Go to homepage
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -86,9 +86,9 @@ export default async function JoinPage({
           <p className="text-muted-foreground mb-6">
             This invite link has been used the maximum number of times. Please ask for a new invite.
           </p>
-          <a href="/" className="text-primary hover:underline">
+          <Link href="/" className="text-primary hover:underline">
             Go to homepage
-          </a>
+          </Link>
         </div>
       </div>
     );

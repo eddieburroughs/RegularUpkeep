@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
@@ -37,6 +37,78 @@ const statusColors: Record<BookingStatus, "default" | "secondary" | "destructive
   completed: "default",
   cancelled: "destructive",
 };
+
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(":");
+  const h = parseInt(hours);
+  const ampm = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 || 12;
+  return `${hour}:${minutes} ${ampm}`;
+};
+
+const EmptyState = ({ message }: { message: string }) => (
+  <div className="text-center py-12 text-muted-foreground">
+    <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-30" />
+    <p>{message}</p>
+  </div>
+);
+
+const JobCard = ({ booking }: { booking: BookingWithDetails }) => (
+  <Link
+    href={`/provider/jobs/${booking.id}`}
+    className="block"
+  >
+    <Card className="hover:border-primary/50 transition-colors">
+      <CardContent className="flex items-center gap-4 py-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-medium truncate">
+              {booking.services?.name || "Service"}
+            </span>
+            <Badge variant={statusColors[booking.status]}>
+              {booking.status.replace("_", " ")}
+            </Badge>
+          </div>
+
+          <div className="space-y-1 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>
+                {new Date(booking.scheduled_date).toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              <Clock className="h-4 w-4 ml-2" />
+              <span>{formatTime(booking.scheduled_time)}</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              <span className="truncate">
+                {booking.properties?.nickname || booking.service_address}
+              </span>
+            </div>
+          </div>
+
+          {booking.customer_notes && (
+            <p className="mt-2 text-sm text-muted-foreground line-clamp-1">
+              Note: {booking.customer_notes}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-col items-end gap-2">
+          <span className="font-semibold">
+            ${((booking.invoice_cents || booking.total_amount) / 100).toFixed(0)}
+          </span>
+          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+        </div>
+      </CardContent>
+    </Card>
+  </Link>
+);
 
 export default async function ProviderJobsPage() {
   const supabase = await createClient();
@@ -84,80 +156,6 @@ export default async function ProviderJobsPage() {
   );
 
   const completedJobs = bookings.filter((b) => b.status === "completed");
-
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":");
-    const h = parseInt(hours);
-    const ampm = h >= 12 ? "PM" : "AM";
-    const hour = h % 12 || 12;
-    return `${hour}:${minutes} ${ampm}`;
-  };
-
-  const JobCard = ({ booking }: { booking: BookingWithDetails }) => (
-    <Link
-      href={`/provider/jobs/${booking.id}`}
-      className="block"
-    >
-      <Card className="hover:border-primary/50 transition-colors">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <p className="font-semibold truncate">
-                  {booking.services?.name || "Service"}
-                </p>
-                <Badge variant={statusColors[booking.status]} className="shrink-0">
-                  {booking.status.replace("_", " ")}
-                </Badge>
-              </div>
-
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    {new Date(booking.scheduled_date).toLocaleDateString("en-US", {
-                      weekday: "short",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </span>
-                  <Clock className="h-4 w-4 ml-2" />
-                  <span>{formatTime(booking.scheduled_time)}</span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  <span className="truncate">
-                    {booking.properties?.nickname || booking.service_address}
-                  </span>
-                </div>
-              </div>
-
-              {booking.customer_notes && (
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-1">
-                  Note: {booking.customer_notes}
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-col items-end gap-2">
-              <span className="font-semibold">
-                ${((booking.invoice_cents || booking.total_amount) / 100).toFixed(0)}
-              </span>
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-
-  const EmptyState = ({ message }: { message: string }) => (
-    <div className="text-center py-12 text-muted-foreground">
-      <CheckCircle2 className="h-12 w-12 mx-auto mb-4 opacity-30" />
-      <p>{message}</p>
-    </div>
-  );
 
   return (
     <div className="space-y-6">

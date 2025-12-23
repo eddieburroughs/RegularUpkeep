@@ -119,6 +119,7 @@ export default function EditHandymanProfilePage() {
     const supabase = createClient();
 
     // Update handyman record
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: handymanError } = await (supabase.from("handymen") as any)
       .update({
         bio: formData.bio || null,
@@ -134,6 +135,7 @@ export default function EditHandymanProfilePage() {
     }
 
     // Update profile
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error: profileError } = await (supabase.from("profiles") as any)
       .update({
         full_name: formData.full_name,

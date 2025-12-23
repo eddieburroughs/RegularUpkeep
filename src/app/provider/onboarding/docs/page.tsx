@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,7 +44,6 @@ const requiredDocs = [
 
 export default function ProviderDocsPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState<DocType | null>(null);
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDoc[]>([]);
   const [provider, setProvider] = useState<{ id: string; verification_status: string } | null>(null);

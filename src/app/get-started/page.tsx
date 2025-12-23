@@ -40,7 +40,7 @@ export default function GetStartedPage() {
                 <Home className="h-7 w-7 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg">I'm a Homeowner</h3>
+                <h3 className="font-semibold text-lg">I&apos;m a Homeowner</h3>
                 <p className="text-sm text-muted-foreground">
                   Manage your home maintenance, get reminders, and find trusted providers
                 </p>
@@ -56,7 +56,7 @@ export default function GetStartedPage() {
                 <Briefcase className="h-7 w-7 text-primary" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg">I'm a Service Provider</h3>
+                <h3 className="font-semibold text-lg">I&apos;m a Service Provider</h3>
                 <p className="text-sm text-muted-foreground">
                   Join our network, get quality leads, and grow your business
                 </p>

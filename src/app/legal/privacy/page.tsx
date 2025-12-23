@@ -132,7 +132,7 @@ export default function PrivacyPage() {
 
             <Separator className="my-8" />
 
-            <h2>Children's Privacy</h2>
+            <h2>Children&apos;s Privacy</h2>
             <p>
               Our services are not intended for individuals under the age of 18. We do not knowingly collect personal information from children.
             </p>
@@ -141,7 +141,7 @@ export default function PrivacyPage() {
 
             <h2>Changes to This Policy</h2>
             <p>
-              We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the "Last updated" date.
+              We may update this Privacy Policy from time to time. We will notify you of any material changes by posting the new policy on this page and updating the &quot;Last updated&quot; date.
             </p>
 
             <Separator className="my-8" />

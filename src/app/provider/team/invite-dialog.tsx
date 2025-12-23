@@ -70,7 +70,8 @@ export function InviteDialog({ providerId }: InviteDialogProps) {
     const inviteCode = generateInviteCode();
     const maxUses = formData.maxUses === "unlimited" ? null : parseInt(formData.maxUses);
 
-    const { data, error: insertError } = await (supabase as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: insertError } = await (supabase as any)
       .from("provider_invites")
       .insert({
         provider_id: providerId,

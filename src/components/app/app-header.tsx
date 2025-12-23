@@ -13,7 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import type { Property, Profile } from "@/types/database";
+import type { Property } from "@/types/database";
 import { createClient } from "@/lib/supabase/client";
 
 interface AppHeaderProps {
@@ -86,6 +86,8 @@ export function AppHeader({
   // Load selected user details when selectedUserId changes
   useEffect(() => {
     if (!selectedUserId) {
+      // Reset selected user when no user is selected (intentional state sync)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedUser(null);
       return;
     }

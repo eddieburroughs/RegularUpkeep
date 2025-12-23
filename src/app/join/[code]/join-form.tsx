@@ -62,6 +62,7 @@ export function JoinForm({ invite, provider, isLoggedIn, userEmail }: JoinFormPr
     }
 
     // Use the invite
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error: rpcError } = await (supabase as any).rpc("use_provider_invite", {
       p_invite_code: invite.invite_code,
       p_profile_id: user.id,
@@ -127,6 +128,7 @@ export function JoinForm({ invite, provider, isLoggedIn, userEmail }: JoinFormPr
 
     // Update profile with phone
     if (formData.phone) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any)
         .from("profiles")
         .update({ phone: formData.phone })
@@ -134,6 +136,7 @@ export function JoinForm({ invite, provider, isLoggedIn, userEmail }: JoinFormPr
     }
 
     // Use the invite to join the team
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error: rpcError } = await (supabase as any).rpc("use_provider_invite", {
       p_invite_code: invite.invite_code,
       p_profile_id: authData.user.id,

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { Upload, X, FileText, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 import { Button } from "./button";
 
 interface FileUploadProps {

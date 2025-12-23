@@ -82,7 +82,6 @@ const starterTasks = [
 
 export default function PlanPreviewPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [propertyId, setPropertyId] = useState<string | null>(null);
   const [propertyAddress, setPropertyAddress] = useState<string>("");

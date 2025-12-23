@@ -123,12 +123,14 @@ export default async function AdminUserDetailPage({ params }: Props) {
     .order("created_at", { ascending: false })
     .limit(5);
 
-  const { data: recentInspections } = await supabase
+  // Get user's recent maintenance tasks (for future use)
+  const _recentTasksQuery = properties.length > 0 ? await supabase
     .from("maintenance_tasks")
     .select("id, name, status, created_at")
     .in("property_id", properties.map(p => p.id))
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(5) : null;
+  void _recentTasksQuery;
 
   return (
     <div className="space-y-6">

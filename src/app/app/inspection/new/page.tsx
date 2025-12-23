@@ -155,6 +155,8 @@ export default function NewInspectionPage() {
     });
   };
 
+  // Photo upload helper - reserved for future enhancement
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _uploadPhotos = async (docId: string): Promise<string[]> => {
     if (photoFiles.length === 0) return [];
 
@@ -270,8 +272,8 @@ export default function NewInspectionPage() {
       setCreatedDocId(docId);
 
       // Upload photos and update findings with real paths
-      for (const [_sectionKey, sectionFindings] of Object.entries(findings)) {
-        for (const [_itemKey, finding] of Object.entries(sectionFindings)) {
+      for (const [, sectionFindings] of Object.entries(findings)) {
+        for (const [, finding] of Object.entries(sectionFindings)) {
           const pendingPhotos = finding.photos.filter(p => p.startsWith("pending:"));
           if (pendingPhotos.length > 0) {
             // We'd need the actual files here - simplified for now

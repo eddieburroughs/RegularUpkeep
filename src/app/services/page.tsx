@@ -26,7 +26,7 @@ export default function ServicesPage() {
             </h2>
             <div className="mt-8 space-y-6 text-left">
               <div className="bg-card p-6 rounded-lg border border-border/50">
-                <h3 className="font-semibold text-lg">We Don't Do the Work Ourselves</h3>
+                <h3 className="font-semibold text-lg">We Don&apos;t Do the Work Ourselves</h3>
                 <p className="mt-2 text-muted-foreground">
                   RegularUpkeep is a maintenance management service, not a contractor. We help you stay organized, remind you about important tasks, and connect you with qualified local professionals when you need work done.
                 </p>
@@ -40,7 +40,7 @@ export default function ServicesPage() {
               <div className="bg-card p-6 rounded-lg border border-border/50">
                 <h3 className="font-semibold text-lg">Transparent Pricing</h3>
                 <p className="mt-2 text-muted-foreground">
-                  You pay our membership fee for the platform and coordination services. Provider costs are separate—you'll get quotes directly from providers and pay them for their work.
+                  You pay our membership fee for the platform and coordination services. Provider costs are separate—you&apos;ll get quotes directly from providers and pay them for their work.
                 </p>
               </div>
             </div>

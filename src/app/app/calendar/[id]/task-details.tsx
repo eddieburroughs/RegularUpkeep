@@ -79,7 +79,7 @@ interface TaskDetailsProps {
   properties: Property[];
 }
 
-export function TaskDetails({ task, properties }: TaskDetailsProps) {
+export function TaskDetails({ task }: Omit<TaskDetailsProps, 'properties'>) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

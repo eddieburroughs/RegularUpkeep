@@ -62,6 +62,7 @@ export function HandymanShell({ children, handyman, provider }: HandymanShellPro
     setUpdating(true);
 
     const supabase = createClient();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await (supabase.from("handymen") as any)
       .update({ is_available: checked })
       .eq("id", handyman.id);

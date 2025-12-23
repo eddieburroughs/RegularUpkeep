@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/popover";
 import {
   Briefcase,
-  DollarSign,
   User,
   Bell,
   Power,

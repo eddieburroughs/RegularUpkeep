@@ -21,7 +21,7 @@ export default function TermsPage() {
         <div className="container-marketing">
           <div className="max-w-3xl mx-auto prose prose-slate dark:prose-invert">
             <p className="lead">
-              Welcome to {brand.name}. These Terms of Service ("Terms") govern your use of our website and home maintenance management services. By using our services, you agree to these Terms.
+              Welcome to {brand.name}. These Terms of Service (&quot;Terms&quot;) govern your use of our website and home maintenance management services. By using our services, you agree to these Terms.
             </p>
 
             <Separator className="my-8" />
@@ -140,7 +140,7 @@ export default function TermsPage() {
 
             <h2>8. Disclaimer of Warranties</h2>
             <p>
-              Our services are provided "as is" and "as available" without warranties of any kind, either express or implied. We do not warrant that our services will be uninterrupted, error-free, or completely secure.
+              Our services are provided &quot;as is&quot; and &quot;as available&quot; without warranties of any kind, either express or implied. We do not warrant that our services will be uninterrupted, error-free, or completely secure.
             </p>
             <p>
               We do not endorse or guarantee the work of any service provider, and any reliance on provider recommendations is at your own risk.
@@ -157,7 +157,7 @@ export default function TermsPage() {
 
             <h2>10. Changes to Terms</h2>
             <p>
-              We may modify these Terms at any time. We will provide notice of material changes by posting the updated Terms on our website and updating the "Last updated" date. Your continued use of our services after changes constitutes acceptance of the modified Terms.
+              We may modify these Terms at any time. We will provide notice of material changes by posting the updated Terms on our website and updating the &quot;Last updated&quot; date. Your continued use of our services after changes constitutes acceptance of the modified Terms.
             </p>
 
             <Separator className="my-8" />

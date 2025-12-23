@@ -90,7 +90,7 @@ export default function PricingPage() {
             Not Sure Which Plan Is Right?
           </h2>
           <p className="mt-4 text-muted-foreground max-w-2xl mx-auto">
-            Talk to us! We'll help you figure out the best fit based on your properties and how much hands-on help you want.
+            Talk to us! We&apos;ll help you figure out the best fit based on your properties and how much hands-on help you want.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button asChild size="lg">
