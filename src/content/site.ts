@@ -6,7 +6,7 @@
 // Brand Constants
 export const brand = {
   name: "RegularUpkeep",
-  tagline: "One place to manage home maintenance",
+  tagline: "AI-powered home maintenance made simple",
   phone: "888-502-UPKEEP (8753)",
   phoneHref: "tel:+18885028753",
   email: "info@regularupkeep.com",
@@ -70,6 +70,7 @@ export const pricing: {
         "Up to 2 properties",
         "Maintenance calendar & reminders",
         "Seasonal task checklists",
+        "AI photo analysis for service requests",
         "Provider recommendations",
         "Email support",
         "Basic maintenance records",
@@ -84,11 +85,12 @@ export const pricing: {
       features: [
         "Up to 4 properties",
         "Everything in Essential",
+        "AI Maintenance Coach recommendations",
+        "Smart seasonal maintenance plans",
         "Priority scheduling assistance",
         "Concierge coordination",
         "Phone & email support",
         "Provider quality follow-up",
-        "Annual home maintenance review",
       ],
       cta: "Get Started",
       popular: true,
@@ -102,11 +104,12 @@ export const pricing: {
       features: [
         "Up to 8 properties",
         "Everything in Standard",
+        "Priority AI processing",
+        "Detailed AI property insights",
         "White-glove coordination",
         "Emergency priority line",
         "Dedicated account manager",
         "Quarterly property check-ins",
-        "Vendor payment coordination",
         "Full maintenance documentation",
       ],
       cta: "Get Started",
@@ -255,14 +258,14 @@ export const howItWorks: HowItWorksStep[] = [
   },
   {
     step: 2,
-    title: "Get Reminders & Recommendations",
-    description: "Receive timely reminders for seasonal tasks and preventive maintenance. We'll recommend vetted local pros when you need work done, taking the guesswork out of finding reliable help.",
-    icon: "Bell",
+    title: "Get Smart Recommendations",
+    description: "Our AI analyzes your home and provides personalized maintenance recommendations. Snap a photo of any issue and get instant analysis with suggested next steps and matched providers.",
+    icon: "Sparkles",
   },
   {
     step: 3,
     title: "We Handle the Details",
-    description: "Need help scheduling or coordinating? Our concierge team handles communication with providers, follows up on quality, and keeps your maintenance records organized in one place.",
+    description: "Need help scheduling or coordinating? Our concierge team and AI tools handle communication with providers, follow up on quality, and keep your maintenance records organized.",
     icon: "CheckCircle",
   },
 ];
@@ -275,6 +278,16 @@ export interface Feature {
 }
 
 export const features: Feature[] = [
+  {
+    title: "AI-Powered Photo Analysis",
+    description: "Snap a photo of any issue and get instant AI analysis with smart suggestions for next steps and provider matching.",
+    icon: "Sparkles",
+  },
+  {
+    title: "Smart Maintenance Coach",
+    description: "Personalized seasonal maintenance recommendations based on your home's age, systems, and local climate.",
+    icon: "Brain",
+  },
   {
     title: "Maintenance Calendar",
     description: "Never miss important maintenance with smart reminders tailored to your home and local climate.",
@@ -395,6 +408,22 @@ export const faqs: FAQ[] = [
     answer: "Yes, we take data security seriously. Your property information is encrypted and stored securely. We never sell your personal data to third parties. See our Privacy Policy for complete details on how we protect your information.",
   },
   {
+    question: "How does the AI photo analysis work?",
+    answer: "When you submit a service request, you can upload photos of the issue. Our AI analyzes the images to identify the problem, suggest possible causes, and recommend appropriate next steps. This helps providers understand the job before they arrive and gives you smarter recommendations.",
+  },
+  {
+    question: "What is the AI Maintenance Coach?",
+    answer: "The AI Maintenance Coach provides personalized maintenance recommendations based on your home's specific characteristics—age, location, climate, and installed systems. It suggests seasonal tasks, priority repairs, and preventive maintenance to help you stay ahead of issues.",
+  },
+  {
+    question: "Is my data private when using AI features?",
+    answer: "Absolutely. We don't store raw text from your conversations beyond what's needed for the service. Sensitive information is hashed for privacy, and AI-generated data is automatically cleaned up after 180 days. You can also disable AI features entirely in your account settings.",
+  },
+  {
+    question: "Can I turn off AI features?",
+    answer: "Yes, you have full control. In your profile settings, you'll find an 'Enable AI helper features' toggle. When disabled, you'll still get all the core features—just without AI-powered analysis and recommendations.",
+  },
+  {
     question: "How do I get started?",
     answer: "Click 'Get Started' to create your account. You'll add your property details, and we'll set up your personalized maintenance calendar. Most members are fully set up within 15 minutes.",
   },
@@ -418,24 +447,34 @@ export const providerBenefits: ProviderBenefit[] = [
     icon: "TrendingUp",
   },
   {
+    title: "AI-Assisted Estimates",
+    description: "Get AI-generated estimate drafts based on job details and photos. Review, adjust, and send professional quotes faster.",
+    icon: "Sparkles",
+  },
+  {
+    title: "Smart Customer Insights",
+    description: "AI-powered CRM suggestions help you follow up at the right time and identify upsell opportunities.",
+    icon: "Brain",
+  },
+  {
     title: "Quality Customers",
     description: "Our members are engaged homeowners who value maintenance and are ready to invest in their properties.",
     icon: "Star",
   },
   {
     title: "Less Admin Work",
-    description: "We handle initial coordination and scheduling. You focus on what you do best\u2014the actual work.",
+    description: "AI helps draft professional messages and job summaries. We handle coordination so you focus on the work.",
     icon: "ClipboardCheck",
+  },
+  {
+    title: "Clear Job Briefs",
+    description: "Receive AI-generated job briefs with photo analysis and issue summaries before you arrive. No surprises.",
+    icon: "FileText",
   },
   {
     title: "Featured Placement",
     description: "Get a profile in our provider directory with your service area, specialties, and member reviews.",
     icon: "Award",
-  },
-  {
-    title: "Clear Communication",
-    description: "Know exactly what the job entails before you show up. No surprises, no wasted trips.",
-    icon: "MessageSquare",
   },
   {
     title: "Reliable Payments",
@@ -446,10 +485,12 @@ export const providerBenefits: ProviderBenefit[] = [
 
 // SEO Metadata
 export const seo = {
-  title: "RegularUpkeep | Home Maintenance Made Simple",
-  description: "One place to manage all your home maintenance. Get reminders, find trusted providers, and let our concierge handle the coordination. Serving Eastern North Carolina.",
+  title: "RegularUpkeep | AI-Powered Home Maintenance Made Simple",
+  description: "One place to manage all your home maintenance. Get AI-powered recommendations, smart photo analysis, find trusted providers, and let our concierge handle the coordination. Serving Eastern North Carolina.",
   keywords: [
     "home maintenance",
+    "AI home maintenance",
+    "smart home care",
     "property management",
     "home repairs",
     "maintenance reminders",
@@ -457,6 +498,8 @@ export const seo = {
     "home services",
     "property maintenance",
     "North Carolina home services",
+    "AI property management",
+    "smart maintenance",
   ],
   openGraph: {
     type: "website",
