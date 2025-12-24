@@ -358,6 +358,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `docs/error-center-playbook.md` | **Support + Engineering** | 55 error codes, user/admin fixes, escalation matrix, Claude Code fix template, JSON + YAML exports |
 | `docs/release-notes-system.md` | **Product Ops** | Release notes template, change taxonomy, KB update workflow, versioning rules, regression checklist, JSON automation |
 | `docs/policies-pack.md` | **All Users + Support** | 8 policies (cancellation, no-show, disputes, refunds, emergency, reviews, quality), canned scripts, chatbot KB |
+| `docs/first-30-days-success-plan.md` | **Customer Success** | 5 role-based playbooks (homeowner, portfolio, provider, handyman, admin), week-by-week tasks, KPIs, chatbot KB |
 | `docs/homeowner-handbook.md` | Homeowners (1-2 properties) | User guide, FAQ, glossary, chatbot KB |
 | `docs/multi-property-handbook.md` | Portfolio owners (3+ properties) | Scaling, delegation, reporting, chatbot KB |
 | `docs/provider-handbook.md` | Service companies | Jobs, estimates, AI copilot, tiers, chatbot KB |
@@ -394,6 +395,12 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 ## Recent Changes Log
 
 ### 2025-12-24 (AI & Documentation)
+- **First 30 Days Success Plan**: Role-based onboarding playbooks
+  - `docs/first-30-days-success-plan.md` — 5 roles, 4 weeks each
+  - Homeowner (1-2 homes), Portfolio Owner (3+), Provider, Handyman, Admin
+  - Each week: goals, tasks, time estimates, success criteria, common pitfalls
+  - "If You Only Do 5 Things" priority lists, KPIs, 10+ FAQ per role
+  - 25 KB chunks + complete YAML intent map with role routing
 - **Policies Pack**: Comprehensive marketplace policies for fair, simple dispute reduction
   - `docs/policies-pack.md` — 8 policies with user-facing + internal enforcement versions
   - Cancellation, No-Show, Change Order, Dispute, Refund, Emergency, Reviews, Quality
