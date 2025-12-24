@@ -73,10 +73,25 @@ export function AdminDecisionForm({
       };
 
       if (entityType === "dispute") {
-        endpoint = `/api/admin/disputes/${entityId}/decision`;
-        if (decision === "partial_refund" && refundAmount) {
-          body.refundAmount = Math.round(parseFloat(refundAmount) * 100); // Convert to cents
+        endpoint = `/api/admin/disputes/${entityId}/resolve`;
+        // Map decision values to API resolution types
+        let resolution: string;
+        if (decision === "resolved_full_refund") {
+          resolution = "customer_favor";
+          body.refundAmount = disputedAmount; // Full refund
+        } else if (decision === "resolved_partial_refund") {
+          resolution = "split";
+          body.refundAmount = refundAmount ? Math.round(parseFloat(refundAmount) * 100) : 0;
+        } else if (decision === "resolved_no_refund" || decision === "reject") {
+          resolution = "provider_favor";
+        } else {
+          resolution = decision; // escalate or other
         }
+        body = {
+          resolution,
+          refundAmount: body.refundAmount,
+          notes,
+        };
       } else if (entityType === "fraud_review") {
         endpoint = "/api/admin/fraud-review";
         body = {
