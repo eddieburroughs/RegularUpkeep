@@ -273,17 +273,31 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 - `/etc/nginx/sites-enabled/regularupkeep.com.conf` - Marketing (static)
 - `/etc/nginx/sites-enabled/api.regularupkeep.com.conf` - Supabase API
 
-## Pricing Plans (from site.ts)
+## Pricing Model (Freemium)
 
-| Plan | Price | Properties | Key Features |
-|------|-------|------------|--------------|
-| Essential | $19/mo | Up to 2 | Calendar, reminders, recommendations |
-| Standard | $39/mo | Up to 4 | + Concierge, priority scheduling |
-| Premium | $79/mo | Up to 8 | + Dedicated manager, emergency line |
+### Homeowners
+| Item | Price |
+|------|-------|
+| Base plan (1-2 homes) | FREE |
+| Additional homes | +$2.50/home/mo |
+| Tenant access | +$2.50/seat/mo |
+| Sponsor-free experience | $25/year |
 
-Add-ons:
-- Additional Properties: +$5/property/mo
-- Rental Property Add-on: +$5/rental/mo
+### Providers
+| Tier | Price | Requirements |
+|------|-------|--------------|
+| Verified | $10/mo | Background check, insurance, license |
+| Preferred | +$15/mo | Verified + 4.5 rating, 10 jobs, <5% disputes |
+
+### Sponsors
+- Local Sponsor: $250/year
+- Realtor Referral: 50 qualified referrals = free sponsor year
+
+### Marketplace Fees
+- Provider commission: 8% of job total
+- Diagnostic fees: $49-$89 by category (credited toward job)
+- Estimate buffer: 15% authorization hold
+- Dispute window: 72 hours after invoice approval
 
 ## Service Categories
 
@@ -303,9 +317,22 @@ Add-ons:
 |------|---------|
 | `src/content/site.ts` | ALL marketing content, pricing, FAQs, services |
 | `src/lib/supabase/middleware.ts` | Auth route protection |
+| `src/lib/config/admin-config.ts` | Database-backed pricing/config (no redeploy needed) |
+| `src/lib/stripe/` | Stripe integration (Connect, payments, subscriptions) |
 | `src/types/database.ts` | Database schema types |
 | `next.config.ts` | Security headers, image domains |
 | `src/app/layout.tsx` | Root layout, metadata, fonts |
+
+## Cron Jobs
+
+| Endpoint | Schedule | Purpose |
+|----------|----------|---------|
+| `/api/cron/process-transfers` | Hourly | Process provider payouts after 72h dispute window |
+| `/api/cron/provider-qualification` | Weekly | Check providers against Preferred tier thresholds |
+| `/api/cron/referral-qualification` | Daily | Qualify referrals, award free sponsor years |
+| `/api/cron/ai-cleanup` | Daily | Clean up old AI data per retention policy |
+
+All cron jobs require `Authorization: Bearer $CRON_SECRET` header.
 
 ## Common Tasks
 
@@ -325,6 +352,23 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ## Recent Changes Log
 
+### 2025-12-24
+- **Pricing Model**: Changed from tiered ($19/$39/$79) to freemium (2 homes free, $2.50/extra)
+- **Marketplace Payment Flow**: Implemented full booking lifecycle with Stripe Connect
+  - Diagnostic fee at service request
+  - Estimate authorization with 15% buffer
+  - Change orders for scope changes >10%
+  - Invoice approval with manual capture
+  - 72-hour dispute window before provider transfer
+- **Change Order System**: Provider can submit change orders, customer approves/rejects
+- **Cron Jobs**: Added process-transfers, provider-qualification, referral-qualification
+- **Referral Tracking**: Sponsor referral codes with anti-fraud qualification rules
+- **Admin Dispute Resolution**: Full resolution with refunds/transfers
+
+### 2025-12-23
+- Added AI ops hardening (rate limiting, cost tracking, retention policies)
+- Added AI features: Maintenance Coach, CRM Copilot, Sponsor Copy, Admin Triage
+
 ### 2025-12-20
 - Fixed CSP blocking API calls (added api.regularupkeep.com to connect-src)
 - Synced favicon.ico and apple-touch-icon.png from marketing site
@@ -336,4 +380,4 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ---
 
-*Last updated: 2025-12-20*
+*Last updated: 2025-12-24*
