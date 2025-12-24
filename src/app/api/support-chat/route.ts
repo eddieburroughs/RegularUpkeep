@@ -385,7 +385,8 @@ function detectIntent(message: string): string {
   if (/feature|request|suggestion|would be nice/.test(lower)) {
     return INTENTS.FEATURE;
   }
-  if (/how do i|how to|where|can i|help me|what is|what's|what are|what do i|what should i|what can|what does|what services|explain|tell me about|do you offer|does regularupkeep|leaking|emergency|urgent/.test(lower)) {
+  // General questions - broad pattern to catch most informational queries
+  if (/^what |^how |^where |^when |^why |^which |^can i|^do i|help me|explain|tell me|required|requirements|need to know|works\?|work\?/.test(lower)) {
     return INTENTS.HOW_TO;
   }
   if (/hello|hi|hey|good morning|good afternoon/.test(lower)) {
