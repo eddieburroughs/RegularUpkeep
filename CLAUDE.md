@@ -7,9 +7,10 @@ This file provides comprehensive context for Claude Code when working on this pr
 **RegularUpkeep** is a home maintenance platform connecting homeowners with service providers. Think of it as a concierge service that helps homeowners stay on top of maintenance with reminders, trusted provider connections, and coordination support.
 
 ### Business Model
-- Homeowners pay a monthly subscription ($19-$79/month)
-- Providers join the network to receive quality leads
+- Homeowners get 1-2 homes FREE, pay $2.50/mo per additional home
+- Providers join the network to receive quality leads (8% commission on jobs)
 - RegularUpkeep coordinates between homeowners and providers
+- Platform fees on bookings ($6-$25 based on job size)
 
 ### Service Area
 Eastern North Carolina (and growing)
@@ -26,7 +27,7 @@ Eastern North Carolina (and growing)
 
 ```
 Name: RegularUpkeep
-Tagline: "One place to manage home maintenance"
+Tagline: "AI-powered home maintenance made simple"
 Phone: 888-502-UPKEEP (8753)
 Email: info@regularupkeep.com
 Website: https://regularupkeep.com
@@ -51,14 +52,15 @@ App: https://app.regularupkeep.com
 
 | Domain | Purpose | Port | PM2 Process |
 |--------|---------|------|-------------|
-| `regularupkeep.com` | Marketing site (static) | - | `regularupkeep-app` (3001) |
+| `regularupkeep.com` | Marketing site | 3002 | `regularupkeep-main-app` |
 | `app.regularupkeep.com` | Main application | 3002 | `regularupkeep-main-app` |
 | `api.regularupkeep.com` | Supabase API (Kong) | - | Docker containers |
 
+**Note:** Both `regularupkeep.com` and `app.regularupkeep.com` are served by the same Next.js app. Deploying once updates both sites.
+
 ### Server Paths
-- **Main App Code**: `/root/RegularUpkeep-app/`
-- **Marketing App Code**: `/home/regularupkeep/apps/regularupkeep-app/`
-- **Marketing Static Files**: `/home/regularupkeep/htdocs/regularupkeep.com/`
+- **App Code**: `/root/RegularUpkeep-app/` (serves both domains)
+- **Static Files (legacy)**: `/home/regularupkeep/htdocs/regularupkeep.com/` (archived)
 - **Nginx Configs**: `/etc/nginx/sites-enabled/`
 - **PM2 Logs**: `/root/.pm2/logs/`
 
@@ -218,23 +220,14 @@ Social OAuth (Google, Facebook, Apple) needs to be:
 
 ## Deployment Commands
 
-### Main App (app.regularupkeep.com)
+### Deploy (Both Sites)
 ```bash
 cd /root/RegularUpkeep-app
 npm run build
 pm2 restart regularupkeep-main-app
 ```
 
-### Marketing Site (regularupkeep.com)
-```bash
-# Update source
-cd /home/regularupkeep/apps/regularupkeep-app
-npm run build
-pm2 restart regularupkeep-app
-
-# If static files need updating
-# Edit files in /home/regularupkeep/htdocs/regularupkeep.com/
-```
+This deploys to both `regularupkeep.com` and `app.regularupkeep.com` since they share the same Next.js app.
 
 ### Full Deploy with Backup
 ```bash
@@ -250,7 +243,6 @@ pm2 restart regularupkeep-app
 ### View Logs
 ```bash
 pm2 logs regularupkeep-main-app --lines 50
-pm2 logs regularupkeep-app --lines 50
 ```
 
 ## Configuration Notes
@@ -269,8 +261,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 ```
 
 ### Nginx Configs
-- `/etc/nginx/sites-enabled/app.regularupkeep.com.conf` - Main app
-- `/etc/nginx/sites-enabled/regularupkeep.com.conf` - Marketing (static)
+- `/etc/nginx/sites-enabled/app.regularupkeep.com.conf` - Main app (proxy to 3002)
+- `/etc/nginx/sites-enabled/regularupkeep.com.conf` - Marketing (proxy to 3002)
 - `/etc/nginx/sites-enabled/api.regularupkeep.com.conf` - Supabase API
 
 ## Pricing Model (Freemium)
@@ -351,6 +343,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `src/lib/supabase/middleware.ts` | Auth route protection |
 | `src/lib/config/admin-config.ts` | Database-backed pricing/config (no redeploy needed) |
 | `src/lib/stripe/` | Stripe integration (Connect, payments, subscriptions) |
+| `src/lib/ai/` | AI gateway, task definitions, provider routing |
+| `docs/homeowner-handbook.md` | User documentation + chatbot KB |
 | `src/types/database.ts` | Database schema types |
 | `next.config.ts` | Security headers, image domains |
 | `src/app/layout.tsx` | Root layout, metadata, fonts |
@@ -383,6 +377,19 @@ Edit `src/content/site.ts` - it contains all pricing, FAQs, services, testimonia
 Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ## Recent Changes Log
+
+### 2025-12-24 (AI & Documentation)
+- **Hybrid AI Mode**: Implemented per-task routing between Claude 4.5 and OpenAI
+  - OpenAI (gpt-4o/gpt-4o-mini): Vision tasks (photo analysis, intake classification)
+  - Claude (sonnet/haiku/opus): Long-form text (estimates, messages, disputes, CRM)
+  - Fallback model per task for resilience
+- **Homeowner Handbook**: Added `docs/homeowner-handbook.md` with:
+  - Complete user guide (30 FAQ, 22 glossary terms)
+  - Chatbot KB add-on (25 JSON chunks, 25 FAQ pairs, YAML intent map)
+- **Unified Deployment**: Both domains now served from single Next.js app
+  - `regularupkeep.com` and `app.regularupkeep.com` → localhost:3002
+  - Single PM2 process (`regularupkeep-main-app`)
+  - Marketing app archived to `/home/regularupkeep/apps/regularupkeep-app.archived-*`
 
 ### 2025-12-24 (Profit + Risk Rails)
 - **Payment Flow Rails**: 20% buffer (capped $250), 12%/$75 change order triggers, 24h auto-approve
@@ -428,4 +435,4 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ---
 
-*Last updated: 2025-12-24*
+*Last updated: 2025-12-24 (AI & Documentation update)*
