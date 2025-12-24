@@ -359,6 +359,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `docs/release-notes-system.md` | **Product Ops** | Release notes template, change taxonomy, KB update workflow, versioning rules, regression checklist, JSON automation |
 | `docs/policies-pack.md` | **All Users + Support** | 8 policies (cancellation, no-show, disputes, refunds, emergency, reviews, quality), canned scripts, chatbot KB |
 | `docs/first-30-days-success-plan.md` | **Customer Success** | 5 role-based playbooks (homeowner, portfolio, provider, handyman, admin), week-by-week tasks, KPIs, chatbot KB |
+| `docs/support-chatbot-design.md` | **Support + Engineering** | Chatbot personality, role routing, triage framework, 9 conversation flows, escalation rules, ticket schema, safety guardrails, 50 QA tests, YAML flows + JSON intents |
 | `docs/homeowner-handbook.md` | Homeowners (1-2 properties) | User guide, FAQ, glossary, chatbot KB |
 | `docs/multi-property-handbook.md` | Portfolio owners (3+ properties) | Scaling, delegation, reporting, chatbot KB |
 | `docs/provider-handbook.md` | Service companies | Jobs, estimates, AI copilot, tiers, chatbot KB |
@@ -395,6 +396,18 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 ## Recent Changes Log
 
 ### 2025-12-24 (AI & Documentation)
+- **Support Chatbot Design**: Complete chatbot implementation guide
+  - `docs/support-chatbot-design.md` — Personality, flows, guardrails, exports
+  - Personality & Tone Guide: Voice principles, do/don't examples, emotional matrix
+  - Role Routing: Support Code auth, 5 roles, fallback identification
+  - Triage Framework: Emergency detection, urgency scoring, issue routing
+  - 9 Core Conversation Flows: Login, notifications, uploads, booking, disputes, refunds, etc.
+  - Escalation Rules: Hard/soft triggers, minimum data requirements, handoff protocol
+  - Ticket Intake Schema: JSON schema with 30+ fields, validation rules
+  - KB Linking: Document-intent mapping, role-to-handbook routing, snippet insertion
+  - Safety Guardrails: Emergency protocols (gas, fire, flood, electrical, CO), privacy rules
+  - 50 QA Regression Tests + 10 edge case tests
+  - Structured exports: YAML flow library, JSON intent catalog, ticket schema, regression tests
 - **First 30 Days Success Plan**: Role-based onboarding playbooks
   - `docs/first-30-days-success-plan.md` — 5 roles, 4 weeks each
   - Homeowner (1-2 homes), Portfolio Owner (3+), Provider, Handyman, Admin
