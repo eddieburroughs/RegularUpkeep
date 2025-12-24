@@ -344,10 +344,18 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `src/lib/config/admin-config.ts` | Database-backed pricing/config (no redeploy needed) |
 | `src/lib/stripe/` | Stripe integration (Connect, payments, subscriptions) |
 | `src/lib/ai/` | AI gateway, task definitions, provider routing |
-| `docs/homeowner-handbook.md` | User documentation + chatbot KB |
 | `src/types/database.ts` | Database schema types |
 | `next.config.ts` | Security headers, image domains |
 | `src/app/layout.tsx` | Root layout, metadata, fonts |
+
+### Documentation (Handbooks)
+| File | Audience | Contents |
+|------|----------|----------|
+| `docs/homeowner-handbook.md` | Homeowners (1-2 properties) | User guide, FAQ, glossary, chatbot KB |
+| `docs/multi-property-handbook.md` | Portfolio owners (3+ properties) | Scaling, delegation, reporting, chatbot KB |
+| `docs/provider-handbook.md` | Service companies | Jobs, estimates, AI copilot, tiers, chatbot KB |
+| `docs/handyman-handbook.md` | Individual contractors | Availability, jobs, earnings, chatbot KB |
+| `docs/admin-handbook.md` | Platform admins | Operations, disputes, config, KPIs, chatbot KB |
 
 ## Cron Jobs
 
@@ -383,9 +391,13 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
   - OpenAI (gpt-4o/gpt-4o-mini): Vision tasks (photo analysis, intake classification)
   - Claude (sonnet/haiku/opus): Long-form text (estimates, messages, disputes, CRM)
   - Fallback model per task for resilience
-- **Homeowner Handbook**: Added `docs/homeowner-handbook.md` with:
-  - Complete user guide (30 FAQ, 22 glossary terms)
-  - Chatbot KB add-on (25 JSON chunks, 25 FAQ pairs, YAML intent map)
+- **Complete Handbook Suite**: Five role-based handbooks with chatbot KB add-ons:
+  - `docs/homeowner-handbook.md` — 1-2 property owners (30 FAQ, 22 glossary)
+  - `docs/multi-property-handbook.md` — Portfolio owners 3+ properties (30 FAQ, 25 glossary)
+  - `docs/provider-handbook.md` — Service companies (25 FAQ, 20+ glossary)
+  - `docs/handyman-handbook.md` — Individual contractors (25 FAQ, 23 glossary)
+  - `docs/admin-handbook.md` — Platform administrators (30 FAQ, 27 glossary)
+  - Each includes: JSON KB chunks, JSON FAQ pairs, YAML intent map for chatbot
 - **Unified Deployment**: Both domains now served from single Next.js app
   - `regularupkeep.com` and `app.regularupkeep.com` → localhost:3002
   - Single PM2 process (`regularupkeep-main-app`)
