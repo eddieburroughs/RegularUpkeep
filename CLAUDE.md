@@ -356,6 +356,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `docs/guided-tours.md` | **Product/Engineering** | 16 in-app tours, 127 steps, JSON export, instrumentation |
 | `docs/media-quality-standards.md` | **All roles + Chatbot** | Photo/video standards, job-type requirements, intake form schema, 3 JSON exports |
 | `docs/error-center-playbook.md` | **Support + Engineering** | 55 error codes, user/admin fixes, escalation matrix, Claude Code fix template, JSON + YAML exports |
+| `docs/release-notes-system.md` | **Product Ops** | Release notes template, change taxonomy, KB update workflow, versioning rules, regression checklist, JSON automation |
 | `docs/homeowner-handbook.md` | Homeowners (1-2 properties) | User guide, FAQ, glossary, chatbot KB |
 | `docs/multi-property-handbook.md` | Portfolio owners (3+ properties) | Scaling, delegation, reporting, chatbot KB |
 | `docs/provider-handbook.md` | Service companies | Jobs, estimates, AI copilot, tiers, chatbot KB |
@@ -392,6 +393,13 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 ## Recent Changes Log
 
 ### 2025-12-24 (AI & Documentation)
+- **Release Notes & Change Control System**: Product ops release management
+  - `docs/release-notes-system.md` — Release notes template, change taxonomy
+  - KB update workflow with feature-to-doc mapping matrix
+  - Versioning rules for handbooks (MAJOR.MINOR.PATCH) and KB datasets (KB-YYYY-MM-DD-VX)
+  - Doc Diff Checklist (8 sections) and Chatbot Regression Checklist (50 queries)
+  - 10 sample release notes (v2.1.1 - v2.3.0)
+  - JSON automation: release schema, doc diff, regression, KB workflow
 - **Error Center Playbook**: Comprehensive error management for support + self-service
   - `docs/error-center-playbook.md` — 55 error codes across 12 categories
   - Categories: AUTH, ONBD, PROP, BOOK, MSG, UPLD, NOTIF, PAY, ADMIN, INTG, API, UNK
