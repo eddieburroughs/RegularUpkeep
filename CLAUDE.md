@@ -75,6 +75,8 @@ App: https://app.regularupkeep.com
 │   │   ├── api/                # API routes
 │   │   ├── app/                # Homeowner dashboard
 │   │   │   ├── admin/          # Admin section
+│   │   │   │   ├── knowledge-base/ # KB article management
+│   │   │   │   └── support/        # Support ticket inbox
 │   │   │   ├── binder/         # Home binder (documents)
 │   │   │   ├── calendar/       # Maintenance calendar
 │   │   │   ├── inspection/     # Home inspections
@@ -121,6 +123,10 @@ App: https://app.regularupkeep.com
 │   │
 │   ├── components/
 │   │   ├── ui/                 # shadcn/ui components
+│   │   ├── support-chat/       # Support chatbot widget
+│   │   │   ├── chat-widget.tsx
+│   │   │   ├── chat-widget-provider.tsx
+│   │   │   └── screenshot-upload.tsx
 │   │   └── marketing/          # Marketing-specific components
 │   │       ├── header.tsx
 │   │       ├── footer.tsx
@@ -138,6 +144,14 @@ App: https://app.regularupkeep.com
 │   │   │   ├── client.ts       # Browser client
 │   │   │   ├── server.ts       # Server client
 │   │   │   └── middleware.ts   # Auth middleware
+│   │   ├── support-chat/       # Support chatbot library
+│   │   │   ├── index.ts        # Main exports
+│   │   │   ├── constants.ts    # Intents, patterns, system prompt
+│   │   │   ├── utils.ts        # Validation, masking, extraction
+│   │   │   ├── identity.ts     # Identity verification flow
+│   │   │   ├── rag.ts          # RAG retrieval with pgvector
+│   │   │   ├── tickets.ts      # Ticket creation & management
+│   │   │   └── analytics.ts    # Event tracking & metrics
 │   │   ├── validations/        # Zod schemas
 │   │   └── utils.ts            # Utility functions
 │   │
@@ -181,6 +195,14 @@ App: https://app.regularupkeep.com
 ### Documents
 - `documents` - Receipts, warranties, manuals, etc.
 - `inspections` - Home inspection reports
+
+### Support Chat
+- `conversations` - Chat sessions with users
+- `support_messages` - Individual messages in conversations
+- `support_tickets` - Escalated tickets from chatbot
+- `kb_articles` - Knowledge base articles
+- `kb_chunks` - Chunked articles with embeddings (pgvector)
+- `chat_rate_limits` - Rate limiting by IP/user/token
 
 ### Key Enums
 ```typescript
@@ -344,6 +366,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `src/lib/config/admin-config.ts` | Database-backed pricing/config (no redeploy needed) |
 | `src/lib/stripe/` | Stripe integration (Connect, payments, subscriptions) |
 | `src/lib/ai/` | AI gateway, task definitions, provider routing |
+| `src/lib/support-chat/` | Support chatbot: identity flow, RAG, tickets, analytics |
 | `src/types/database.ts` | Database schema types |
 | `next.config.ts` | Security headers, image domains |
 | `src/app/layout.tsx` | Root layout, metadata, fonts |
@@ -394,6 +417,59 @@ Edit `src/content/site.ts` - it contains all pricing, FAQs, services, testimonia
 Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ## Recent Changes Log
+
+### 2025-12-24 (Support Chatbot Implementation)
+- **Production-Ready Support Chatbot**: Full implementation with three contexts
+  - **Public Website**: FAQ/sales answers via RAG, lead capture, CTA deep links
+  - **In-App**: Role-aware help, identity verification, ticket creation, screenshot uploads
+  - **Admin Inbox**: Open Items view, ticket management, agent replies
+- **Identity Verification Flow**: 4-step state machine
+  - Asks for Customer Support Code (RU-XXXXXX-XXXX) first
+  - Fallback to name + email/phone if no code
+  - Validates against database, links to user account
+  - States: NONE → CODE_PENDING → CODE_CONFIRMED → VERIFIED
+- **RAG Knowledge Base System**:
+  - `kb_articles` table with title, slug, body, role visibility, intent tags
+  - `kb_chunks` table with pgvector embeddings (text-embedding-3-small)
+  - Automatic chunking on article save (500 chars, 100 overlap)
+  - Role-filtered search (homeowner/provider/handyman/admin/all)
+  - Citation tracking in chat responses
+- **Ticket Escalation**: Auto-creates tickets on:
+  - User requests human ("speak to someone")
+  - Billing/refund/dispute topics
+  - Bug reports or technical issues
+  - Low RAG confidence (no relevant answers)
+- **Security & Privacy**:
+  - Rate limiting by IP/user_id/public_token (10 req/min)
+  - PII masking (email, phone displayed as j***@e***.com)
+  - Sensitive data detection (SSN, credit card) with warnings
+  - Never asks for passwords or SSNs
+  - JWT tokens for public conversation persistence
+- **New Admin Pages**:
+  - `/app/admin/knowledge-base` - KB article management with stats
+  - `/app/admin/knowledge-base/[id]` - Article editor with auto-chunking
+  - `/app/admin/knowledge-base/import` - Bulk JSON import
+  - `/app/admin/support` - Open Items inbox with filters
+  - `/app/admin/support/[id]` - Ticket detail with conversation view
+- **New API Routes**:
+  - `POST /api/support-chat` - Main chat endpoint with state machine
+  - `POST /api/support-chat/lookup` - Lookup by support code or email/phone
+  - `POST /api/support-chat/token` - Generate/validate public tokens
+  - `POST /api/support-chat/upload` - Screenshot upload for conversations
+  - `POST /api/admin/kb/reindex` - Re-chunk and embed articles
+  - `POST /api/admin/kb/import` - Bulk import KB articles
+- **Chat Widget**: Floating widget on all public/app pages
+  - Quick action buttons (New Request, Track Request, etc.)
+  - Message history with citations
+  - Screenshot capture and upload
+  - Deep links to relevant app sections
+- **Analytics & Observability**:
+  - Event logging: chat_started, message_sent, escalated, resolved
+  - RAG search tracking (query, results, similarity, latency)
+  - Daily volume reports, escalation rates, category breakdown
+  - Error logging with context for debugging
+- **CLI Script**: `npm run kb:import` - Import KB from handbook docs
+- **Tests**: 30+ unit tests for utility functions (validation, masking, extraction)
 
 ### 2025-12-24 (AI & Documentation)
 - **Support Chatbot Design**: Complete chatbot implementation guide
@@ -513,4 +589,4 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ---
 
-*Last updated: 2025-12-24 (AI & Documentation update)*
+*Last updated: 2025-12-24 (Support Chatbot Implementation)*

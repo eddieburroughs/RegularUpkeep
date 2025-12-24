@@ -13,7 +13,8 @@
     "test:coverage": "vitest run --coverage",
     "security-check": "./scripts/security-check.sh",
     "audit": "npm audit",
-    "check-all": "npm run lint && npm run typecheck && npm run test:run && npm run audit"
+    "check-all": "npm run lint && npm run typecheck && npm run test:run && npm run audit",
+    "kb:import": "npx ts-node scripts/kb-import.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

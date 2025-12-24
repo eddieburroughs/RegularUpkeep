@@ -2364,3 +2364,191 @@ export interface AIRetentionConfig {
   ai_policy_events_retention_days: number;
   cache_ttl_hours: number;
 }
+
+// ============================================================================
+// SUPPORT CHATBOT TYPES
+// ============================================================================
+
+export type ConversationChannel = "web" | "app";
+export type ConversationStatus = "open" | "escalated" | "closed";
+export type ChatMessageSender = "user" | "bot" | "agent";
+export type LeadRole = "homeowner" | "provider" | "handyman" | "pm" | "investor" | "unknown";
+export type LeadStatus = "new" | "contacted" | "qualified" | "converted" | "lost";
+export type TicketCategory = "billing" | "login" | "booking" | "inspection" | "provider" | "bug" | "feature" | "other";
+export type TicketPriority = "low" | "normal" | "high" | "urgent";
+export type TicketStatus = "new" | "open" | "waiting_on_user" | "resolved" | "closed";
+export type KBRoleVisibility = "all" | "homeowner" | "provider" | "handyman" | "admin";
+export type KBArticleStatus = "draft" | "published";
+
+export interface IdentityState {
+  status: "pending" | "code_requested" | "fallback_requested" | "verified" | "failed";
+  user_id?: string;
+  support_code?: string;
+  masked_email?: string;
+  masked_phone?: string;
+  role?: UserRole;
+  full_name?: string;
+  attempts?: number;
+}
+
+export interface Conversation {
+  id: string;
+  user_id: string | null;
+  channel: ConversationChannel;
+  status: ConversationStatus;
+  public_token_hash: string | null;
+  identity_state: IdentityState;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  last_message_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender: ChatMessageSender;
+  content: string;
+  metadata: ChatMessageMetadata;
+  created_at: string;
+}
+
+export interface ChatMessageMetadata {
+  page_url?: string;
+  device?: {
+    type?: string;
+    os?: string;
+    browser?: string;
+  };
+  intent?: string;
+  confidence?: number;
+  retrieval?: {
+    chunk_ids: string[];
+    article_ids: string[];
+    similarity_scores: number[];
+  };
+  suggested_actions?: string[];
+  attachments?: string[];
+  model?: string;
+  tokens_used?: number;
+}
+
+export interface Lead {
+  id: string;
+  conversation_id: string | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  role: LeadRole | null;
+  city: string | null;
+  properties_count: number | null;
+  pain_point: string | null;
+  consent_contact: boolean;
+  source: ConversationChannel;
+  status: LeadStatus;
+  created_at: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  conversation_id: string | null;
+  user_id: string | null;
+  lead_id: string | null;
+  support_code: string | null;
+  category: TicketCategory;
+  priority: TicketPriority;
+  status: TicketStatus;
+  summary: string;
+  details: string | null;
+  links: Record<string, unknown>;
+  attachments: string[];
+  assigned_to: string | null;
+  internal_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KBArticle {
+  id: string;
+  title: string;
+  body: string;
+  tags: string[];
+  role_visibility: KBRoleVisibility;
+  status: KBArticleStatus;
+  source_path: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KBArticleChunk {
+  id: string;
+  article_id: string;
+  chunk_index: number;
+  content: string;
+  embedding: number[] | null;
+  token_count: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  actor_user_id: string | null;
+  action: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  payload: Record<string, unknown>;
+  ip_address: string | null;
+  created_at: string;
+}
+
+// Support chat API types
+export interface SupportChatRequest {
+  conversation_id?: string;
+  channel: ConversationChannel;
+  message: string;
+  context?: {
+    page_url?: string;
+    device?: {
+      type?: string;
+      os?: string;
+      browser?: string;
+    };
+    role?: LeadRole;
+    is_authenticated?: boolean;
+    user_id?: string;
+    current_property_id?: string;
+  };
+  public_token?: string;
+}
+
+export interface SupportChatResponse {
+  conversation_id: string;
+  reply: string;
+  suggested_actions: string[];
+  public_token?: string;
+  identity_state?: IdentityState;
+}
+
+export interface LookupByCodeRequest {
+  code: string;
+  public_token?: string;
+}
+
+export interface LookupByContactRequest {
+  name: string;
+  email?: string;
+  phone?: string;
+  public_token?: string;
+}
+
+export interface LookupResult {
+  user_id: string;
+  masked_email: string | null;
+  masked_phone: string | null;
+  role: UserRole;
+}
+
+export interface LookupResponse {
+  match?: LookupResult;
+  options?: LookupResult[];
+}
