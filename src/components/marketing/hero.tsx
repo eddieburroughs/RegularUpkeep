@@ -19,8 +19,8 @@ export function Hero({ title, subtitle, showCtas = true, centered = false, image
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#0178C7]/5 via-background to-background">
       <div className="container-marketing section-padding">
-        <div className={hasImage ? "grid gap-8 lg:grid-cols-2 lg:gap-12 items-center" : ""}>
-          <div className={`${hasImage ? "" : `max-w-3xl ${centered ? "mx-auto text-center" : ""}`}`}>
+        <div className={hasImage ? "grid gap-8 lg:grid-cols-2 lg:gap-12 items-stretch" : ""}>
+          <div className={`${hasImage ? "flex flex-col justify-center" : `max-w-3xl ${centered ? "mx-auto text-center" : ""}`}`}>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl text-balance">
               {title}
             </h1>
@@ -42,13 +42,13 @@ export function Hero({ title, subtitle, showCtas = true, centered = false, image
             )}
           </div>
           {hasImage && (
-            <div className="relative flex justify-center lg:justify-end">
+            <div className="relative hidden lg:flex items-center justify-center">
               <Image
                 src={image}
                 alt={imageAlt}
-                width={500}
-                height={500}
-                className="w-full max-w-md lg:max-w-lg rounded-2xl shadow-xl"
+                width={400}
+                height={400}
+                className="h-full w-auto max-h-64 object-contain"
                 priority
               />
             </div>

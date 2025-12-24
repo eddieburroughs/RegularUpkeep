@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Home, Users, Award, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader, TestimonialsSection, CtaBand , MarketingLayout } from "@/components/marketing";
+import { PageHeader, CtaBand, MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -129,8 +129,6 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
-      <TestimonialsSection />
 
       <section className="section-padding">
         <div className="container-marketing text-center">

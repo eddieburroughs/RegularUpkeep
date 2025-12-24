@@ -2,7 +2,6 @@ import {
   Hero,
   HowItWorksSection,
   FeatureGrid,
-  TestimonialsSection,
   FaqSection,
   CtaBand,
   MarketingLayout,
@@ -20,7 +19,6 @@ export default function HomePage() {
       />
       <HowItWorksSection />
       <FeatureGrid />
-      <TestimonialsSection />
       <FaqSection />
       <CtaBand
         title="Take control of your home maintenance"

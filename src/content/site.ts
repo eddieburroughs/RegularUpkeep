@@ -289,46 +289,6 @@ export const features: Feature[] = [
   },
 ];
 
-// Testimonials
-export interface Testimonial {
-  quote: string;
-  author: string;
-  role: string;
-}
-
-export const testimonials: Testimonial[] = [
-  {
-    quote: "I used to forget about HVAC maintenance until something broke. Now I get reminders and they even help me schedule with a reliable tech. Worth every penny.",
-    author: "Jordan R.",
-    role: "Homeowner",
-  },
-  {
-    quote: "Managing two rental properties was chaos before RegularUpkeep. The maintenance calendar and provider coordination alone save me hours every month.",
-    author: "Michelle T.",
-    role: "Property Owner",
-  },
-  {
-    quote: "As a first-time homeowner, I had no idea what maintenance I should be doing. Their seasonal checklists and recommendations made it easy to stay on top of everything.",
-    author: "David K.",
-    role: "Homeowner",
-  },
-  {
-    quote: "The concierge service is a game-changer. I just tell them what I need, and they handle getting quotes and scheduling. I've gotten back so much of my time.",
-    author: "Sarah M.",
-    role: "Busy Professional",
-  },
-  {
-    quote: "We have a beach house that's two hours away. Having RegularUpkeep coordinate maintenance while we're not there gives us real peace of mind.",
-    author: "Robert & Linda P.",
-    role: "Second Home Owners",
-  },
-  {
-    quote: "The providers they recommend actually show up on time and do quality work. That alone sets them apart from what I've experienced trying to find help on my own.",
-    author: "Amanda H.",
-    role: "Homeowner",
-  },
-];
-
 // FAQs
 export interface FAQ {
   question: string;
