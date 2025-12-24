@@ -2151,7 +2151,33 @@ export interface ProviderTierConfig {
 export interface SponsorPricingConfig {
   local_sponsor_yearly_cents: number;
   tiles_per_territory: number;
+  max_total_tiles: number; // Max tiles per metro (ADDENDUM D)
   sponsor_types: SponsorType[];
+}
+
+// Marketing packages config (ADDENDUM C)
+export interface MarketingPackagesConfig {
+  priority_dispatch: {
+    yearly_cents: number;
+    placement_boost_weight: number; // How much to boost in dispatch algorithm
+  };
+  maintenance_plans: {
+    interior_yearly_per_home_cents: number;
+    exterior_yearly_per_home_cents: number;
+    full_yearly_per_home_cents: number;
+    includes_seasonal_visits: number;
+  };
+  instant_payout: {
+    fee_percentage: number; // Additional fee for instant payout
+    available_after_verification: boolean;
+  };
+}
+
+// Provider payout config (ADDENDUM C3)
+export interface ProviderPayoutConfig {
+  standard_hold_hours: number; // 72h default
+  instant_payout_fee_percentage: number; // 1% additional fee
+  instant_payout_requires_verified: boolean;
 }
 
 export interface RealtorReferralConfig {

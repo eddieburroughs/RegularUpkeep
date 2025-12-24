@@ -113,15 +113,22 @@ export async function POST(
       );
     }
 
-    // Capture the payment
-    const { chargeId, providerTransferId, providerAmount, platformFee } =
-      await capturePayment({
-        paymentIntentId,
-        amountToCapture: invoice.total_cents,
-        invoiceId: invoice.id,
-        providerId: invoice.provider_id,
-        providerStripeAccountId: providerAccount.stripe_account_id,
-      });
+    // Capture the payment (includes homeowner platform fee)
+    const {
+      chargeId,
+      providerTransferId,
+      providerAmount,
+      providerFee,
+      homeownerPlatformFee,
+      totalCaptured,
+    } = await capturePayment({
+      paymentIntentId,
+      amountToCapture: invoice.total_cents,
+      invoiceId: invoice.id,
+      providerId: invoice.provider_id,
+      providerStripeAccountId: providerAccount.stripe_account_id,
+      // Note: instant payout can be requested separately via provider/instant-payout endpoint
+    });
 
     // Update invoice status
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,9 +136,11 @@ export async function POST(
       .update({
         status: "paid",
         stripe_charge_id: chargeId,
-        stripe_transfer_id: providerTransferId,
-        platform_fee_cents: platformFee,
+        stripe_transfer_id: providerTransferId, // null for standard flow (delayed transfer)
+        platform_fee_cents: homeownerPlatformFee,
+        provider_fee_cents: providerFee,
         provider_payout_cents: providerAmount,
+        total_captured_cents: totalCaptured,
         paid_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
@@ -151,8 +160,11 @@ export async function POST(
       success: true,
       chargeId,
       providerTransferId,
+      invoiceTotal: invoice.total_cents,
+      homeownerPlatformFee,
+      totalCaptured,
+      providerFee,
       providerAmount,
-      platformFee,
     });
   } catch (error) {
     console.error("Invoice approval error:", error);

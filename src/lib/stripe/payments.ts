@@ -10,7 +10,7 @@
 
 import { getStripe } from "./client";
 import { createClient } from "@/lib/supabase/server";
-import { calculateProviderFee } from "@/lib/config/admin-config";
+import { calculateProviderFee, calculateHomeownerPlatformFee, getConfig } from "@/lib/config/admin-config";
 import type Stripe from "stripe";
 
 /**
@@ -44,7 +44,7 @@ export async function createDiagnosticFeePayment(params: {
 
 /**
  * Create a payment intent for estimate authorization (manual capture)
- * This authorizes the estimate amount + buffer for later capture
+ * This authorizes the estimate amount + buffer + max platform fee for later capture
  */
 export async function authorizeEstimate(params: {
   customerId: string;
@@ -57,7 +57,11 @@ export async function authorizeEstimate(params: {
 
   // Calculate authorization amount with buffer
   const bufferAmount = Math.ceil(params.amountCents * (params.bufferPercentage / 100));
-  const authorizedAmount = params.amountCents + bufferAmount;
+  const estimateWithBuffer = params.amountCents + bufferAmount;
+
+  // Include max possible platform fee in authorization (based on buffered amount)
+  const maxPlatformFee = await calculateHomeownerPlatformFee(estimateWithBuffer);
+  const authorizedAmount = estimateWithBuffer + maxPlatformFee;
 
   const paymentIntent = await stripe.paymentIntents.create({
     customer: params.customerId,
@@ -70,6 +74,7 @@ export async function authorizeEstimate(params: {
       service_request_id: params.serviceRequestId,
       original_amount: params.amountCents.toString(),
       buffer_amount: bufferAmount.toString(),
+      max_platform_fee: maxPlatformFee.toString(),
     },
   });
 
@@ -82,48 +87,70 @@ export async function authorizeEstimate(params: {
 
 /**
  * Capture an authorized payment after work completion
- * Captures up to the authorized amount
+ * Captures invoice amount + homeowner platform fee
+ * Provider gets invoice amount minus commission
  */
 export async function capturePayment(params: {
   paymentIntentId: string;
-  amountToCapture: number;
+  amountToCapture: number; // Invoice total (work cost)
   invoiceId: string;
   providerId: string;
   providerStripeAccountId: string;
+  useInstantPayout?: boolean; // Optional: instant payout (+1% fee)
 }): Promise<{
   chargeId: string;
-  providerTransferId: string;
+  providerTransferId: string | null; // null if using delayed transfer
   providerAmount: number;
-  platformFee: number;
+  providerFee: number; // Commission taken from provider
+  homeownerPlatformFee: number; // Fee charged to homeowner
+  totalCaptured: number; // Total amount captured from customer
 }> {
   const stripe = getStripe();
   const supabase = await createClient();
 
-  // Calculate platform fee
-  const providerFee = await calculateProviderFee(params.amountToCapture);
+  // Calculate homeowner platform fee (charged on top of invoice)
+  const homeownerPlatformFee = await calculateHomeownerPlatformFee(params.amountToCapture);
+  const totalCaptured = params.amountToCapture + homeownerPlatformFee;
+
+  // Calculate provider fee (commission from invoice amount)
+  let providerFee = await calculateProviderFee(params.amountToCapture);
+
+  // Add instant payout fee if requested (ADDENDUM C3)
+  if (params.useInstantPayout) {
+    const payoutConfig = await getConfig("provider_payout");
+    const instantPayoutFee = Math.ceil(params.amountToCapture * (payoutConfig.instant_payout_fee_percentage / 100));
+    providerFee += instantPayoutFee;
+  }
+
   const providerAmount = params.amountToCapture - providerFee;
 
-  // Capture the payment
+  // Capture the payment (invoice + platform fee)
   const paymentIntent = await stripe.paymentIntents.capture(
     params.paymentIntentId,
     {
-      amount_to_capture: params.amountToCapture,
+      amount_to_capture: totalCaptured,
     }
   );
 
   const chargeId = paymentIntent.latest_charge as string;
 
-  // Create transfer to provider
-  const transfer = await stripe.transfers.create({
-    amount: providerAmount,
-    currency: "usd",
-    destination: params.providerStripeAccountId,
-    source_transaction: chargeId,
-    metadata: {
-      invoice_id: params.invoiceId,
-      provider_id: params.providerId,
-    },
-  });
+  // For standard flow: provider transfer is delayed (handled by cron after dispute window)
+  // For instant payout: create immediate transfer
+  let transferId: string | null = null;
+  if (params.useInstantPayout) {
+    const transfer = await stripe.transfers.create({
+      amount: providerAmount,
+      currency: "usd",
+      destination: params.providerStripeAccountId,
+      source_transaction: chargeId,
+      metadata: {
+        invoice_id: params.invoiceId,
+        provider_id: params.providerId,
+        instant_payout: "true",
+      },
+    });
+    transferId = transfer.id;
+  }
 
   // Record the transaction
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -132,26 +159,32 @@ export async function capturePayment(params: {
     service_request_id: paymentIntent.metadata.service_request_id,
     stripe_payment_intent_id: params.paymentIntentId,
     stripe_charge_id: chargeId,
-    stripe_transfer_id: transfer.id,
+    stripe_transfer_id: transferId,
     type: "service_payment",
     status: "succeeded",
-    amount_cents: params.amountToCapture,
-    fee_cents: providerFee,
+    amount_cents: totalCaptured,
+    fee_cents: providerFee + homeownerPlatformFee, // Total fees collected
     net_cents: providerAmount,
     currency: "usd",
     description: `Payment for invoice`,
     metadata: {
       invoice_id: params.invoiceId,
       provider_id: params.providerId,
+      invoice_amount: params.amountToCapture,
+      homeowner_platform_fee: homeownerPlatformFee,
+      provider_commission: providerFee,
+      instant_payout: params.useInstantPayout ? "true" : "false",
     },
     processed_at: new Date().toISOString(),
   });
 
   return {
     chargeId,
-    providerTransferId: transfer.id,
+    providerTransferId: transferId,
     providerAmount,
-    platformFee: providerFee,
+    providerFee,
+    homeownerPlatformFee,
+    totalCaptured,
   };
 }
 

@@ -13,6 +13,8 @@ import type {
   ProviderFeesConfig,
   ProviderTierConfig,
   SponsorPricingConfig,
+  MarketingPackagesConfig,
+  ProviderPayoutConfig,
   RealtorReferralConfig,
   MarketplacePaymentsConfig,
   MediaRequirementsConfig,
@@ -28,6 +30,8 @@ export const CONFIG_KEYS = {
   PROVIDER_FEES: "provider_fees",
   PROVIDER_TIERS: "provider_tiers",
   SPONSOR_PRICING: "sponsor_pricing",
+  MARKETING_PACKAGES: "marketing_packages",
+  PROVIDER_PAYOUT: "provider_payout",
   REALTOR_REFERRAL: "realtor_referral",
   MARKETPLACE_PAYMENTS: "marketplace_payments",
   MEDIA_REQUIREMENTS: "media_requirements",
@@ -45,6 +49,8 @@ export interface ConfigTypeMap {
   provider_fees: ProviderFeesConfig;
   provider_tiers: ProviderTierConfig;
   sponsor_pricing: SponsorPricingConfig;
+  marketing_packages: MarketingPackagesConfig;
+  provider_payout: ProviderPayoutConfig;
   realtor_referral: RealtorReferralConfig;
   marketplace_payments: MarketplacePaymentsConfig;
   media_requirements: MediaRequirementsConfig;
@@ -73,17 +79,17 @@ export const DEFAULT_CONFIG: ConfigTypeMap = {
     other: { fee_cents: 4900, creditable: true },
   },
   homeowner_platform_fees: {
+    // Flat fee by ticket size (per ADDENDUM A1)
     tiers: [
-      { min_cents: 0, max_cents: 10000, fee_cents: 500 },
-      { min_cents: 10001, max_cents: 25000, fee_cents: 750 },
-      { min_cents: 25001, max_cents: 50000, fee_cents: 1000 },
-      { min_cents: 50001, max_cents: 100000, fee_cents: 1500 },
+      { min_cents: 0, max_cents: 29999, fee_cents: 600 },         // < $300 => $6
+      { min_cents: 30000, max_cents: 150000, fee_cents: 1200 },   // $300-$1500 => $12
+      { min_cents: 150001, max_cents: 999999999, fee_cents: 2500 }, // > $1500 => $25
     ],
-    cap_cents: 2500,
+    cap_cents: 2500, // $25 cap
   },
   provider_fees: {
     percentage: 8.0,
-    minimum_cents: 500,
+    minimum_cents: 350, // $3.50 floor per ADDENDUM B
   },
   provider_tiers: {
     verified: {
@@ -104,7 +110,30 @@ export const DEFAULT_CONFIG: ConfigTypeMap = {
   sponsor_pricing: {
     local_sponsor_yearly_cents: 25000,
     tiles_per_territory: 3,
+    max_total_tiles: 8, // Max 8 tiles per metro (ADDENDUM D)
     sponsor_types: ["realtor", "insurance", "handyman"],
+  },
+  marketing_packages: {
+    // ADDENDUM C: Marketing packages for providers
+    priority_dispatch: {
+      yearly_cents: 4900, // $49/year
+      placement_boost_weight: 1.5, // 50% boost in dispatch algorithm
+    },
+    maintenance_plans: {
+      interior_yearly_per_home_cents: 3900, // $39/home/year
+      exterior_yearly_per_home_cents: 4900, // $49/home/year
+      full_yearly_per_home_cents: 7900, // $79/home/year (bundled)
+      includes_seasonal_visits: 4, // 4 visits per year
+    },
+    instant_payout: {
+      fee_percentage: 1.0, // +1% fee for instant payout
+      available_after_verification: true, // Must be Verified tier
+    },
+  },
+  provider_payout: {
+    standard_hold_hours: 72, // Standard 72h hold after invoice approval
+    instant_payout_fee_percentage: 1.0, // +1% for instant payout
+    instant_payout_requires_verified: true, // Must be Verified to use
   },
   realtor_referral: {
     qualified_homeowners_threshold: 50,

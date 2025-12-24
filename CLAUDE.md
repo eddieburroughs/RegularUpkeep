@@ -294,10 +294,17 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 - Realtor Referral: 50 qualified referrals = free sponsor year
 
 ### Marketplace Fees
-- Provider commission: 8% of job total
+- **Homeowner platform fee**: $6 (<$300), $12 ($300-$1500), $25 (>$1500)
+- **Provider commission**: 8% of job total ($3.50 minimum)
+- **Instant payout**: +1% fee (requires Verified tier)
 - Diagnostic fees: $49-$89 by category (credited toward job)
-- Estimate buffer: 15% authorization hold
+- Estimate buffer: 15% authorization hold (+ max platform fee)
 - Dispute window: 72 hours after invoice approval
+
+### Provider Marketing Packages
+- Priority Dispatch: $49/year (1.5x boost in dispatch algorithm)
+- Maintenance Plans: $39-79/home/year (interior/exterior/full)
+- Instant Payout: +1% per job (immediate transfer vs 72h hold)
 
 ## Service Categories
 
@@ -352,14 +359,22 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ## Recent Changes Log
 
+### 2025-12-24 (ADDENDUM - Monetization Hardening)
+- **Homeowner Platform Fee**: Added per-booking fee ($6 for <$300, $12 for $300-$1500, $25 cap for >$1500)
+- **Provider Minimum Fee**: Set $3.50 minimum on 8% commission
+- **Marketing Packages**: Added Priority Dispatch ($49/yr), Maintenance Plans ($39-79/home/yr), Instant Payout (+1%)
+- **Local Sponsor Tiles**: Renamed from "ads", max 8 tiles per metro, waitlist for full territories
+- **Preferred Gating**: Provider tier status history logging, gating helpers for tier-locked features
+- **New Tables**: provider_tier_history, provider_addons, sponsor_tile_waitlist
+
 ### 2025-12-24
 - **Pricing Model**: Changed from tiered ($19/$39/$79) to freemium (2 homes free, $2.50/extra)
 - **Marketplace Payment Flow**: Implemented full booking lifecycle with Stripe Connect
   - Diagnostic fee at service request
-  - Estimate authorization with 15% buffer
+  - Estimate authorization with 15% buffer (+ platform fee)
   - Change orders for scope changes >10%
-  - Invoice approval with manual capture
-  - 72-hour dispute window before provider transfer
+  - Invoice approval with manual capture (+ homeowner platform fee)
+  - 72-hour dispute window before provider transfer (or instant with +1% fee)
 - **Change Order System**: Provider can submit change orders, customer approves/rejects
 - **Cron Jobs**: Added process-transfers, provider-qualification, referral-qualification
 - **Referral Tracking**: Sponsor referral codes with anti-fraud qualification rules

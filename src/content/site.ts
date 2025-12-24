@@ -94,10 +94,10 @@ export const pricing: {
     {
       name: "Sponsor-Free Experience",
       price: "$25/year",
-      description: "Remove all sponsor recommendations and ads",
+      description: "Remove Local Sponsor Tiles from your dashboard",
     },
   ],
-  disclaimer: "Platform membership is free for up to 2 homes. Service provider costs are separate and paid through our secure marketplace. Only pay for what you use.",
+  disclaimer: "Platform membership is free for up to 2 homes. When you book services, a small platform fee ($6-$25 based on job size) is added at checkout. Service provider costs are separate and paid through our secure marketplace. You'll see all fees before confirming payment.",
 };
 
 // Services
@@ -399,6 +399,14 @@ export const faqs: FAQ[] = [
   {
     question: "Do you offer any guarantees?",
     answer: "We guarantee the quality of our platform and concierge service. While we can't guarantee the work of independent service providers, we do vet them carefully and follow up on quality. If you're not satisfied with our service, contact us and we'll make it right.",
+  },
+  {
+    question: "What is the platform fee?",
+    answer: "When you book services through our marketplace, a small platform fee is added to your checkout: $6 for jobs under $300, $12 for jobs $300-$1,500, and $25 for larger jobs. This fee helps us maintain the platform, vet providers, and provide concierge support. You'll always see the exact fee before confirming payment.",
+  },
+  {
+    question: "What are Local Sponsor Tiles?",
+    answer: "Local Sponsor Tiles are recommendations from trusted local businesses in your area—like realtors, insurance agents, and home service companies. These sponsors help keep our platform free for homeowners. You can remove sponsor tiles with our $25/year Sponsor-Free Experience add-on.",
   },
 ];
 

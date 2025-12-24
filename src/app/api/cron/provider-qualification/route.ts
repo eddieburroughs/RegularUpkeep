@@ -136,9 +136,26 @@ export async function GET(request: NextRequest) {
           })
           .eq("provider_id", provider.provider_id);
 
-        // Track changes
+        // Track changes and log status history (ADDENDUM E)
         if (qualifies && !previouslyQualified) {
           results.newlyQualified++;
+
+          // Log status change to history
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from("provider_tier_history") as any).insert({
+            provider_id: provider.provider_id,
+            previous_status: "not_qualified",
+            new_status: "qualified",
+            trigger: "cron_check",
+            metrics_snapshot: {
+              average_rating: metrics.average_rating,
+              total_jobs_completed: metrics.total_jobs_completed,
+              dispute_rate: metrics.dispute_rate,
+              avg_response_time_hours: metrics.avg_response_time_hours,
+              thresholds,
+            },
+            created_at: new Date().toISOString(),
+          });
 
           // Create notification for provider
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -152,6 +169,23 @@ export async function GET(request: NextRequest) {
           });
         } else if (!qualifies && previouslyQualified) {
           results.newlyDisqualified++;
+
+          // Log status change to history
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from("provider_tier_history") as any).insert({
+            provider_id: provider.provider_id,
+            previous_status: "qualified",
+            new_status: "not_qualified",
+            trigger: "cron_check",
+            metrics_snapshot: {
+              average_rating: metrics.average_rating,
+              total_jobs_completed: metrics.total_jobs_completed,
+              dispute_rate: metrics.dispute_rate,
+              avg_response_time_hours: metrics.avg_response_time_hours,
+              thresholds,
+            },
+            created_at: new Date().toISOString(),
+          });
 
           // If currently on preferred tier, they'll lose access at next billing
           if (provider.tier === "preferred") {
