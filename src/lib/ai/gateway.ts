@@ -13,9 +13,18 @@ import type {
   AIPolicyEvent,
   AIModel,
   AIProvider,
+  AIProviderAdapter,
 } from "./types";
 import { getTaskDefinition, canActorExecuteTask } from "./tasks";
-import { getBestAvailableProvider, mapModelToProvider, getProviderAdapter } from "./providers";
+import {
+  getBestAvailableProvider,
+  mapModelToProvider,
+  getProviderAdapter,
+  getProviderForTask,
+  getPrimaryModelForTask,
+  getFallbackModelForTask,
+  getConfiguredProviderMode,
+} from "./providers";
 import { checkInputSafety, checkOutputSafety, sanitizeOutput, checkForEmergency } from "./safety";
 import {
   generateCorrelationId,
@@ -188,14 +197,25 @@ export async function runTask<TInput = Record<string, unknown>, TOutput = Record
       }
     }
 
-    // Get provider
-    const provider = request.flags?.forceProvider
-      ? getProviderAdapter(request.flags.forceProvider)
-      : getBestAvailableProvider();
+    // Get provider - use task-based routing in hybrid mode
+    let provider: AIProviderAdapter;
+    if (request.flags?.forceProvider) {
+      provider = getProviderAdapter(request.flags.forceProvider);
+    } else {
+      // Get the preferred provider for this task type (hybrid routing)
+      const preferredProvider = getProviderForTask(request.taskType);
+      provider = getProviderAdapter(preferredProvider);
+
+      // If preferred provider unavailable, try fallback
+      if (!provider.isAvailable()) {
+        console.warn(`Preferred provider ${provider.name} unavailable for ${request.taskType}, trying fallback`);
+        provider = getBestAvailableProvider();
+      }
+    }
 
     // Check if provider is available
     if (!provider.isAvailable()) {
-      console.warn(`Provider ${provider.name} not available, using fallback`);
+      console.warn(`No provider available for ${request.taskType}, using fallback`);
       return createFallbackResponse(
         taskDef,
         request.inputs,
@@ -223,8 +243,9 @@ export async function runTask<TInput = Record<string, unknown>, TOutput = Record
       );
     }
 
-    // Select model
-    const preferredModel = request.flags?.forceModel || taskDef.preferredModel;
+    // Select model - use task-based routing in hybrid mode
+    const preferredModel = request.flags?.forceModel || getPrimaryModelForTask(request.taskType);
+    const fallbackModel = getFallbackModelForTask(request.taskType);
     const model = mapModelToProvider(preferredModel, provider.name as AIProvider);
 
     // Build prompt
@@ -244,8 +265,13 @@ export async function runTask<TInput = Record<string, unknown>, TOutput = Record
       try {
         const timeoutMs = request.flags?.timeoutMs || DEFAULT_TIMEOUT_MS;
 
+        // Map fallback model to provider for retry attempts
+        const attemptModel = attempt === 0
+          ? model
+          : mapModelToProvider(fallbackModel, provider.name as AIProvider);
+
         const completionPromise = provider.generateCompletion({
-          model: attempt === 0 ? model : taskDef.fallbackModel,
+          model: attemptModel,
           systemPrompt: system,
           userPrompt: user,
           imageUrls: taskDef.requiresVision ? imageUrls : undefined,

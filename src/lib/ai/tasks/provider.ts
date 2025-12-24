@@ -21,8 +21,8 @@ import type {
 export const providerEstimateTask: TaskDefinition<ProviderEstimateInput, ProviderEstimateOutput> = {
   taskType: "PROVIDER_ESTIMATE_DRAFT",
   description: "Help providers draft estimates with scope of work suggestions",
-  preferredModel: "gpt-4o",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-sonnet-4-5-20250929", // Strong writing + structured output
+  fallbackModel: "claude-haiku-4-5-20251001",
   maxTokens: 1200,
   temperature: 0.4,
   requiresVision: false,
@@ -150,8 +150,8 @@ Provide suggestions in this JSON format:
 export const providerMessageTask: TaskDefinition<ProviderMessageInput, ProviderMessageOutput> = {
   taskType: "PROVIDER_MESSAGE_DRAFT",
   description: "Help providers draft professional messages to customers",
-  preferredModel: "gpt-4o-mini",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-haiku-4-5-20251001", // Fast/cheap; upgrade to Sonnet if needed
+  fallbackModel: "claude-sonnet-4-5-20250929",
   maxTokens: 600,
   temperature: 0.5,
   requiresVision: false,
@@ -233,8 +233,8 @@ Respond in this JSON format:
 export const invoiceNarrativeTask: TaskDefinition<InvoiceNarrativeInput, InvoiceNarrativeOutput> = {
   taskType: "INVOICE_NARRATIVE_DRAFT",
   description: "Generate professional invoice narratives",
-  preferredModel: "gpt-4o-mini",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-sonnet-4-5-20250929", // Better professional narrative
+  fallbackModel: "claude-haiku-4-5-20251001",
   maxTokens: 800,
   temperature: 0.3,
   requiresVision: false,

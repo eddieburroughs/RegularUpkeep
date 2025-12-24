@@ -22,8 +22,8 @@ import type {
 export const disputeTimelineTask: TaskDefinition<DisputeTimelineInput, DisputeTimelineOutput> = {
   taskType: "DISPUTE_TIMELINE_SUMMARY",
   description: "Analyze dispute with timeline, root cause, and refund recommendation",
-  preferredModel: "gpt-4o",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-sonnet-4-5-20250929", // Use Opus only if Sonnet isn't enough
+  fallbackModel: "claude-opus-4-5-20251101",
   maxTokens: 1500,
   temperature: 0.2,
   requiresVision: false,
@@ -215,8 +215,8 @@ Provide analysis in this JSON format:
 export const fraudSignalTask: TaskDefinition<FraudSignalInput, FraudSignalOutput> = {
   taskType: "FRAUD_SIGNAL_REFERRALS",
   description: "Analyze referral patterns for potential fraud signals",
-  preferredModel: "gpt-4o",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-sonnet-4-5-20250929", // Flags for review, not accusations
+  fallbackModel: "claude-haiku-4-5-20251001",
   maxTokens: 1000,
   temperature: 0.1,
   requiresVision: false,
@@ -354,8 +354,8 @@ Respond in this JSON format:
 export const providerQualityTask: TaskDefinition<ProviderQualityInput, ProviderQualityOutput> = {
   taskType: "PROVIDER_QUALITY_SUMMARY",
   description: "Generate plain-language provider quality insights for admins",
-  preferredModel: "gpt-4o-mini",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-sonnet-4-5-20250929", // Provider quality insights
+  fallbackModel: "claude-haiku-4-5-20251001",
   maxTokens: 800,
   temperature: 0.3,
   requiresVision: false,

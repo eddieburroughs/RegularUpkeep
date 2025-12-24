@@ -62,8 +62,8 @@ function getCurrentQuarter(): "Q1" | "Q2" | "Q3" | "Q4" {
 export const maintenancePlanTask: TaskDefinition<MaintenancePlanInput, MaintenancePlanOutput> = {
   taskType: "MAINTENANCE_PLAN_SUGGEST",
   description: "Generate personalized maintenance coach recommendations based on property and season",
-  preferredModel: "gpt-4o",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-haiku-4-5-20251001", // Mostly templated text generation
+  fallbackModel: "claude-sonnet-4-5-20250929",
   maxTokens: 2000,
   temperature: 0.4,
   requiresVision: false,

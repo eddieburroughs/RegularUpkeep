@@ -32,11 +32,15 @@ export type AITaskType =
 export type AIProvider = "openai" | "anthropic" | "none";
 
 export type AIModel =
-  // OpenAI Models
+  // OpenAI Models (production snapshot IDs)
   | "gpt-4o"
   | "gpt-4o-mini"
   | "gpt-4-turbo"
-  // Anthropic Models
+  // Anthropic Models (production snapshot IDs - Claude 4.5 series)
+  | "claude-sonnet-4-5-20250929"
+  | "claude-haiku-4-5-20251001"
+  | "claude-opus-4-5-20251101"
+  // Legacy Anthropic Models (for backwards compatibility)
   | "claude-3-5-sonnet-20241022"
   | "claude-3-haiku-20240307"
   // Mock

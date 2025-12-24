@@ -1,5 +1,8 @@
 /**
  * Anthropic Provider Adapter
+ *
+ * Uses Claude for long-form summaries and nuanced writing.
+ * Preferred for: dispute triage, CRM copilot, invoice narratives, sponsor copy.
  */
 
 import Anthropic from "@anthropic-ai/sdk";
@@ -11,10 +14,28 @@ import type {
 } from "../types";
 
 // Cost per 1M tokens (as of Dec 2024)
+// Production snapshot IDs for stable behavior
 const ANTHROPIC_PRICING: Record<string, { input: number; output: number }> = {
+  // Claude 4.5 models (production snapshot IDs)
+  "claude-sonnet-4-5-20250929": { input: 3, output: 15 },
+  "claude-haiku-4-5-20251001": { input: 0.25, output: 1.25 },
+  "claude-opus-4-5-20251101": { input: 15, output: 75 },
+  // Legacy models (backwards compatibility)
   "claude-3-5-sonnet-20241022": { input: 3, output: 15 },
   "claude-3-haiku-20240307": { input: 0.25, output: 1.25 },
 };
+
+// JSON mode instruction for strict structured output with Claude
+const JSON_MODE_INSTRUCTION = `
+
+CRITICAL OUTPUT FORMAT REQUIREMENTS:
+1. You MUST respond with valid, machine-parseable JSON only
+2. Do NOT include markdown code blocks (no \`\`\`json or \`\`\`)
+3. Do NOT include any explanatory text before or after the JSON
+4. Ensure all string values are properly escaped
+5. Use double quotes for all keys and string values
+6. Begin your response with { and end with }
+7. Validate your JSON structure before responding`;
 
 let client: Anthropic | null = null;
 
@@ -52,12 +73,19 @@ export const anthropicAdapter: AIProviderAdapter = {
   ): Promise<ProviderCompletionResponse> {
     const anthropic = getClient();
 
-    // Map our model names to Anthropic model names
+    // Map our model names to Anthropic API model IDs
+    // Uses production snapshot IDs for stable behavior
     const modelMap: Record<string, string> = {
+      // Claude 4.5 models (production)
+      "claude-sonnet-4-5-20250929": "claude-sonnet-4-5-20250929",
+      "claude-haiku-4-5-20251001": "claude-haiku-4-5-20251001",
+      "claude-opus-4-5-20251101": "claude-opus-4-5-20251101",
+      // Legacy models (backwards compatibility)
       "claude-3-5-sonnet-20241022": "claude-3-5-sonnet-20241022",
       "claude-3-haiku-20240307": "claude-3-haiku-20240307",
     };
-    const model = modelMap[request.model] || "claude-3-haiku-20240307";
+    // Default to Haiku 4.5 for fast/cheap operations
+    const model = modelMap[request.model] || "claude-haiku-4-5-20251001";
 
     // Build message content
     const content: Anthropic.MessageCreateParams["messages"][0]["content"] = [];
@@ -81,11 +109,10 @@ export const anthropicAdapter: AIProviderAdapter = {
       }
     }
 
-    // Add JSON mode instruction to system prompt if needed
-    let systemPrompt = request.systemPrompt;
-    if (request.jsonMode) {
-      systemPrompt += "\n\nIMPORTANT: You must respond with valid JSON only. No other text.";
-    }
+    // Add JSON mode instruction to system prompt for strict structured output
+    const systemPrompt = request.jsonMode
+      ? request.systemPrompt + JSON_MODE_INSTRUCTION
+      : request.systemPrompt;
 
     const response = await anthropic.messages.create({
       model,

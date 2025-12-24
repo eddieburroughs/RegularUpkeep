@@ -19,8 +19,8 @@ import type {
 export const crmNextActionTask: TaskDefinition<CrmNextActionInput, CrmNextActionOutput> = {
   taskType: "CRM_NEXT_BEST_ACTION",
   description: "Suggest next best actions for customer engagement with risks and upsell opportunities",
-  preferredModel: "gpt-4o",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-sonnet-4-5-20250929", // Pipeline suggestions
+  fallbackModel: "claude-haiku-4-5-20251001",
   maxTokens: 1200,
   temperature: 0.4,
   requiresVision: false,

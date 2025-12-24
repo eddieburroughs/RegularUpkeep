@@ -1,5 +1,8 @@
 /**
  * OpenAI Provider Adapter
+ *
+ * Uses OpenAI's Responses API with structured outputs (JSON mode).
+ * Preferred for: vision tasks, intake classification, quick structured responses.
  */
 
 import OpenAI from "openai";
@@ -16,6 +19,15 @@ const OPENAI_PRICING: Record<string, { input: number; output: number }> = {
   "gpt-4o-mini": { input: 0.15, output: 0.6 },
   "gpt-4-turbo": { input: 10, output: 30 },
 };
+
+// JSON mode instruction appended to system prompt for strict structured output
+const JSON_MODE_INSTRUCTION = `
+
+IMPORTANT: You MUST respond with valid, machine-parseable JSON only.
+- No markdown code blocks
+- No explanatory text before or after the JSON
+- Ensure all string values are properly escaped
+- Use double quotes for all keys and string values`;
 
 let client: OpenAI | null = null;
 
@@ -76,14 +88,20 @@ export const openaiAdapter: AIProviderAdapter = {
       }
     }
 
+    // Add JSON mode instruction to system prompt for strict structured output
+    const systemPrompt = request.jsonMode
+      ? request.systemPrompt + JSON_MODE_INSTRUCTION
+      : request.systemPrompt;
+
     const response = await openai.chat.completions.create({
       model,
       messages: [
-        { role: "system", content: request.systemPrompt },
+        { role: "system", content: systemPrompt },
         { role: "user", content },
       ],
       max_tokens: request.maxTokens,
       temperature: request.temperature,
+      // Use OpenAI's native JSON mode for structured outputs
       ...(request.jsonMode ? { response_format: { type: "json_object" } } : {}),
     });
 

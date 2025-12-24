@@ -25,8 +25,8 @@ function checkProhibitedClaims(text: string): string[] {
 export const sponsorTileCopyTask: TaskDefinition<SponsorTileCopyInput, SponsorTileCopyOutput> = {
   taskType: "SPONSOR_TILE_COPY",
   description: "Generate multiple marketing copy variants for sponsor tiles with compliance checking",
-  preferredModel: "gpt-4o-mini",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "claude-haiku-4-5-20251001", // Short marketing copy
+  fallbackModel: "claude-sonnet-4-5-20250929",
   maxTokens: 1500,
   temperature: 0.7,
   requiresVision: false,

@@ -25,8 +25,8 @@ import type {
 export const intakeClassifyTask: TaskDefinition<IntakeClassifyInput, IntakeClassifyOutput> = {
   taskType: "INTAKE_CLASSIFY_AND_SUMMARIZE",
   description: "Analyze service request images and description to classify and summarize the issue",
-  preferredModel: "gpt-4o",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "gpt-4o-mini", // Fast vision model; fallback to gpt-4o
+  fallbackModel: "gpt-4o",
   maxTokens: 1000,
   temperature: 0.3,
   requiresVision: true,
@@ -168,8 +168,8 @@ Only include safetyFlags array if safety hazards are detected. Leave it empty or
 export const intakeFollowupTask: TaskDefinition<IntakeFollowupInput, IntakeFollowupOutput> = {
   taskType: "INTAKE_FOLLOWUP_QUESTIONS",
   description: "Generate relevant follow-up questions based on the issue category",
-  preferredModel: "gpt-4o-mini",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "gpt-4o-mini", // Fast structured output
+  fallbackModel: "gpt-4o",
   maxTokens: 800,
   temperature: 0.4,
   requiresVision: false,
@@ -399,8 +399,8 @@ Notes:
 export const mediaQualityTask: TaskDefinition<MediaQualityInput, MediaQualityOutput> = {
   taskType: "MEDIA_QUALITY_CHECK",
   description: "Check the quality and relevance of uploaded images",
-  preferredModel: "gpt-4o-mini",
-  fallbackModel: "gpt-4o-mini",
+  preferredModel: "gpt-4o-mini", // Fast vision check
+  fallbackModel: "gpt-4o",
   maxTokens: 500,
   temperature: 0.2,
   requiresVision: true,
