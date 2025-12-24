@@ -10,7 +10,12 @@
 
 import { getStripe } from "./client";
 import { createClient } from "@/lib/supabase/server";
-import { calculateProviderFee, calculateHomeownerPlatformFee, getConfig } from "@/lib/config/admin-config";
+import {
+  calculateProviderFee,
+  calculateHomeownerPlatformFee,
+  calculateAuthorizationAmount,
+  getConfig,
+} from "@/lib/config/admin-config";
 import type Stripe from "stripe";
 
 /**
@@ -44,28 +49,29 @@ export async function createDiagnosticFeePayment(params: {
 
 /**
  * Create a payment intent for estimate authorization (manual capture)
- * This authorizes the estimate amount + buffer + max platform fee for later capture
+ * This authorizes the estimate amount + buffer (capped) + max platform fee for later capture
  */
 export async function authorizeEstimate(params: {
   customerId: string;
   estimateId: string;
   serviceRequestId: string;
   amountCents: number;
-  bufferPercentage: number;
-}): Promise<{ clientSecret: string; paymentIntentId: string; authorizedAmount: number }> {
+}): Promise<{
+  clientSecret: string;
+  paymentIntentId: string;
+  authorizedAmount: number;
+  bufferAmount: number;
+  platformFee: number;
+}> {
   const stripe = getStripe();
 
-  // Calculate authorization amount with buffer
-  const bufferAmount = Math.ceil(params.amountCents * (params.bufferPercentage / 100));
-  const estimateWithBuffer = params.amountCents + bufferAmount;
-
-  // Include max possible platform fee in authorization (based on buffered amount)
-  const maxPlatformFee = await calculateHomeownerPlatformFee(estimateWithBuffer);
-  const authorizedAmount = estimateWithBuffer + maxPlatformFee;
+  // Calculate authorization amount with buffer (capped) and platform fee
+  const { bufferAmount, totalAuthorization, platformFee } =
+    await calculateAuthorizationAmount(params.amountCents);
 
   const paymentIntent = await stripe.paymentIntents.create({
     customer: params.customerId,
-    amount: authorizedAmount,
+    amount: totalAuthorization,
     currency: "usd",
     capture_method: "manual", // Manual capture for marketplace flow
     metadata: {
@@ -74,14 +80,16 @@ export async function authorizeEstimate(params: {
       service_request_id: params.serviceRequestId,
       original_amount: params.amountCents.toString(),
       buffer_amount: bufferAmount.toString(),
-      max_platform_fee: maxPlatformFee.toString(),
+      max_platform_fee: platformFee.toString(),
     },
   });
 
   return {
     clientSecret: paymentIntent.client_secret!,
     paymentIntentId: paymentIntent.id,
-    authorizedAmount,
+    authorizedAmount: totalAuthorization,
+    bufferAmount,
+    platformFee,
   };
 }
 

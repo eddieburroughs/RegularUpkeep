@@ -293,13 +293,38 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 - Local Sponsor: $250/year
 - Realtor Referral: 50 qualified referrals = free sponsor year
 
-### Marketplace Fees
-- **Homeowner platform fee**: $6 (<$300), $12 ($300-$1500), $25 (>$1500)
-- **Provider commission**: 8% of job total ($3.50 minimum)
+### Marketplace Fees ("Profit + Risk Rails")
+- **Homeowner platform fee**: $6 (<$300), $12 ($300-$1500), $25 cap (>$1500)
+- **Provider commission**: 8% of commissionable subtotal ($3.50 minimum)
+  - Excludes: tax, tip, permit fees
 - **Instant payout**: +1% fee (requires Verified tier)
-- Diagnostic fees: $49-$89 by category (credited toward job)
-- Estimate buffer: 15% authorization hold (+ max platform fee)
-- Dispute window: 72 hours after invoice approval
+
+### Diagnostic Fees (Base Service Fees)
+| Category | Fee | After-Hours (+35%) |
+|----------|-----|-------------------|
+| Handyman | $49 | $66 |
+| Plumbing | $79 | $107 |
+| Electrical | $79 | $107 |
+| HVAC | $89 | $120 |
+| Default | $59 | $80 |
+
+- All fees creditable toward final invoice
+- Refundable before provider accepts, non-refundable after
+- After-hours window: 6 PM - 8 AM local time
+
+### Payment Flow Rails
+| Setting | Value |
+|---------|-------|
+| Estimate buffer | 20% (capped at $250) |
+| Change order required | >12% OR >$75 increase |
+| Auto-approve | 24 hours (if within cap, no dispute) |
+| Dispute window | 72 hours after payment |
+| Provider transfer | After dispute window closes |
+
+### Proof Requirements
+- Required categories: plumbing, hvac, electrical, roofing, water_damage
+- Before photo: Required
+- After photo: Required
 
 ### Provider Marketing Packages
 - Priority Dispatch: $49/year (1.5x boost in dispatch algorithm)
@@ -358,6 +383,14 @@ Edit `src/content/site.ts` - it contains all pricing, FAQs, services, testimonia
 Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ## Recent Changes Log
+
+### 2025-12-24 (Profit + Risk Rails)
+- **Payment Flow Rails**: 20% buffer (capped $250), 12%/$75 change order triggers, 24h auto-approve
+- **Proof Requirements**: Before/after photos required for plumbing, hvac, electrical, roofing, water_damage
+- **After-Hours Pricing**: 35% multiplier for 6 PM - 8 AM bookings
+- **Base Fee Rules**: Creditable by default, refundable before provider accepts
+- **Commissionable Excludes**: Tax, tip, permit fees excluded from provider commission
+- **New Helper Functions**: `requiresChangeOrder()`, `calculateAuthorizationAmount()`, `requiresPhotoProof()`, `isAfterHours()`, `getBaseFeeRules()`
 
 ### 2025-12-24 (ADDENDUM - Monetization Hardening)
 - **Homeowner Platform Fee**: Added per-booking fee ($6 for <$300, $12 for $300-$1500, $25 cap for >$1500)

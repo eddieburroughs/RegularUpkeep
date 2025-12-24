@@ -8,7 +8,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ensureStripeCustomer } from "@/lib/stripe/subscriptions";
 import { authorizeEstimate } from "@/lib/stripe/payments";
-import { getConfig, calculateHomeownerPlatformFee } from "@/lib/config/admin-config";
 
 export async function POST(
   request: NextRequest,
@@ -80,10 +79,6 @@ export async function POST(
       return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
-    // Get payment flow config for buffer percentage
-    const paymentFlow = await getConfig("marketplace_payments");
-    const bufferPercentage = paymentFlow.estimate_buffer_percentage;
-
     // Ensure Stripe customer exists
     const customerId = await ensureStripeCustomer({
       userId: user.id,
@@ -91,14 +86,14 @@ export async function POST(
       name: profile.full_name || undefined,
     });
 
-    // Authorize the payment
-    const { clientSecret, paymentIntentId, authorizedAmount } = await authorizeEstimate({
-      customerId,
-      estimateId: estimate.id,
-      serviceRequestId: estimate.service_request_id,
-      amountCents: estimate.total_cents,
-      bufferPercentage,
-    });
+    // Authorize the payment (uses config for buffer % and cap)
+    const { clientSecret, paymentIntentId, authorizedAmount, bufferAmount, platformFee } =
+      await authorizeEstimate({
+        customerId,
+        estimateId: estimate.id,
+        serviceRequestId: estimate.service_request_id,
+        amountCents: estimate.total_cents,
+      });
 
     // Update estimate status
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,6 +103,7 @@ export async function POST(
         approved_at: new Date().toISOString(),
         stripe_payment_intent_id: paymentIntentId,
         authorized_amount_cents: authorizedAmount,
+        buffer_amount_cents: bufferAmount,
         updated_at: new Date().toISOString(),
       })
       .eq("id", estimateId);
@@ -121,15 +117,14 @@ export async function POST(
       })
       .eq("id", estimate.service_request_id);
 
-    // Calculate platform fee for the estimated amount
-    const platformFee = await calculateHomeownerPlatformFee(estimate.total_cents);
-
     return NextResponse.json({
       success: true,
       clientSecret,
       paymentIntentId,
-      authorizedAmount,
+      estimateAmount: estimate.total_cents,
+      bufferAmount,
       platformFee,
+      authorizedAmount,
     });
   } catch (error) {
     console.error("Estimate approval error:", error);

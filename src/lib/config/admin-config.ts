@@ -17,6 +17,9 @@ import type {
   ProviderPayoutConfig,
   RealtorReferralConfig,
   MarketplacePaymentsConfig,
+  ProofRequirementsConfig,
+  AfterHoursConfig,
+  BaseFeeRulesConfig,
   MediaRequirementsConfig,
   FeatureFlagsConfig,
   AIOperationsConfig,
@@ -34,6 +37,9 @@ export const CONFIG_KEYS = {
   PROVIDER_PAYOUT: "provider_payout",
   REALTOR_REFERRAL: "realtor_referral",
   MARKETPLACE_PAYMENTS: "marketplace_payments",
+  PROOF_REQUIREMENTS: "proof_requirements",
+  AFTER_HOURS: "after_hours",
+  BASE_FEE_RULES: "base_fee_rules",
   MEDIA_REQUIREMENTS: "media_requirements",
   FEATURE_FLAGS: "feature_flags",
   AI_OPERATIONS: "ai_operations",
@@ -53,6 +59,9 @@ export interface ConfigTypeMap {
   provider_payout: ProviderPayoutConfig;
   realtor_referral: RealtorReferralConfig;
   marketplace_payments: MarketplacePaymentsConfig;
+  proof_requirements: ProofRequirementsConfig;
+  after_hours: AfterHoursConfig;
+  base_fee_rules: BaseFeeRulesConfig;
   media_requirements: MediaRequirementsConfig;
   feature_flags: FeatureFlagsConfig;
   ai_operations: AIOperationsConfig;
@@ -67,29 +76,39 @@ export const DEFAULT_CONFIG: ConfigTypeMap = {
     sponsor_free_yearly_cents: 2500,
   },
   diagnostic_fees: {
-    hvac: { fee_cents: 8900, creditable: true },
-    plumbing: { fee_cents: 7900, creditable: true },
-    electrical: { fee_cents: 8900, creditable: true },
-    appliances: { fee_cents: 6900, creditable: true },
-    exterior: { fee_cents: 5900, creditable: true },
-    interior: { fee_cents: 4900, creditable: true },
-    landscaping: { fee_cents: 0, creditable: false },
-    pest_control: { fee_cents: 0, creditable: false },
-    safety: { fee_cents: 4900, creditable: true },
-    other: { fee_cents: 4900, creditable: true },
+    // Base service fees by category (credited toward final invoice)
+    handyman: { fee_cents: 4900, creditable: true },   // $49
+    plumbing: { fee_cents: 7900, creditable: true },   // $79
+    electrical: { fee_cents: 7900, creditable: true }, // $79
+    hvac: { fee_cents: 8900, creditable: true },       // $89
+    roofing: { fee_cents: 7900, creditable: true },    // $79
+    water_damage: { fee_cents: 8900, creditable: true }, // $89 (emergency)
+    appliances: { fee_cents: 5900, creditable: true }, // $59
+    exterior: { fee_cents: 5900, creditable: true },   // $59
+    interior: { fee_cents: 4900, creditable: true },   // $49
+    landscaping: { fee_cents: 4900, creditable: true }, // $49
+    pest_control: { fee_cents: 4900, creditable: true }, // $49
+    safety: { fee_cents: 5900, creditable: true },     // $59
+    default: { fee_cents: 5900, creditable: true },    // $59 fallback
   },
   homeowner_platform_fees: {
-    // Flat fee by ticket size (per ADDENDUM A1)
+    mode: "FLAT_TIER" as const,
     tiers: [
-      { min_cents: 0, max_cents: 29999, fee_cents: 600 },         // < $300 => $6
-      { min_cents: 30000, max_cents: 150000, fee_cents: 1200 },   // $300-$1500 => $12
-      { min_cents: 150001, max_cents: 999999999, fee_cents: 2500 }, // > $1500 => $25
+      { min_cents: 0, max_cents: 29999, fee_cents: 600 },           // < $300 => $6
+      { min_cents: 30000, max_cents: 150000, fee_cents: 1200 },     // $300-$1500 => $12
+      { min_cents: 150001, max_cents: 999999999, fee_cents: 2500 }, // > $1500 => $25 (cap)
     ],
-    cap_cents: 2500, // $25 cap
+    cap_cents: 2500,
+    waive_if_first_job: false,
   },
   provider_fees: {
     percentage: 8.0,
-    minimum_cents: 350, // $3.50 floor per ADDENDUM B
+    minimum_cents: 350, // $3.50 floor
+    commissionable_excludes: {
+      tax: true,
+      tip: true,
+      permit: true,
+    },
   },
   provider_tiers: {
     verified: {
@@ -145,11 +164,31 @@ export const DEFAULT_CONFIG: ConfigTypeMap = {
     },
   },
   marketplace_payments: {
-    estimate_buffer_percentage: 15,
-    change_order_threshold_percentage: 10,
-    auto_approve_hours: 24,
-    dispute_window_hours: 72,
-    hold_period_hours: 72,
+    estimate_buffer_percentage: 20,          // 20% buffer on authorization
+    estimate_buffer_cap_cents: 25000,        // $250 max buffer
+    change_order_threshold_percentage: 12,   // 12% triggers change order
+    change_order_threshold_amount_cents: 7500, // OR $75 flat triggers change order
+    auto_approve_hours: 24,                  // Auto-approve if no action in 24h
+    dispute_window_hours: 72,                // 72h to dispute after payment
+    hold_period_hours: 72,                   // 72h hold before provider transfer
+  },
+  proof_requirements: {
+    photo_required_categories: ["plumbing", "hvac", "electrical", "roofing", "water_damage"],
+    photo_before_required: true,
+    photo_after_required: true,
+  },
+  after_hours: {
+    enabled: true,
+    multiplier: 1.35, // 35% surcharge for after-hours
+    window_local: {
+      start: "18:00",
+      end: "08:00",
+    },
+  },
+  base_fee_rules: {
+    creditable_by_default: true,
+    refundable_before_provider_accepts: true,
+    refundable_after_accepts: false,
   },
   media_requirements: {
     hvac: { min_photos: 2, video_required: false, emergency_exception: true },
@@ -337,10 +376,141 @@ export async function calculateProviderFee(amountCents: number): Promise<number>
  * Get diagnostic fee for a service category
  */
 export async function getDiagnosticFee(
-  category: string
+  category: string,
+  isAfterHours: boolean = false
 ): Promise<{ fee_cents: number; creditable: boolean }> {
   const config = await getConfig("diagnostic_fees");
-  return config[category] || { fee_cents: 4900, creditable: true };
+  const baseFee = config[category] || config["default"] || { fee_cents: 5900, creditable: true };
+
+  // Apply after-hours multiplier if applicable
+  if (isAfterHours) {
+    const afterHoursConfig = await getConfig("after_hours");
+    if (afterHoursConfig.enabled) {
+      return {
+        fee_cents: Math.ceil(baseFee.fee_cents * afterHoursConfig.multiplier),
+        creditable: baseFee.creditable,
+      };
+    }
+  }
+
+  return baseFee;
+}
+
+/**
+ * Check if current time is in after-hours window
+ */
+export async function isAfterHours(timezone: string = "America/New_York"): Promise<boolean> {
+  const config = await getConfig("after_hours");
+  if (!config.enabled) return false;
+
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const currentTime = formatter.format(now);
+  const [currentHour] = currentTime.split(":").map(Number);
+
+  const [startHour] = config.window_local.start.split(":").map(Number);
+  const [endHour] = config.window_local.end.split(":").map(Number);
+
+  // Handle overnight window (e.g., 18:00 - 08:00)
+  if (startHour > endHour) {
+    return currentHour >= startHour || currentHour < endHour;
+  }
+  return currentHour >= startHour && currentHour < endHour;
+}
+
+/**
+ * Check if a change order is required based on estimate vs final amount
+ */
+export async function requiresChangeOrder(params: {
+  originalEstimateCents: number;
+  newAmountCents: number;
+}): Promise<{ required: boolean; reason?: string }> {
+  const config = await getConfig("marketplace_payments");
+  const increase = params.newAmountCents - params.originalEstimateCents;
+  const percentageIncrease = (increase / params.originalEstimateCents) * 100;
+
+  // Check percentage threshold (12%)
+  if (percentageIncrease > config.change_order_threshold_percentage) {
+    return {
+      required: true,
+      reason: `Increase of ${percentageIncrease.toFixed(1)}% exceeds ${config.change_order_threshold_percentage}% threshold`,
+    };
+  }
+
+  // Check flat amount threshold ($75)
+  if (increase > config.change_order_threshold_amount_cents) {
+    return {
+      required: true,
+      reason: `Increase of $${(increase / 100).toFixed(2)} exceeds $${(config.change_order_threshold_amount_cents / 100).toFixed(2)} threshold`,
+    };
+  }
+
+  return { required: false };
+}
+
+/**
+ * Calculate authorization amount with buffer and cap
+ */
+export async function calculateAuthorizationAmount(
+  estimateCents: number
+): Promise<{ bufferAmount: number; totalAuthorization: number; platformFee: number }> {
+  const config = await getConfig("marketplace_payments");
+
+  // Calculate buffer (20% default)
+  let bufferAmount = Math.ceil(estimateCents * (config.estimate_buffer_percentage / 100));
+
+  // Apply buffer cap ($250 default)
+  bufferAmount = Math.min(bufferAmount, config.estimate_buffer_cap_cents);
+
+  const estimateWithBuffer = estimateCents + bufferAmount;
+
+  // Include max possible platform fee
+  const platformFee = await calculateHomeownerPlatformFee(estimateWithBuffer);
+
+  return {
+    bufferAmount,
+    totalAuthorization: estimateWithBuffer + platformFee,
+    platformFee,
+  };
+}
+
+/**
+ * Check if photo proof is required for a category
+ */
+export async function requiresPhotoProof(
+  category: string
+): Promise<{ before: boolean; after: boolean }> {
+  const config = await getConfig("proof_requirements");
+
+  if (!config.photo_required_categories.includes(category)) {
+    return { before: false, after: false };
+  }
+
+  return {
+    before: config.photo_before_required,
+    after: config.photo_after_required,
+  };
+}
+
+/**
+ * Get base fee refund rules
+ */
+export async function getBaseFeeRules(): Promise<{
+  creditableByDefault: boolean;
+  refundableBeforeAccept: boolean;
+  refundableAfterAccept: boolean;
+}> {
+  const config = await getConfig("base_fee_rules");
+  return {
+    creditableByDefault: config.creditable_by_default,
+    refundableBeforeAccept: config.refundable_before_provider_accepts,
+    refundableAfterAccept: config.refundable_after_accepts,
+  };
 }
 
 /**

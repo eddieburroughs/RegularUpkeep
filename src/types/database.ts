@@ -2122,13 +2122,20 @@ export interface PlatformFeeTier {
 }
 
 export interface HomeownerPlatformFeesConfig {
+  mode: "FLAT_TIER" | "PERCENTAGE";
   tiers: PlatformFeeTier[];
   cap_cents: number;
+  waive_if_first_job: boolean;
 }
 
 export interface ProviderFeesConfig {
   percentage: number;
   minimum_cents: number;
+  commissionable_excludes: {
+    tax: boolean;
+    tip: boolean;
+    permit: boolean;
+  };
 }
 
 export interface ProviderTierConfig {
@@ -2192,10 +2199,36 @@ export interface RealtorReferralConfig {
 
 export interface MarketplacePaymentsConfig {
   estimate_buffer_percentage: number;
+  estimate_buffer_cap_cents: number; // Don't authorize absurd buffers
   change_order_threshold_percentage: number;
+  change_order_threshold_amount_cents: number; // Flat amount trigger
   auto_approve_hours: number;
   dispute_window_hours: number;
   hold_period_hours: number;
+}
+
+// Proof requirements config (reduces disputes)
+export interface ProofRequirementsConfig {
+  photo_required_categories: string[];
+  photo_before_required: boolean;
+  photo_after_required: boolean;
+}
+
+// After-hours pricing config
+export interface AfterHoursConfig {
+  enabled: boolean;
+  multiplier: number; // e.g., 1.35 for 35% surcharge
+  window_local: {
+    start: string; // "18:00"
+    end: string;   // "08:00"
+  };
+}
+
+// Base fee (diagnostic) refund rules
+export interface BaseFeeRulesConfig {
+  creditable_by_default: boolean;
+  refundable_before_provider_accepts: boolean;
+  refundable_after_accepts: boolean;
 }
 
 export interface MediaRequirementsConfig {
