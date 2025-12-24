@@ -1,7 +1,7 @@
 # AI Integration Map
 
-> **Document Version**: 1.0
-> **Created**: 2025-12-23
+> **Document Version**: 2.0
+> **Last Updated**: 2025-12-24
 > **Purpose**: Pre-AI audit mapping what exists, what to reuse, what to refactor
 
 ---
@@ -16,482 +16,584 @@
 6. [Deprecation Candidates](#deprecation-candidates)
 7. [Data Flow Diagrams](#data-flow-diagrams)
 8. [Feature Flags](#feature-flags)
-9. [Implementation Priority](#implementation-priority)
+9. [Implementation Status](#implementation-status)
 
 ---
 
 ## Executive Summary
 
-The RegularUpkeep codebase is **architecturally ready** for AI integration. Key findings:
+**The RegularUpkeep codebase has extensive AI infrastructure already built.** Full audit completed 2025-12-24.
 
-- **Existing AI stub** at `/api/ai/analyze-media` returns placeholder responses - ready to connect to real AI
-- **Feature flag system** already has `ai_intake_enabled` flag
-- **No AI SDKs installed** - need to add `openai` or `@anthropic-ai/sdk`
-- **No AI API keys configured** - need `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`
-- **198 TypeScript files** total, well-organized codebase
-- **All major flows are complete**: service requests, estimates, invoices, disputes, messaging, dashboards
+### Key Findings
+
+| Area | Status |
+|------|--------|
+| AI SDK packages | **Installed** (`openai`, `@anthropic-ai/sdk`) |
+| AI provider abstraction | **Complete** (`src/lib/ai/`) |
+| Prompt templates | **Complete** (13 task types) |
+| Rate limiting | **Complete** (per-minute + daily database limits) |
+| Cost tracking | **Complete** (`ai_jobs`, `ai_daily_metrics` tables) |
+| Feature flags | **All 7 exist** in `admin_config` |
+| AI API routes | **10+ routes** implemented |
+| AI UI components | **15+ components** implemented |
+
+### What Needs Work
+
+- Enable and test disabled feature flags
+- Add unit tests for AI edge cases
+- End-to-end testing of AI flows
+- Performance optimization for AI responses
 
 ---
 
 ## Current AI Infrastructure
 
-### Existing Files
+### AI Provider Layer (`src/lib/ai/`)
 
-| File | Status | Purpose |
-|------|--------|---------|
-| `src/app/api/ai/analyze-media/route.ts` | **Placeholder** | Image analysis API - returns category-specific mock responses |
-| `src/components/service-request/ai-assisted-description.tsx` | **Active** | UI component for AI-assisted service descriptions |
-| `src/lib/config/admin-config.ts` | **Active** | Contains `ai_intake_enabled` feature flag |
-| `src/types/database.ts` | **Active** | Has `FeatureFlagsConfig` interface with `ai_intake_enabled` |
+| File | Purpose | Status |
+|------|---------|--------|
+| `gateway.ts` | Central AI request handler with rate limiting, consent checks, logging | **Complete** |
+| `providers/index.ts` | Provider abstraction (OpenAI, Anthropic, mock) | **Complete** |
+| `providers/openai.ts` | OpenAI GPT-4 Vision implementation | **Complete** |
+| `providers/anthropic.ts` | Claude implementation | **Complete** |
+| `providers/mock.ts` | Mock provider for testing | **Complete** |
+| `tasks/index.ts` | Task type registry | **Complete** |
 
-### Missing Infrastructure
+### AI Task Types (13 Total)
 
-| Item | Action Required |
-|------|-----------------|
-| AI SDK package | Install `openai` or `@anthropic-ai/sdk` |
-| API key env var | Add `OPENAI_API_KEY` and/or `ANTHROPIC_API_KEY` to `.env.local` |
-| AI provider abstraction | Create `src/lib/ai/` with provider-agnostic interface |
-| Prompt templates | Create `src/lib/ai/prompts/` directory |
-| Token/cost tracking | Add to `transactions` table or new `ai_usage` table |
+| Task Type | Description | Feature Flag |
+|-----------|-------------|--------------|
+| `homeowner_classification` | Classify service requests from photos/description | `ai_intake_enabled` |
+| `homeowner_follow_up` | Generate follow-up questions | `ai_intake_enabled` |
+| `homeowner_safety_check` | Detect safety hazards (gas, electrical, flooding) | `ai_intake_enabled` |
+| `provider_brief` | Generate brief for providers | `ai_intake_enabled` |
+| `estimate_draft` | Help providers draft estimates | `ai_provider_copilot_enabled` |
+| `message_draft` | Draft professional messages | `ai_provider_copilot_enabled` |
+| `invoice_narrative` | Generate work summary narratives | `ai_provider_copilot_enabled` |
+| `crm_next_action` | Suggest CRM follow-up actions | `ai_crm_copilot_enabled` |
+| `maintenance_plan` | Generate seasonal maintenance plans | `ai_maintenance_coach_enabled` |
+| `sponsor_copy` | Generate ad copy variants | `ai_sponsor_copy_enabled` |
+| `dispute_summary` | Summarize disputes for admin | `ai_admin_triage_enabled` |
+| `fraud_detection` | Detect referral fraud signals | `ai_admin_triage_enabled` |
+| `provider_insights` | Provider quality insights | `ai_admin_triage_enabled` |
+
+### Database Tables
+
+| Table | Purpose | Status |
+|-------|---------|--------|
+| `ai_jobs` | Log all AI requests (user, task type, status, cost) | **Complete** |
+| `ai_outputs` | Store AI outputs linked to jobs | **Complete** |
+| `ai_feedback` | User thumbs up/down feedback | **Complete** |
+| `ai_policy_events` | Blocked content logging | **Complete** |
+| `ai_daily_usage` | Per-user daily usage tracking | **Complete** |
+| `ai_daily_metrics` | Platform-wide daily metrics | **Complete** |
+| `ai_cleanup_log` | Retention cleanup audit log | **Complete** |
+| `user_preferences` | User AI consent preferences | **Complete** |
+
+### AI API Routes
+
+| Route | Purpose | Status |
+|-------|---------|--------|
+| `/api/ai/classify` | Classify service request | **Complete** |
+| `/api/ai/follow-up` | Generate follow-up questions | **Complete** |
+| `/api/ai/provider-brief` | Generate provider brief | **Complete** |
+| `/api/provider/estimate-draft` | AI estimate suggestions | **Complete** |
+| `/api/provider/message-draft` | AI message drafts | **Complete** |
+| `/api/provider/invoice-narrative` | AI work summaries | **Complete** |
+| `/api/provider/crm/next-action` | CRM suggestions | **Complete** |
+| `/api/properties/[id]/maintenance-plan` | Maintenance coach | **Complete** |
+| `/api/sponsor/campaigns/[id]/copy` | Sponsor copy generation | **Complete** |
+| `/api/admin/disputes/[id]/ai-summary` | Dispute summarization | **Complete** |
+| `/api/admin/referrals/[id]/fraud-check` | Fraud detection | **Complete** |
+| `/api/admin/providers/[id]/insights` | Provider insights | **Complete** |
+| `/api/user/ai-preferences` | User consent management | **Complete** |
+| `/api/admin/ai-ops` | Admin AI metrics dashboard | **Complete** |
+| `/api/ai/feedback` | Feedback collection | **Complete** |
+| `/api/cron/ai-cleanup` | Data retention cleanup | **Complete** |
+
+### AI UI Components
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `AIClassificationCard` | `src/components/ai-intake/classification-card.tsx` | Display AI classification |
+| `AIFollowUpQuestions` | `src/components/ai-intake/follow-up-questions.tsx` | Show/collect follow-ups |
+| `SafetyWarning` | `src/components/ai-intake/safety-warning.tsx` | Display safety alerts |
+| `VoiceNoteRecorder` | `src/components/ai-intake/voice-note-recorder.tsx` | Voice input for emergencies |
+| `EmergencyChecklist` | `src/components/ai-intake/emergency-checklist.tsx` | Emergency bypass checklist |
+| `AIEstimateDraft` | `src/components/provider/ai-estimate-draft.tsx` | AI estimate suggestions |
+| `AIMessageDraft` | `src/components/provider/ai-message-draft.tsx` | AI message drafts |
+| `AIInvoiceNarrative` | `src/components/provider/ai-invoice-narrative.tsx` | Work summary generator |
+| `MissingInfoChecker` | `src/components/provider/missing-info-checker.tsx` | Hard + soft info checks |
+| `CrmSuggestionsPanel` | `src/components/provider/crm-suggestions-panel.tsx` | CRM AI suggestions |
+| `MaintenanceCoachPanel` | `src/components/homeowner/maintenance-coach-panel.tsx` | Seasonal recommendations |
+| `SponsorCopyEditor` | `src/components/sponsor/sponsor-copy-editor.tsx` | AI copy variants |
+| `AIFeedback` | `src/components/ai/ai-feedback.tsx` | Thumbs up/down component |
+| `AdminAIOpsTab` | `src/app/app/admin/ai-ops/page.tsx` | AI operations dashboard |
 
 ---
 
 ## Integration Points by AI Feature
 
-### 1. AI Intake (Service Request Creation)
+### A. AI Intake (Homeowner Service Requests)
 
-**Current Flow:**
+**Status**: **COMPLETE** - Behind `ai_intake_enabled` flag (currently enabled)
+
+**Flow**:
 ```
-User selects category → Uploads media → AI analyzes photos → Suggests description → User refines → Submits
-```
-
-**Files to Modify:**
-
-| File | Line(s) | Change |
-|------|---------|--------|
-| `src/app/api/ai/analyze-media/route.ts` | 35-143 | Replace mock responses with real AI vision call |
-| `src/app/app/requests/new/page.tsx` | 385-410 | Already integrated - no changes needed |
-| `src/components/service-request/ai-assisted-description.tsx` | 140-175 | Already integrated - no changes needed |
-
-**Database Fields (Already Exist):**
-- `service_requests.ai_summary` - AI-generated summary
-- `service_requests.ai_follow_up_questions` - Generated clarifying questions
-- `service_requests.ai_follow_up_answers` - User responses
-- `service_requests.ai_provider_brief` - Brief for provider
-- `service_requests.ai_processing_status` - Processing state
-
-### 2. AI Media Quality Check
-
-**Current Flow:**
-```
-User uploads photo → Manual requirements check → Submit if met
+Upload Photos → AI Classification → Safety Check → Follow-up Questions → Provider Brief
 ```
 
-**Target Flow:**
-```
-User uploads photo → AI validates quality/relevance → Feedback if poor → Submit
-```
+**Files**:
+| File | Line(s) | Integration |
+|------|---------|-------------|
+| `src/app/app/requests/new/page.tsx` | 50-200 | Main flow orchestration |
+| `src/components/ai-intake/classification-card.tsx` | * | Classification display |
+| `src/components/ai-intake/follow-up-questions.tsx` | * | Q&A collection |
+| `src/components/ai-intake/safety-warning.tsx` | * | Safety alerts |
+| `src/app/api/ai/classify/route.ts` | * | Classification endpoint |
+| `src/app/api/ai/follow-up/route.ts` | * | Follow-up generation |
+| `src/app/api/ai/provider-brief/route.ts` | * | Brief generation |
 
-**Files to Create/Modify:**
+**Safety Features**:
+- Gas leak detection → Emergency services prompt
+- Electrical hazards → Professional warning
+- Flooding → Water shutoff guidance
 
-| File | Action |
-|------|--------|
-| `src/app/api/ai/validate-media/route.ts` | **Create** - Quality validation endpoint |
-| `src/components/service-request/media-upload.tsx:107-128` | Modify - Call validation before accepting upload |
-| `src/lib/ai/prompts/media-quality.ts` | **Create** - Prompt template for quality check |
+### B. Provider AI Copilot
 
-### 3. AI Provider Copilot
+**Status**: **COMPLETE** - Behind `ai_provider_copilot_enabled` flag (currently disabled)
 
-**Current Flow:**
-```
-Provider receives job → Views details → Creates estimate manually
-```
+**Features**:
+1. Estimate Draft - AI suggests line items and scope
+2. Message Draft - Professional message templates
+3. Invoice Narrative - Work summary generation
 
-**Target Flow:**
-```
-Provider receives job → AI analyzes request → Suggests estimate → Provider refines
-```
+**Files**:
+| File | Integration |
+|------|-------------|
+| `src/app/provider/jobs/[id]/page.tsx` | AI estimate button |
+| `src/app/provider/messages/[id]/page.tsx` | AI draft reply button |
+| `src/app/provider/jobs/[id]/complete/page.tsx` | AI work summary |
+| `src/components/provider/ai-estimate-draft.tsx` | Estimate UI |
+| `src/components/provider/ai-message-draft.tsx` | Message UI |
+| `src/components/provider/ai-invoice-narrative.tsx` | Summary UI |
 
-**Files to Create/Modify:**
+**Safety Rules**:
+- Never include prices in AI output (provider adds)
+- No pricing promises in messages
+- No code compliance claims unless provider confirms
+- All drafts editable before sending
 
-| File | Action |
-|------|--------|
-| `src/app/api/ai/estimate-assist/route.ts` | **Create** - Estimate generation endpoint |
-| `src/app/provider/jobs/[id]/job-detail-client.tsx` | Modify - Add AI estimate button |
-| `src/components/provider/ai-estimate-generator.tsx` | **Create** - UI for AI estimate suggestions |
+### C. CRM Copilot (Provider)
 
-### 4. AI Admin Triage
+**Status**: **COMPLETE** - Behind `ai_crm_copilot_enabled` flag (currently disabled)
 
-**Current Flow:**
-```
-Admin manually reviews requests → Assigns to providers
-```
+**Features**:
+- Next best action suggestions
+- Churn risk detection
+- Upsell opportunities
+- Customer health scores
 
-**Target Flow:**
-```
-Request submitted → AI categorizes/prioritizes → Suggests provider matches → Admin confirms
-```
+**Files**:
+| File | Integration |
+|------|-------------|
+| `src/app/provider/crm/page.tsx` | CRM dashboard |
+| `src/components/provider/crm-suggestions-panel.tsx` | Suggestions UI |
+| `src/app/api/provider/crm/next-action/route.ts` | API endpoint |
 
-**Files to Create/Modify:**
+### D. Maintenance Coach (Homeowner)
 
-| File | Action |
-|------|--------|
-| `src/app/api/ai/triage/route.ts` | **Create** - Auto-triage endpoint |
-| `src/app/app/admin/page.tsx:300-400` | Modify - Add AI triage panel |
-| `src/components/admin/ai-triage-queue.tsx` | **Create** - Triage queue component |
+**Status**: **COMPLETE** - Behind `ai_maintenance_coach_enabled` flag (currently disabled)
 
-### 5. AI CRM Copilot (Provider)
+**Features**:
+- Seasonal task recommendations
+- Priority repairs identification
+- Premium: Printable quarterly checklist
 
-**Current Flow:**
-```
-Provider views CRM → Manual customer analysis → Manual follow-up decisions
-```
+**Files**:
+| File | Integration |
+|------|-------------|
+| `src/app/app/properties/[id]/page.tsx` | Property detail |
+| `src/components/homeowner/maintenance-coach-panel.tsx` | Coach UI |
+| `src/app/api/properties/[id]/maintenance-plan/route.ts` | API endpoint |
 
-**Target Flow:**
-```
-Provider views CRM → AI suggests follow-ups → AI drafts messages → Provider sends
-```
+### E. Sponsor Copy (Advertisers)
 
-**Files to Create/Modify:**
+**Status**: **COMPLETE** - Behind `ai_sponsor_copy_enabled` flag (currently disabled)
 
-| File | Action |
-|------|--------|
-| `src/app/api/ai/crm-insights/route.ts` | **Create** - Customer insights endpoint |
-| `src/app/provider/crm/page.tsx:291-325` | Modify - Add AI insights panel |
-| `src/components/provider/ai-customer-insights.tsx` | **Create** - Insights component |
+**Features**:
+- Multiple copy variants (headlines, CTAs, descriptions)
+- Compliance checking
+- Brand guidelines support
 
-### 6. AI Maintenance Coach (Homeowner)
+**Files**:
+| File | Integration |
+|------|-------------|
+| `src/app/sponsor/campaigns/[id]/page.tsx` | Campaign editor |
+| `src/components/sponsor/sponsor-copy-editor.tsx` | Copy UI |
+| `src/app/api/sponsor/campaigns/[id]/copy/route.ts` | API endpoint |
 
-**Current Flow:**
-```
-Homeowner views dashboard → Manual maintenance planning
-```
+### F. Admin AI Triage
 
-**Target Flow:**
-```
-Homeowner views dashboard → AI analyzes property → Suggests maintenance → Explains benefits
-```
+**Status**: **COMPLETE** - Behind `ai_admin_triage_enabled` flag (currently disabled)
 
-**Files to Create/Modify:**
+**Features**:
+- Dispute timeline summarization
+- Refund recommendations
+- Fraud signal detection
+- Provider quality insights
 
-| File | Action |
-|------|--------|
-| `src/app/api/ai/maintenance-coach/route.ts` | **Create** - Coaching endpoint |
-| `src/app/app/page.tsx:119-148` | Modify - Add AI coach widget |
-| `src/components/app/ai-maintenance-coach.tsx` | **Create** - Coach component |
-
-### 7. AI Sponsor Ad Copy
-
-**Current Flow:**
-```
-Sponsor uploads ad → Manual content creation
-```
-
-**Target Flow:**
-```
-Sponsor uploads product info → AI generates ad copy → Sponsor refines
-```
-
-**Files to Create/Modify:**
-
-| File | Action |
-|------|--------|
-| `src/app/api/ai/generate-ad-copy/route.ts` | **Create** - Ad copy generation |
-| `src/components/sponsors/ad-editor.tsx` | Modify - Add AI generation button |
+**Files**:
+| File | Integration |
+|------|-------------|
+| `src/app/app/admin/disputes/[id]/page.tsx` | Dispute detail |
+| `src/app/app/admin/referrals/page.tsx` | Referral management |
+| `src/app/app/admin/providers/[id]/page.tsx` | Provider profile |
 
 ---
 
 ## What We Can Reuse As-Is
 
-### Components (No Changes Needed)
+### Infrastructure (100% Reusable)
 
-| Component | Path | Reason |
-|-----------|------|--------|
-| AIAssistedDescription | `src/components/service-request/ai-assisted-description.tsx` | Already consumes AI API response correctly |
-| MediaUpload | `src/components/service-request/media-upload.tsx` | Upload logic is AI-agnostic |
-| EstimateApproval | `src/components/marketplace/estimate-approval.tsx` | UI complete, just needs AI suggestion source |
-| InvoiceApproval | `src/components/marketplace/invoice-approval.tsx` | Complete as-is |
-| MessageThread | `src/app/*/messages/[id]/message-thread.tsx` | AI responses can use same thread system |
+| Component | Path | Notes |
+|-----------|------|-------|
+| AI Gateway | `src/lib/ai/gateway.ts` | Rate limiting, logging, consent |
+| Provider Abstraction | `src/lib/ai/providers/` | OpenAI + Anthropic ready |
+| Task Registry | `src/lib/ai/tasks/` | 13 task types defined |
+| Feature Flags | `src/lib/config/admin-config.ts` | All 7 AI flags exist |
+| Rate Limiting | Per-minute (memory) + Daily (DB) | Complete |
+| Cost Tracking | `ai_jobs` + `ai_daily_metrics` | Complete |
+| Consent System | `user_preferences` table | Complete |
+| Feedback System | `ai_feedback` table + component | Complete |
+| Cleanup Cron | `/api/cron/ai-cleanup` | Complete |
 
 ### Database Schema (No Changes Needed)
 
-| Table | Reason |
-|-------|--------|
-| `service_requests` | Already has `ai_*` fields for AI data |
-| `estimates` | Structure supports AI-generated line items |
-| `message_threads` | Can be used for AI conversations |
-| `admin_config` | Feature flags ready for AI toggles |
+| Table | Purpose |
+|-------|---------|
+| `service_requests` | Has `ai_*` fields for AI data |
+| `ai_jobs` | AI request logging |
+| `ai_outputs` | AI output storage |
+| `ai_feedback` | User feedback |
+| `ai_policy_events` | Content moderation logs |
+| `ai_daily_usage` | Per-user usage |
+| `ai_daily_metrics` | Platform metrics |
+| `user_preferences` | Consent tracking |
 
 ### API Patterns (Reuse)
 
-| Pattern | Location | Reuse For |
-|---------|----------|-----------|
-| Auth middleware | `src/lib/supabase/middleware.ts` | All AI endpoints |
-| Config fetching | `src/lib/config/admin-config.ts:getConfig()` | AI feature flags |
-| Error handling | API routes use consistent JSON responses | AI endpoints |
-| Rate limiting | `src/app/api/inspection/generate-pdf/route.ts:33-42` | AI endpoints |
+| Pattern | Location | Notes |
+|---------|----------|-------|
+| AI Gateway wrapper | `src/lib/ai/gateway.ts` | All routes use this |
+| Feature flag checking | `isFeatureEnabled()` | Consistent pattern |
+| Error handling | JSON error responses | Consistent |
+| Cost calculation | Gateway handles | Automatic |
 
 ---
 
 ## Minimal Refactors Required
 
-### 1. AI Provider Abstraction
+### 1. Enable Disabled Features
 
-**Reason**: Allow switching between OpenAI/Anthropic/others without code changes
+**Action**: Set flags to `true` in admin config or database
 
-**Create**: `src/lib/ai/provider.ts`
+| Flag | Current | Action |
+|------|---------|--------|
+| `ai_intake_enabled` | `true` | Already enabled |
+| `ai_media_quality_enabled` | `false` | Enable when ready |
+| `ai_provider_copilot_enabled` | `false` | Enable when ready |
+| `ai_admin_triage_enabled` | `false` | Enable when ready |
+| `ai_crm_copilot_enabled` | `false` | Enable when ready |
+| `ai_maintenance_coach_enabled` | `false` | Enable when ready |
+| `ai_sponsor_copy_enabled` | `false` | Enable when ready |
 
-```typescript
-// Interface for AI provider abstraction
-export interface AIProvider {
-  analyzeImage(imageUrls: string[], prompt: string): Promise<AIResponse>;
-  generateText(prompt: string, context?: string): Promise<string>;
-  embedText(text: string): Promise<number[]>;
-}
+### 2. Add Missing Tests
 
-export function getAIProvider(): AIProvider {
-  const provider = process.env.AI_PROVIDER || 'openai';
-  // Return appropriate implementation
-}
-```
+**Status**: 47 tests exist, but more edge cases needed
 
-**Files Affected**: Just the new file + env configuration
+| Test Area | Status | Needed |
+|-----------|--------|--------|
+| Media validation | Complete | - |
+| AI fallback | Complete | - |
+| Rate limiting | Partial | Add exhaustion tests |
+| Consent flows | Partial | Add opt-out tests |
+| Cost tracking | Partial | Add budget limit tests |
 
-### 2. Prompt Management System
+### 3. Performance Optimization
 
-**Reason**: Centralize prompts for easy iteration and A/B testing
-
-**Create**: `src/lib/ai/prompts/`
-
-```
-src/lib/ai/prompts/
-├── index.ts           # Prompt registry
-├── intake.ts          # Service request intake prompts
-├── estimate.ts        # Estimate generation prompts
-├── triage.ts          # Admin triage prompts
-├── crm.ts             # CRM insights prompts
-└── maintenance.ts     # Maintenance coaching prompts
-```
-
-**Files Affected**: New directory only
-
-### 3. API Route Pattern for AI
-
-**Reason**: Consistent error handling, rate limiting, cost tracking
-
-**Create**: `src/lib/ai/route-helpers.ts`
-
-```typescript
-export async function withAIRateLimit(
-  request: Request,
-  handler: () => Promise<Response>
-): Promise<Response> {
-  // Rate limiting
-  // Cost tracking
-  // Error handling wrapper
-}
-```
-
-**Files Affected**: New file, then update AI routes to use it
+| Area | Current | Improvement |
+|------|---------|-------------|
+| AI response time | ~2-5s | Add caching for common queries |
+| Image processing | Serial | Parallelize multi-image analysis |
+| Prompt length | Variable | Optimize token usage |
 
 ---
 
 ## Deprecation Candidates
 
-> **Note**: Do NOT delete these immediately. Mark as deprecated, monitor usage, remove in future release.
+> **Note**: Do NOT delete immediately. Mark as deprecated, monitor, remove in future release.
 
 ### Files to Deprecate Later
 
 | File | Reason | When to Remove |
 |------|--------|----------------|
-| None currently | Codebase is clean | N/A |
+| `src/app/api/ai/analyze-media/route.ts` | Old placeholder, replaced by `/api/ai/classify` | After verifying no references |
 
 ### Code Patterns to Deprecate Later
 
 | Pattern | Location | Replacement |
 |---------|----------|-------------|
-| Hardcoded category prompts | `src/app/api/ai/analyze-media/route.ts:35-143` | Move to prompt templates |
-| Mock AI responses | Same file | Replace with real AI calls |
+| Hardcoded mock responses | Old analyze-media route | Now uses real AI |
 
 ---
 
 ## Data Flow Diagrams
 
-### Intake AI → Provider Brief → Estimate AI → Invoice AI → Dispute AI
+### Complete AI-Enhanced Service Request Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                           SERVICE REQUEST LIFECYCLE                              │
+│                        AI-ENHANCED SERVICE REQUEST LIFECYCLE                     │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
-1. INTAKE AI
-   ┌──────────┐    ┌─────────────┐    ┌──────────────┐    ┌──────────────────┐
-   │ Homeowner│───►│ Upload Media│───►│ AI Analyze   │───►│ Generate Summary │
-   │ starts   │    │ (photos)    │    │ /api/ai/     │    │ + Questions      │
-   │ request  │    └─────────────┘    │ analyze-media│    └────────┬─────────┘
-   └──────────┘                       └──────────────┘             │
-                                                                   ▼
-                                                          ┌──────────────────┐
-                                                          │ User answers     │
-                                                          │ follow-ups       │
-                                                          └────────┬─────────┘
-                                                                   │
-2. PROVIDER BRIEF GENERATION                                       ▼
-   ┌──────────────────────────────────────────────────────────────────────────┐
-   │                                                                           │
-   │  ┌────────────────┐    ┌─────────────────┐    ┌───────────────────────┐  │
-   │  │ Combine:       │───►│ AI Generate     │───►│ Store in              │  │
-   │  │ - AI summary   │    │ Provider Brief  │    │ service_requests.     │  │
-   │  │ - User answers │    │ /api/ai/brief   │    │ ai_provider_brief     │  │
-   │  │ - Media URLs   │    └─────────────────┘    └───────────────────────┘  │
-   │  └────────────────┘                                                       │
-   └──────────────────────────────────────────────────────────────────────────┘
-                                                                   │
-3. ESTIMATE AI                                                     ▼
-   ┌──────────────────────────────────────────────────────────────────────────┐
-   │                                                                           │
-   │  ┌────────────────┐    ┌─────────────────┐    ┌───────────────────────┐  │
-   │  │ Provider views │───►│ AI Suggest      │───►│ Provider reviews      │  │
-   │  │ job + brief    │    │ Estimate        │    │ and adjusts           │  │
-   │  │                │    │ /api/ai/        │    │                       │  │
-   │  │                │    │ estimate-assist │    └───────────────────────┘  │
-   │  └────────────────┘    └─────────────────┘              │                │
-   └─────────────────────────────────────────────────────────┼────────────────┘
-                                                             │
-                        ┌────────────────────────────────────┘
-                        ▼
-   ┌──────────────────────────────────────────────────────────────────────────┐
-   │ PAYMENT FLOW (Existing - No AI changes needed)                            │
-   │                                                                           │
-   │  Estimate Sent → Customer Approves → Payment Authorized (15% buffer)      │
-   │       ↓                                                                   │
-   │  Work Completed → Invoice Submitted → Customer Approves → Payment Captured│
-   └──────────────────────────────────────────────────────────────────────────┘
-                                                             │
-4. INVOICE AI (Optional Enhancement)                         ▼
-   ┌──────────────────────────────────────────────────────────────────────────┐
-   │                                                                           │
-   │  ┌────────────────┐    ┌─────────────────┐    ┌───────────────────────┐  │
-   │  │ Provider       │───►│ AI Validate     │───►│ Auto-flag anomalies   │  │
-   │  │ submits invoice│    │ Line Items      │    │ for admin review      │  │
-   │  │                │    │ /api/ai/        │    │                       │  │
-   │  │                │    │ invoice-review  │    └───────────────────────┘  │
-   │  └────────────────┘    └─────────────────┘                               │
-   └──────────────────────────────────────────────────────────────────────────┘
-                                                             │
-5. DISPUTE AI                                                ▼
-   ┌──────────────────────────────────────────────────────────────────────────┐
-   │                                                                           │
-   │  ┌────────────────┐    ┌─────────────────┐    ┌───────────────────────┐  │
-   │  │ Customer opens │───►│ AI Analyze      │───►│ Recommend resolution  │  │
-   │  │ dispute        │    │ Dispute         │    │ to admin              │  │
-   │  │                │    │ /api/ai/        │    │                       │  │
-   │  │                │    │ dispute-analyze │    └───────────────────────┘  │
-   │  └────────────────┘    └─────────────────┘                               │
-   │                                                                           │
-   │  Inputs:                          Output:                                 │
-   │  - Original request + photos      - Similarity score (scope vs invoice)  │
-   │  - Estimate scope                 - Risk assessment                      │
-   │  - Invoice line items             - Suggested resolution                 │
-   │  - Completion photos              - Supporting evidence analysis         │
-   │  - Dispute reason + evidence                                             │
-   └──────────────────────────────────────────────────────────────────────────┘
+1. INTAKE AI (ai_intake_enabled)
+   ┌────────────┐    ┌────────────┐    ┌─────────────────┐    ┌──────────────────┐
+   │ Homeowner  │───►│ Upload     │───►│ AI Classification│───►│ Safety Check     │
+   │ Starts     │    │ Photos     │    │ /api/ai/classify │    │ (Gas/Elec/Water) │
+   └────────────┘    └────────────┘    └─────────────────┘    └────────┬─────────┘
+                                                                       │
+                                              ┌────────────────────────┘
+                                              ▼
+   ┌──────────────────────────────────────────────────────────────────────────────┐
+   │  If Safety Hazard Detected:                                                   │
+   │  ┌──────────────────┐    ┌────────────────────┐    ┌─────────────────────┐   │
+   │  │ SafetyWarning    │───►│ Emergency Guidance │───►│ Continue or         │   │
+   │  │ Component        │    │ (Shutoffs, 911)    │    │ Emergency Exit      │   │
+   │  └──────────────────┘    └────────────────────┘    └─────────────────────┘   │
+   └──────────────────────────────────────────────────────────────────────────────┘
+                                              │
+                                              ▼
+   ┌──────────────────────────────────────────────────────────────────────────────┐
+   │  Follow-up Questions:                                                         │
+   │  ┌──────────────────┐    ┌────────────────────┐    ┌─────────────────────┐   │
+   │  │ AI Generates     │───►│ User Answers       │───►│ Stored in           │   │
+   │  │ /api/ai/follow-up│    │ Questions          │    │ ai_follow_up_answers│   │
+   │  └──────────────────┘    └────────────────────┘    └─────────────────────┘   │
+   └──────────────────────────────────────────────────────────────────────────────┘
+                                              │
+2. PROVIDER BRIEF GENERATION                  ▼
+   ┌──────────────────────────────────────────────────────────────────────────────┐
+   │  ┌────────────────┐    ┌─────────────────────┐    ┌──────────────────────┐   │
+   │  │ Combine:       │───►│ /api/ai/            │───►│ Store in             │   │
+   │  │ - Classification│    │ provider-brief      │    │ ai_provider_brief    │   │
+   │  │ - Answers      │    └─────────────────────┘    └──────────────────────┘   │
+   │  │ - Media URLs   │                                                          │
+   │  └────────────────┘                                                          │
+   └──────────────────────────────────────────────────────────────────────────────┘
+                                              │
+3. PROVIDER COPILOT (ai_provider_copilot_enabled)
+                                              ▼
+   ┌──────────────────────────────────────────────────────────────────────────────┐
+   │  ┌────────────────┐    ┌─────────────────────┐    ┌──────────────────────┐   │
+   │  │ Provider Views │───►│ AI Estimate Draft   │───►│ Provider Edits       │   │
+   │  │ Job + Brief    │    │ /api/provider/      │    │ and Sends            │   │
+   │  │                │    │ estimate-draft      │    │                      │   │
+   │  └────────────────┘    └─────────────────────┘    └──────────────────────┘   │
+   │                                                                               │
+   │  Safety Rules:                                                                │
+   │  - Never includes prices (provider adds)                                      │
+   │  - All drafts editable before sending                                         │
+   │  - No compliance claims without confirmation                                  │
+   └──────────────────────────────────────────────────────────────────────────────┘
+                                              │
+4. PAYMENT FLOW (Existing - Stripe Integration)
+                                              ▼
+   ┌──────────────────────────────────────────────────────────────────────────────┐
+   │  Estimate Sent → Customer Approves → Payment Authorized (20% buffer, $250 cap)│
+   │       ↓                                                                       │
+   │  Work Completed → Invoice Submitted → 24h Auto-Approve → Payment Captured     │
+   │       ↓                                                                       │
+   │  72h Dispute Window → Provider Transfer (or Instant +1% fee)                  │
+   └──────────────────────────────────────────────────────────────────────────────┘
+                                              │
+5. INVOICE AI (ai_provider_copilot_enabled)   ▼
+   ┌──────────────────────────────────────────────────────────────────────────────┐
+   │  ┌────────────────┐    ┌─────────────────────┐    ┌──────────────────────┐   │
+   │  │ Provider       │───►│ AI Work Summary     │───►│ Professional         │   │
+   │  │ Completes Work │    │ /api/provider/      │    │ Narrative Added      │   │
+   │  │                │    │ invoice-narrative   │    │                      │   │
+   │  └────────────────┘    └─────────────────────┘    └──────────────────────┘   │
+   └──────────────────────────────────────────────────────────────────────────────┘
+                                              │
+6. DISPUTE AI (ai_admin_triage_enabled)       ▼
+   ┌──────────────────────────────────────────────────────────────────────────────┐
+   │  ┌────────────────┐    ┌─────────────────────┐    ┌──────────────────────┐   │
+   │  │ Customer Opens │───►│ AI Dispute Summary  │───►│ Admin Reviews        │   │
+   │  │ Dispute        │    │ /api/admin/disputes/│    │ with AI Insights     │   │
+   │  │                │    │ [id]/ai-summary     │    │                      │   │
+   │  └────────────────┘    └─────────────────────┘    └──────────────────────┘   │
+   │                                                                               │
+   │  AI Outputs:                                                                  │
+   │  - Timeline summary                                                           │
+   │  - Scope vs invoice comparison                                                │
+   │  - Refund recommendation                                                      │
+   │  - Risk assessment                                                            │
+   └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Admin Triage Flow
+### AI Operations Flow
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              ADMIN TRIAGE FLOW                                   │
+│                              AI OPERATIONS FLOW                                  │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
-  ┌──────────────┐    ┌────────────────┐    ┌─────────────────┐    ┌────────────┐
-  │ New Request  │───►│ AI Triage      │───►│ Admin Dashboard │───►│ Provider   │
-  │ Submitted    │    │ /api/ai/triage │    │ Review Queue    │    │ Assigned   │
-  └──────────────┘    └────────────────┘    └─────────────────┘    └────────────┘
-                              │
-                              ▼
-                    ┌─────────────────────┐
-                    │ AI Outputs:         │
-                    │ - Priority score    │
-                    │ - Category confirm  │
-                    │ - Provider matches  │
-                    │ - Urgency flag      │
-                    │ - Complexity rating │
-                    └─────────────────────┘
+  ┌─────────────┐    ┌──────────────────┐    ┌─────────────────┐
+  │ AI Request  │───►│ Gateway Check    │───►│ Rate Limit      │
+  │ (any route) │    │ src/lib/ai/      │    │ Check           │
+  └─────────────┘    │ gateway.ts       │    │ (per-min + daily│
+                     └──────────────────┘    └────────┬────────┘
+                                                      │
+                     ┌────────────────────────────────┘
+                     ▼
+  ┌──────────────────────────────────────────────────────────────────────────────┐
+  │  Consent Check:                                                               │
+  │  ┌──────────────────┐    ┌────────────────────┐    ┌─────────────────────┐   │
+  │  │ Check user_      │───►│ If consent=false   │───►│ Return rule-based   │   │
+  │  │ preferences      │    │ Skip AI            │    │ fallback            │   │
+  │  └──────────────────┘    └────────────────────┘    └─────────────────────┘   │
+  └──────────────────────────────────────────────────────────────────────────────┘
+                     │
+                     ▼ (If consent OK)
+  ┌──────────────────────────────────────────────────────────────────────────────┐
+  │  Provider Selection:                                                          │
+  │  ┌──────────────────┐    ┌────────────────────┐    ┌─────────────────────┐   │
+  │  │ Task Type        │───►│ Select Provider    │───►│ OpenAI / Anthropic  │   │
+  │  │ Definition       │    │ (config or env)    │    │ / Mock              │   │
+  │  └──────────────────┘    └────────────────────┘    └─────────────────────┘   │
+  └──────────────────────────────────────────────────────────────────────────────┘
+                     │
+                     ▼
+  ┌──────────────────────────────────────────────────────────────────────────────┐
+  │  Logging & Cost Tracking:                                                     │
+  │  ┌──────────────────┐    ┌────────────────────┐    ┌─────────────────────┐   │
+  │  │ Create ai_jobs   │───►│ Execute AI Call    │───►│ Update ai_jobs      │   │
+  │  │ record           │    │                    │    │ + ai_daily_metrics  │   │
+  │  └──────────────────┘    └────────────────────┘    └─────────────────────┘   │
+  └──────────────────────────────────────────────────────────────────────────────┘
+                     │
+                     ▼
+  ┌──────────────────────────────────────────────────────────────────────────────┐
+  │  Admin Monitoring:                                                            │
+  │  ┌──────────────────────────────────────────────────────────────────────┐    │
+  │  │ /app/admin/ai-ops                                                    │    │
+  │  │ - Daily spend vs budget                                              │    │
+  │  │ - 7-day cost trend                                                   │    │
+  │  │ - Top task types                                                     │    │
+  │  │ - Alert at 75% budget                                                │    │
+  │  └──────────────────────────────────────────────────────────────────────┘    │
+  └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Feature Flags
 
-### Existing Flag
+### Current Status (All Exist)
 
-| Flag | Key | Default | Location |
-|------|-----|---------|----------|
-| AI Intake | `ai_intake_enabled` | `true` | `admin_config.feature_flags` |
+| Flag | Config Key | Default | Status |
+|------|------------|---------|--------|
+| AI Intake | `ai_intake_enabled` | `true` | **ENABLED** |
+| AI Media Quality | `ai_media_quality_enabled` | `false` | Disabled |
+| AI Provider Copilot | `ai_provider_copilot_enabled` | `false` | Disabled |
+| AI Admin Triage | `ai_admin_triage_enabled` | `false` | Disabled |
+| AI CRM Copilot | `ai_crm_copilot_enabled` | `false` | Disabled |
+| AI Maintenance Coach | `ai_maintenance_coach_enabled` | `false` | Disabled |
+| AI Sponsor Copy | `ai_sponsor_copy_enabled` | `false` | Disabled |
 
-### New Flags to Add
+### Flag Location
 
-| Flag | Key | Default | Purpose |
-|------|-----|---------|---------|
-| AI Media Quality | `AI_MEDIA_QUALITY_ENABLED` | `false` | Photo quality validation |
-| AI Provider Copilot | `AI_PROVIDER_COPILOT_ENABLED` | `false` | Estimate suggestions |
-| AI Admin Triage | `AI_ADMIN_TRIAGE_ENABLED` | `false` | Auto-categorization |
-| AI CRM Copilot | `AI_CRM_COPILOT_ENABLED` | `false` | Customer insights |
-| AI Maintenance Coach | `AI_MAINTENANCE_COACH_ENABLED` | `false` | Homeowner recommendations |
-| AI Sponsor Copy | `AI_SPONSOR_COPY_ENABLED` | `false` | Ad copy generation |
+All flags are defined in:
+- **Interface**: `src/types/database.ts` → `FeatureFlagsConfig`
+- **Defaults**: `src/lib/config/admin-config.ts` → `DEFAULT_CONFIG.feature_flags`
+- **Runtime**: `admin_config` table → `config_key = 'feature_flags'`
 
-### Implementation Location
+### Usage Pattern
 
-All flags should be added to:
-- `src/types/database.ts` - `FeatureFlagsConfig` interface
-- `src/lib/config/admin-config.ts` - Default values
-- Admin UI at `/app/admin/config` - Toggle switches
+```typescript
+import { isFeatureEnabled } from "@/lib/config/admin-config";
 
----
-
-## Implementation Priority
-
-### Phase 1: Foundation (Week 1)
-1. Install AI SDK (`openai` package)
-2. Add `OPENAI_API_KEY` to environment
-3. Create `src/lib/ai/` abstraction layer
-4. Add feature flags to config
-5. Update `/api/ai/analyze-media` with real AI
-
-### Phase 2: Core Features (Weeks 2-3)
-1. AI Media Quality validation
-2. AI Provider Copilot (estimate suggestions)
-3. AI Admin Triage
-
-### Phase 3: Enhancement Features (Weeks 4-5)
-1. AI CRM Copilot
-2. AI Maintenance Coach
-3. AI Sponsor Copy
-
-### Phase 4: Advanced (Future)
-1. AI Dispute Analysis
-2. AI Invoice Review
-3. Real-time AI chat assistant
+// In API route or component
+const aiEnabled = await isFeatureEnabled("ai_provider_copilot_enabled");
+if (!aiEnabled) {
+  return fallbackBehavior();
+}
+```
 
 ---
 
-## Acceptance Criteria
+## Implementation Status
 
-Before marking any AI feature as complete:
+### Completed (Ready to Enable)
 
-- [ ] Feature flag controls enable/disable
-- [ ] Graceful fallback when AI unavailable
-- [ ] Error handling with user-friendly messages
-- [ ] Cost tracking per AI call
-- [ ] Rate limiting in place
-- [ ] Existing flow unchanged when AI disabled
-- [ ] Tests cover AI success and failure paths
-- [ ] Prompt templates externalized
-- [ ] No hardcoded API keys
+| Feature | Implementation | Tests | Enable When |
+|---------|----------------|-------|-------------|
+| AI Intake | 100% | 47 tests | **Already enabled** |
+| Provider Copilot | 100% | Included | Ready now |
+| CRM Copilot | 100% | Included | Ready now |
+| Maintenance Coach | 100% | Included | Ready now |
+| Sponsor Copy | 100% | Included | Ready now |
+| Admin Triage | 100% | Included | Ready now |
+| AI Ops Dashboard | 100% | N/A | Always on for admins |
+| Rate Limiting | 100% | Partial | Always on |
+| Cost Tracking | 100% | Partial | Always on |
+| Consent System | 100% | Partial | Always on |
+| Cleanup Cron | 100% | N/A | Runs daily |
+
+### Not Yet Implemented
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| AI Media Quality | Placeholder | Needs quality assessment prompts |
+| Real-time Chat AI | Not started | Future enhancement |
+| AI Invoice Review | Not started | Future enhancement |
+
+### Recommended Enablement Order
+
+1. **Phase 1** (Immediate): Already done
+   - `ai_intake_enabled` ✓
+
+2. **Phase 2** (Next Sprint):
+   - `ai_provider_copilot_enabled` - High provider value
+   - `ai_admin_triage_enabled` - Reduces admin workload
+
+3. **Phase 3** (Following Sprint):
+   - `ai_crm_copilot_enabled` - Provider retention
+   - `ai_maintenance_coach_enabled` - Homeowner retention
+
+4. **Phase 4** (Future):
+   - `ai_sponsor_copy_enabled` - Lower priority
+   - `ai_media_quality_enabled` - Needs more work
+
+---
+
+## Acceptance Criteria (Per Feature)
+
+Before enabling any AI feature flag:
+
+- [x] Feature flag controls enable/disable
+- [x] Graceful fallback when AI unavailable
+- [x] Error handling with user-friendly messages
+- [x] Cost tracking per AI call
+- [x] Rate limiting in place
+- [x] Existing flow unchanged when AI disabled
+- [ ] Tests cover AI success and failure paths (partial)
+- [x] Prompt templates externalized
+- [x] No hardcoded API keys
+- [x] User consent respected
 
 ---
 
 *Document maintained by: Engineering Team*
-*Last updated: 2025-12-23*
+*Last updated: 2025-12-24*
