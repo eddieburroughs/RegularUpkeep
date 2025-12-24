@@ -354,6 +354,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `docs/master-user-guide.md` | **All roles (unified)** | Platform overview, common features, role quick starts, unified chatbot KB |
 | `docs/sop-pack.md` | **Support & Operations** | 10 SOPs, decision trees, scripts, SLA targets, chatbot KB |
 | `docs/guided-tours.md` | **Product/Engineering** | 16 in-app tours, 127 steps, JSON export, instrumentation |
+| `docs/media-quality-standards.md` | **All roles + Chatbot** | Photo/video standards, job-type requirements, intake form schema, 3 JSON exports |
 | `docs/homeowner-handbook.md` | Homeowners (1-2 properties) | User guide, FAQ, glossary, chatbot KB |
 | `docs/multi-property-handbook.md` | Portfolio owners (3+ properties) | Scaling, delegation, reporting, chatbot KB |
 | `docs/provider-handbook.md` | Service companies | Jobs, estimates, AI copilot, tiers, chatbot KB |
@@ -390,6 +391,11 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 ## Recent Changes Log
 
 ### 2025-12-24 (AI & Documentation)
+- **Media Quality Standards**: Photo/video documentation requirements
+  - `docs/media-quality-standards.md` — Homeowner + Provider photo guides
+  - 4-Photo Rule, before/during/after standards, 8 job-type specific requirements
+  - Smart Intake form template with conditional fields and AI features
+  - 3 JSON exports: media checklist, job-type requirements, intake form schema
 - **SOP Pack**: Complete Standard Operating Procedures for support/operations
   - `docs/sop-pack.md` — 10 SOPs covering no-shows, cancellations, disputes, fraud, etc.
   - Decision trees, customer/provider scripts, SLA targets, escalation rules
