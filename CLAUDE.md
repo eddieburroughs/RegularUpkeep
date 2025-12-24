@@ -351,6 +351,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 ### Documentation (Handbooks)
 | File | Audience | Contents |
 |------|----------|----------|
+| `docs/master-user-guide.md` | **All roles (unified)** | Platform overview, common features, role quick starts, unified chatbot KB |
 | `docs/homeowner-handbook.md` | Homeowners (1-2 properties) | User guide, FAQ, glossary, chatbot KB |
 | `docs/multi-property-handbook.md` | Portfolio owners (3+ properties) | Scaling, delegation, reporting, chatbot KB |
 | `docs/provider-handbook.md` | Service companies | Jobs, estimates, AI copilot, tiers, chatbot KB |
@@ -387,6 +388,11 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 ## Recent Changes Log
 
 ### 2025-12-24 (AI & Documentation)
+- **Master User Guide**: Unified documentation combining all 5 handbooks
+  - `docs/master-user-guide.md` — 2,500+ lines, all roles in one document
+  - Shared sections: Platform overview, pricing, payment flow, disputes, AI features
+  - Role-based quick start checklists on one page
+  - Unified chatbot KB: 50 KB chunks, 40 FAQ pairs, role-aware intent map
 - **Hybrid AI Mode**: Implemented per-task routing between Claude 4.5 and OpenAI
   - OpenAI (gpt-4o/gpt-4o-mini): Vision tasks (photo analysis, intake classification)
   - Claude (sonnet/haiku/opus): Long-form text (estimates, messages, disputes, CRM)
