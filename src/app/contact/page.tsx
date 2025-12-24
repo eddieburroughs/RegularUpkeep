@@ -31,7 +31,6 @@ ${formData.get("message")}
   };
 
   return (
-    <MarketingLayout>
     <Card className="border-border/50">
       <CardHeader>
         <CardTitle>Send Us a Message</CardTitle>
@@ -92,7 +91,6 @@ ${formData.get("message")}
         </form>
       </CardContent>
     </Card>
-    </MarketingLayout>
   );
 }
 

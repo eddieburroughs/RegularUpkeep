@@ -28,7 +28,7 @@ export function CtaBand({
           <p className="mt-4 text-lg text-primary-foreground/80 max-w-2xl">
             {subtitle}
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+          <div className="mt-6 flex flex-wrap justify-center gap-4">
             <Button
               asChild
               size="lg"

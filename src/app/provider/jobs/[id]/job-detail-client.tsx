@@ -30,8 +30,10 @@ import {
   CheckCircle2,
   Play,
   MessageSquare,
+  Wrench,
+  ClipboardList,
 } from "lucide-react";
-import type { BookingStatus, TravelStatus } from "@/types/database";
+import type { BookingStatus, TravelStatus, PropertyMaintenanceTask, MaintenanceSkillLevel } from "@/types/database";
 import type { ProviderBriefOutput } from "@/lib/ai/types";
 
 interface LineItem {
@@ -74,9 +76,16 @@ interface JobDetailClientProps {
   };
   providerId: string;
   providerBrief: ProviderBriefOutput | null;
+  linkedTasks?: PropertyMaintenanceTask[];
 }
 
-export function JobDetailClient({ booking, providerBrief }: JobDetailClientProps) {
+const skillBadgeColors: Record<string, string> = {
+  diy: "bg-green-100 text-green-800",
+  pro_recommended: "bg-amber-100 text-amber-800",
+  pro_required: "bg-red-100 text-red-800",
+};
+
+export function JobDetailClient({ booking, providerBrief, linkedTasks = [] }: JobDetailClientProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState(booking.completion_notes || "");
@@ -164,6 +173,24 @@ export function JobDetailClient({ booking, providerBrief }: JobDetailClientProps
               uploaded_by: user.id,
             });
           }
+        }
+      }
+    }
+
+    // Mark linked maintenance tasks as complete when job is completed
+    if (newStatus === "completed" && linkedTasks.length > 0) {
+      for (const task of linkedTasks) {
+        try {
+          await fetch(`/api/maintenance/tasks/${task.id}/complete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              notes: `Completed by provider as part of job #${booking.booking_number}`,
+              completed_by: "provider",
+            }),
+          });
+        } catch (err) {
+          console.error(`Failed to mark task ${task.id} as complete:`, err);
         }
       }
     }
@@ -384,6 +411,72 @@ export function JobDetailClient({ booking, providerBrief }: JobDetailClientProps
       {/* AI Provider Brief */}
       {providerBrief && (
         <AIProviderBriefCard brief={providerBrief} />
+      )}
+
+      {/* Linked Maintenance Tasks */}
+      {linkedTasks.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2">
+              <ClipboardList className="h-5 w-5" />
+              Linked Maintenance Tasks
+            </CardTitle>
+            <CardDescription>
+              Tasks associated with this service request
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {linkedTasks.map((task) => (
+              <div
+                key={task.id}
+                className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30"
+              >
+                <Wrench className="h-5 w-5 text-muted-foreground mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-medium text-sm">{task.title}</p>
+                    <Badge variant="outline" className="text-xs">
+                      {task.category.replace("_", " ")}
+                    </Badge>
+                    {task.skill_level && (
+                      <Badge
+                        variant="secondary"
+                        className={`text-xs ${skillBadgeColors[task.skill_level] || ""}`}
+                      >
+                        {task.skill_level === "diy"
+                          ? "DIY"
+                          : task.skill_level === "pro_recommended"
+                          ? "Pro Recommended"
+                          : "Pro Required"}
+                      </Badge>
+                    )}
+                  </div>
+                  {task.description && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {task.description}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    {task.estimated_minutes && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        ~{task.estimated_minutes} min
+                      </span>
+                    )}
+                    {task.priority && (
+                      <span className="capitalize">
+                        {task.priority} priority
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <p className="text-xs text-muted-foreground pt-2">
+              Completing this job will automatically update these maintenance tasks.
+            </p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Invoice Editor (shown when completing) */}

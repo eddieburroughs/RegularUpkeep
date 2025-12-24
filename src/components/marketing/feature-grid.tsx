@@ -42,12 +42,12 @@ export function FeatureGrid() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Everything You Need to Stay Ahead of Maintenance
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
             From smart reminders to hands-on help, we give you the tools and support to keep your home in top shape.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {features.map((feature) => (
             <FeatureCard key={feature.title} feature={feature} />
           ))}

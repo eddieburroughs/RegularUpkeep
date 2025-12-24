@@ -55,8 +55,24 @@ function PricingCard({ plan }: { plan: PricingPlan }) {
 }
 
 export function PricingCards() {
+  const planCount = pricing.plans.length;
+
+  if (planCount === 1) {
+    return (
+      <div className="flex justify-center">
+        <div className="w-full max-w-sm">
+          <PricingCard plan={pricing.plans[0]} />
+        </div>
+      </div>
+    );
+  }
+
+  const gridClass = planCount === 2
+    ? "grid gap-8 md:grid-cols-2 max-w-3xl mx-auto"
+    : "grid gap-8 md:grid-cols-3";
+
   return (
-    <div className="grid gap-8 md:grid-cols-3">
+    <div className={gridClass}>
       {pricing.plans.map((plan) => (
         <PricingCard key={plan.name} plan={plan} />
       ))}

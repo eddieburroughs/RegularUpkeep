@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { brand } from "@/content/site";
@@ -8,30 +9,48 @@ interface HeroProps {
   subtitle: string;
   showCtas?: boolean;
   centered?: boolean;
+  image?: string;
+  imageAlt?: string;
 }
 
-export function Hero({ title, subtitle, showCtas = true, centered = false }: HeroProps) {
+export function Hero({ title, subtitle, showCtas = true, centered = false, image, imageAlt = "Hero image" }: HeroProps) {
+  const hasImage = !!image;
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#0178C7]/5 via-background to-background">
       <div className="container-marketing section-padding">
-        <div className={`max-w-3xl ${centered ? "mx-auto text-center" : ""}`}>
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl text-balance">
-            {title}
-          </h1>
-          <p className="mt-6 text-lg sm:text-xl text-muted-foreground text-balance">
-            {subtitle}
-          </p>
-          {showCtas && (
-            <div className={`mt-10 flex flex-wrap gap-4 ${centered ? "justify-center" : ""}`}>
-              <Button asChild size="lg" className="text-base">
-                <Link href={brand.authUrl}>Get Started</Link>
-              </Button>
-              <Button asChild variant="outline" size="lg" className="text-base">
-                <Link href={brand.phoneHref} className="flex items-center gap-2">
-                  <Phone className="h-5 w-5" />
-                  Call {brand.phone}
-                </Link>
-              </Button>
+        <div className={hasImage ? "grid gap-8 lg:grid-cols-2 lg:gap-12 items-center" : ""}>
+          <div className={`${hasImage ? "" : `max-w-3xl ${centered ? "mx-auto text-center" : ""}`}`}>
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl text-balance">
+              {title}
+            </h1>
+            <p className="mt-4 text-lg sm:text-xl text-muted-foreground text-balance">
+              {subtitle}
+            </p>
+            {showCtas && (
+              <div className={`mt-6 flex flex-wrap gap-4 ${centered && !hasImage ? "justify-center" : ""}`}>
+                <Button asChild size="lg" className="text-base">
+                  <Link href={brand.authUrl}>Get Started</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="text-base">
+                  <Link href={brand.phoneHref} className="flex items-center gap-2">
+                    <Phone className="h-5 w-5" />
+                    Call {brand.phone}
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
+          {hasImage && (
+            <div className="relative flex justify-center lg:justify-end">
+              <Image
+                src={image}
+                alt={imageAlt}
+                width={500}
+                height={500}
+                className="w-full max-w-md lg:max-w-lg rounded-2xl shadow-xl"
+                priority
+              />
             </div>
           )}
         </div>
@@ -50,15 +69,15 @@ export function Hero({ title, subtitle, showCtas = true, centered = false }: Her
   );
 }
 
-export function PageHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+export function PageHeader({ title, subtitle, centered = true }: { title: string; subtitle?: string; centered?: boolean }) {
   return (
     <section className="bg-gradient-to-b from-[#0178C7]/5 via-background to-background">
-      <div className="container-marketing py-12 md:py-16">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
+      <div className={`container-marketing py-8 md:py-10 ${centered ? "text-center" : ""}`}>
+        <h1 className={`text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl ${centered ? "mx-auto" : ""}`}>
           {title}
         </h1>
         {subtitle && (
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
+          <p className={`mt-4 text-lg text-muted-foreground max-w-2xl ${centered ? "mx-auto" : ""}`}>
             {subtitle}
           </p>
         )}

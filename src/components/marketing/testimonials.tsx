@@ -32,12 +32,12 @@ export function TestimonialsSection() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             What Our Members Say
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
             Homeowners and property managers trust RegularUpkeep to simplify their maintenance.
           </p>
         </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {testimonials.slice(0, 6).map((testimonial, index) => (
             <TestimonialCard key={index} testimonial={testimonial} />
           ))}

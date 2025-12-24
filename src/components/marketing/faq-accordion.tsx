@@ -38,12 +38,12 @@ export function FaqSection() {
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Frequently Asked Questions
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
             Got questions? We&apos;ve got answers. If you don&apos;t see what you&apos;re looking for, reach out to us directly.
           </p>
         </div>
 
-        <div className="mt-12 max-w-3xl mx-auto">
+        <div className="mt-8 max-w-3xl mx-auto">
           <FaqAccordion />
         </div>
       </div>

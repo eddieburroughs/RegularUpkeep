@@ -93,7 +93,7 @@ export function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="mt-12 border-t border-white/10 pt-8">
+        <div className="mt-8 border-t border-white/10 pt-6">
           <p className="text-center text-sm text-white/60">
             &copy; {currentYear} {brand.name}. All rights reserved.
           </p>

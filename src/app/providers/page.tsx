@@ -33,7 +33,6 @@ Additional Information: ${formData.get("additional")}
   };
 
   return (
-    <MarketingLayout>
     <Card className="border-border/50">
       <CardHeader>
         <CardTitle>Apply to Join Our Network</CardTitle>
@@ -132,7 +131,6 @@ Additional Information: ${formData.get("additional")}
         </form>
       </CardContent>
     </Card>
-    </MarketingLayout>
   );
 }
 

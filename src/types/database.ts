@@ -2552,3 +2552,235 @@ export interface LookupResponse {
   match?: LookupResult;
   options?: LookupResult[];
 }
+
+// ============================================================================
+// MAINTENANCE CALENDAR TYPES
+// ============================================================================
+
+// Enums
+export type MaintenanceFrequencyType = "weekly" | "monthly" | "seasonal" | "annual" | "multi_year" | "one_time";
+export type MaintenanceSkillLevel = "diy" | "pro_recommended" | "pro_required";
+export type MaintenanceDefaultAssignee = "homeowner" | "provider";
+export type PropertyTaskStatus = "active" | "paused" | "archived";
+export type CompletionSource = "manual" | "provider_job" | "auto";
+
+// Maintenance Task Template (admin-managed)
+export interface MaintenanceTaskTemplate {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  frequency_type: MaintenanceFrequencyType;
+  frequency_interval: number;
+  suggested_months: number[] | null;
+  priority: string;
+  estimated_minutes: number | null;
+  skill_level: MaintenanceSkillLevel;
+  tags: string[];
+  default_assignee: MaintenanceDefaultAssignee;
+  instructions: string | null;
+  pro_tips: string | null;
+  warning_notes: string | null;
+  is_active: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Property Maintenance Task (per-property instance)
+export interface PropertyMaintenanceTask {
+  id: string;
+  property_id: string;
+  template_id: string | null;
+  title: string;
+  description: string | null;
+  category: string;
+  frequency_type: MaintenanceFrequencyType;
+  frequency_interval: number;
+  suggested_months: number[] | null;
+  priority: string;
+  estimated_minutes: number | null;
+  skill_level: MaintenanceSkillLevel;
+  tags: string[];
+  default_assignee: MaintenanceDefaultAssignee;
+  instructions: string | null;
+  pro_tips: string | null;
+  warning_notes: string | null;
+  custom_notes: string | null;
+  status: PropertyTaskStatus;
+  next_due_date: string | null;
+  last_completed_at: string | null;
+  last_completed_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Task with property info (for display)
+export interface PropertyMaintenanceTaskWithProperty extends PropertyMaintenanceTask {
+  property?: {
+    id: string;
+    nickname: string | null;
+    address_line1: string;
+    city: string;
+    state: string;
+  };
+  last_completed_by_profile?: {
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+}
+
+// Maintenance Task Completion (history entry)
+export interface MaintenanceTaskCompletion {
+  id: string;
+  property_task_id: string;
+  completed_by: string;
+  completed_at: string;
+  notes: string | null;
+  cost_cents: number | null;
+  attachments: MaintenanceAttachment[];
+  related_request_id: string | null;
+  completion_source: CompletionSource;
+  created_at: string;
+}
+
+// Completion with user info
+export interface MaintenanceTaskCompletionWithUser extends MaintenanceTaskCompletion {
+  completed_by_profile?: {
+    full_name: string | null;
+    avatar_url: string | null;
+    role: UserRole;
+  };
+  related_request?: {
+    request_number: string;
+    title: string;
+    status: ServiceRequestStatus;
+  };
+}
+
+// Attachment structure
+export interface MaintenanceAttachment {
+  id: string;
+  path: string;
+  name: string;
+  size: number;
+  type: string;
+  uploaded_at: string;
+}
+
+// Request Link (task to service request)
+export interface MaintenanceTaskRequestLink {
+  id: string;
+  property_task_id: string;
+  request_id: string;
+  included_in_scope: boolean;
+  notes: string | null;
+  created_at: string;
+}
+
+// Link with task details (for display)
+export interface MaintenanceTaskRequestLinkWithTask extends MaintenanceTaskRequestLink {
+  property_task: PropertyMaintenanceTask;
+}
+
+// ============================================================================
+// MAINTENANCE CALENDAR API TYPES
+// ============================================================================
+
+// Request types
+export interface GeneratePlanRequest {
+  property_id: string;
+}
+
+export interface MarkTaskCompleteRequest {
+  property_task_id: string;
+  notes?: string;
+  cost_cents?: number;
+  attachments?: MaintenanceAttachment[];
+  related_request_id?: string;
+}
+
+export interface CreateRequestFromTasksRequest {
+  property_id: string;
+  task_ids: string[];
+  title: string;
+  description?: string;
+  urgency?: UrgencyLevel;
+  preferred_date?: string;
+  preferred_time_start?: string;
+  preferred_time_end?: string;
+  photos?: string[];
+}
+
+// Response types
+export interface TaskListResponse {
+  overdue: PropertyMaintenanceTaskWithProperty[];
+  due_soon: PropertyMaintenanceTaskWithProperty[];
+  upcoming: PropertyMaintenanceTaskWithProperty[];
+  completed: PropertyMaintenanceTaskWithProperty[];
+}
+
+export interface TaskHistoryResponse {
+  task: PropertyMaintenanceTaskWithProperty;
+  completions: MaintenanceTaskCompletionWithUser[];
+}
+
+export interface CreateRequestFromTasksResponse {
+  request: {
+    id: string;
+    request_number: string;
+  };
+  linked_task_count: number;
+}
+
+// Calendar view types
+export interface CalendarTask {
+  id: string;
+  title: string;
+  date: string;
+  category: string;
+  priority: string;
+  skill_level: MaintenanceSkillLevel;
+  status: "overdue" | "due" | "upcoming" | "completed";
+}
+
+export interface CalendarMonth {
+  year: number;
+  month: number;
+  days: {
+    date: string;
+    tasks: CalendarTask[];
+  }[];
+}
+
+// Filter options
+export interface TaskFilters {
+  categories?: string[];
+  skill_levels?: MaintenanceSkillLevel[];
+  priorities?: string[];
+  tags?: string[];
+  status?: PropertyTaskStatus[];
+  search?: string;
+}
+
+// Template management
+export interface CreateTemplateRequest {
+  title: string;
+  description?: string;
+  category: string;
+  frequency_type: MaintenanceFrequencyType;
+  frequency_interval?: number;
+  suggested_months?: number[];
+  priority?: string;
+  estimated_minutes?: number;
+  skill_level?: MaintenanceSkillLevel;
+  tags?: string[];
+  default_assignee?: MaintenanceDefaultAssignee;
+  instructions?: string;
+  pro_tips?: string;
+  warning_notes?: string;
+}
+
+export interface UpdateTemplateRequest extends Partial<CreateTemplateRequest> {
+  is_active?: boolean;
+}
