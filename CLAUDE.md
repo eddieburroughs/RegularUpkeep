@@ -357,6 +357,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `docs/media-quality-standards.md` | **All roles + Chatbot** | Photo/video standards, job-type requirements, intake form schema, 3 JSON exports |
 | `docs/error-center-playbook.md` | **Support + Engineering** | 55 error codes, user/admin fixes, escalation matrix, Claude Code fix template, JSON + YAML exports |
 | `docs/release-notes-system.md` | **Product Ops** | Release notes template, change taxonomy, KB update workflow, versioning rules, regression checklist, JSON automation |
+| `docs/policies-pack.md` | **All Users + Support** | 8 policies (cancellation, no-show, disputes, refunds, emergency, reviews, quality), canned scripts, chatbot KB |
 | `docs/homeowner-handbook.md` | Homeowners (1-2 properties) | User guide, FAQ, glossary, chatbot KB |
 | `docs/multi-property-handbook.md` | Portfolio owners (3+ properties) | Scaling, delegation, reporting, chatbot KB |
 | `docs/provider-handbook.md` | Service companies | Jobs, estimates, AI copilot, tiers, chatbot KB |
@@ -393,6 +394,13 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 ## Recent Changes Log
 
 ### 2025-12-24 (AI & Documentation)
+- **Policies Pack**: Comprehensive marketplace policies for fair, simple dispute reduction
+  - `docs/policies-pack.md` — 8 policies with user-facing + internal enforcement versions
+  - Cancellation, No-Show, Change Order, Dispute, Refund, Emergency, Reviews, Quality
+  - Edge cases and resolution guidelines for each policy
+  - Canned message scripts: homeowner, provider, admin notifications
+  - 28 FAQ JSON pairs + complete YAML intent map for chatbot
+  - Quick reference card for support agents
 - **Release Notes & Change Control System**: Product ops release management
   - `docs/release-notes-system.md` — Release notes template, change taxonomy
   - KB update workflow with feature-to-doc mapping matrix
