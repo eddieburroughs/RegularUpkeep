@@ -17,7 +17,7 @@ export default async function CalendarPage() {
   // Get user's properties
   type PropertyMemberWithProperty = {
     property_id: string;
-    role: string;
+    member_role: string;
     properties: {
       id: string;
       nickname: string | null;
@@ -31,7 +31,7 @@ export default async function CalendarPage() {
     .from("property_members")
     .select(`
       property_id,
-      role,
+      member_role,
       properties (
         id,
         nickname,
@@ -41,7 +41,7 @@ export default async function CalendarPage() {
       )
     `)
     .eq("user_id", user.id)
-    .in("role", ["owner", "manager"]) as { data: PropertyMemberWithProperty[] | null };
+    .in("member_role", ["owner", "manager"]) as { data: PropertyMemberWithProperty[] | null };
 
   const properties = (propertyMembers || [])
     .map((pm) => pm.properties)
