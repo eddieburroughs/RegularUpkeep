@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       .from("property_members")
       .select("property_id")
       .eq("user_id", user.id)
-      .in("role", ["owner", "manager"]) as { data: { property_id: string }[] | null };
+      .in("member_role", ["owner", "manager"]) as { data: { property_id: string }[] | null };
 
     let propertyIds = (propertyMembers || []).map((pm) => pm.property_id);
 

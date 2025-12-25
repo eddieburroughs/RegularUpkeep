@@ -34,10 +34,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Verify access
     const { data: member } = await supabase
       .from("property_members")
-      .select("role")
+      .select("member_role")
       .eq("property_id", task.property_id)
       .eq("user_id", user.id)
-      .single() as { data: { role: string } | null };
+      .single() as { data: { member_role: string } | null };
 
     if (!member) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
@@ -87,12 +87,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     // Verify access
     const { data: member } = await supabase
       .from("property_members")
-      .select("role")
+      .select("member_role")
       .eq("property_id", existingTask.property_id)
       .eq("user_id", user.id)
-      .single() as { data: { role: string } | null };
+      .single() as { data: { member_role: string } | null };
 
-    if (!member || !["owner", "manager"].includes(member.role)) {
+    if (!member || !["owner", "manager"].includes(member.member_role)) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -207,12 +207,12 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Verify owner access
     const { data: member } = await supabase
       .from("property_members")
-      .select("role")
+      .select("member_role")
       .eq("property_id", task.property_id)
       .eq("user_id", user.id)
-      .single() as { data: { role: string } | null };
+      .single() as { data: { member_role: string } | null };
 
-    if (!member || member.role !== "owner") {
+    if (!member || member.member_role !== "owner") {
       return NextResponse.json({ error: "Only owner can delete tasks" }, { status: 403 });
     }
 

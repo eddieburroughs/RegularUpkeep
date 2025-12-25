@@ -38,12 +38,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Check access - homeowner or provider with assigned request
     const { data: member } = await supabase
       .from("property_members")
-      .select("role")
+      .select("member_role")
       .eq("property_id", task.property_id)
       .eq("user_id", user.id)
-      .single() as { data: { role: string } | null };
+      .single() as { data: { member_role: string } | null };
 
-    const isPropertyOwner = member && ["owner", "manager"].includes(member.role);
+    const isPropertyOwner = member && ["owner", "manager"].includes(member.member_role);
 
     // Check if user is provider with linked request
     let relatedRequestId: string | undefined;

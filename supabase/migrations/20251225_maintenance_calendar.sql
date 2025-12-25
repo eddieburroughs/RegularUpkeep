@@ -402,7 +402,7 @@ CREATE POLICY "property_tasks_select_owner"
       SELECT 1 FROM property_members pm
       WHERE pm.property_id = property_maintenance_tasks.property_id
         AND pm.user_id = auth.uid()
-        AND pm.role IN ('owner', 'manager')
+        AND pm.member_role IN ('owner', 'manager')
     )
   );
 
@@ -415,7 +415,7 @@ CREATE POLICY "property_tasks_insert_owner"
       SELECT 1 FROM property_members pm
       WHERE pm.property_id = property_maintenance_tasks.property_id
         AND pm.user_id = auth.uid()
-        AND pm.role IN ('owner', 'manager')
+        AND pm.member_role IN ('owner', 'manager')
     )
   );
 
@@ -428,7 +428,7 @@ CREATE POLICY "property_tasks_update_owner"
       SELECT 1 FROM property_members pm
       WHERE pm.property_id = property_maintenance_tasks.property_id
         AND pm.user_id = auth.uid()
-        AND pm.role IN ('owner', 'manager')
+        AND pm.member_role IN ('owner', 'manager')
     )
   )
   WITH CHECK (
@@ -436,7 +436,7 @@ CREATE POLICY "property_tasks_update_owner"
       SELECT 1 FROM property_members pm
       WHERE pm.property_id = property_maintenance_tasks.property_id
         AND pm.user_id = auth.uid()
-        AND pm.role IN ('owner', 'manager')
+        AND pm.member_role IN ('owner', 'manager')
     )
   );
 
@@ -449,7 +449,7 @@ CREATE POLICY "property_tasks_delete_owner"
       SELECT 1 FROM property_members pm
       WHERE pm.property_id = property_maintenance_tasks.property_id
         AND pm.user_id = auth.uid()
-        AND pm.role = 'owner'
+        AND pm.member_role = 'owner'
     )
   );
 
@@ -513,7 +513,7 @@ CREATE POLICY "completions_insert_owner"
       JOIN property_members pm ON pm.property_id = pmt.property_id
       WHERE pmt.id = maintenance_task_completions.property_task_id
         AND pm.user_id = auth.uid()
-        AND pm.role IN ('owner', 'manager')
+        AND pm.member_role IN ('owner', 'manager')
     )
   );
 
@@ -691,7 +691,7 @@ CREATE POLICY "maintenance_attachments_insert"
         SELECT 1 FROM property_members pm
         WHERE pm.property_id = (string_to_array(name, '/'))[1]::uuid
           AND pm.user_id = auth.uid()
-          AND pm.role IN ('owner', 'manager')
+          AND pm.member_role IN ('owner', 'manager')
       )
       OR
       -- Provider can upload for their jobs
@@ -719,7 +719,7 @@ CREATE POLICY "maintenance_attachments_delete"
         SELECT 1 FROM property_members pm
         WHERE pm.property_id = (string_to_array(name, '/'))[1]::uuid
           AND pm.user_id = auth.uid()
-          AND pm.role = 'owner'
+          AND pm.member_role = 'owner'
       )
       OR
       -- Admin can delete

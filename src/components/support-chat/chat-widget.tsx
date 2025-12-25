@@ -10,7 +10,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+// Note: Using native scrolling instead of ScrollArea for proper ref handling
 import {
   MessageCircle,
   X,
@@ -280,7 +280,10 @@ export function ChatWidget({
         {!isMinimized && (
           <>
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+            <div
+              ref={scrollRef}
+              className="flex-1 p-4 overflow-y-auto"
+            >
               <div className="space-y-4">
                 {messages.map((message) => (
                   <div
@@ -332,7 +335,7 @@ export function ChatWidget({
                   </div>
                 )}
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Quick Actions */}
             {messages.length === 1 && (

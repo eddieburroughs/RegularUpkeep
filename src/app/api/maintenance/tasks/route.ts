@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       .from("property_members")
       .select("property_id")
       .eq("user_id", user.id)
-      .in("role", ["owner", "manager"]) as { data: { property_id: string }[] | null };
+      .in("member_role", ["owner", "manager"]) as { data: { property_id: string }[] | null };
 
     const propertyIds = (propertyMembers || []).map((pm) => pm.property_id);
 
@@ -108,12 +108,12 @@ export async function POST(request: NextRequest) {
     // Verify property access
     const { data: member } = await supabase
       .from("property_members")
-      .select("role")
+      .select("member_role")
       .eq("property_id", property_id)
       .eq("user_id", user.id)
-      .single() as { data: { role: string } | null };
+      .single() as { data: { member_role: string } | null };
 
-    if (!member || !["owner", "manager"].includes(member.role)) {
+    if (!member || !["owner", "manager"].includes(member.member_role)) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
