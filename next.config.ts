@@ -48,6 +48,12 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // SSR for app routes, static for marketing
   trailingSlash: true,
+  // Security: Don't expose Next.js version
+  poweredByHeader: false,
+  // Bundle optimization
+  experimental: {
+    optimizePackageImports: ["lucide-react", "@supabase/supabase-js"],
+  },
   images: {
     remotePatterns: [
       {
