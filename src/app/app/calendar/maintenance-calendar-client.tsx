@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   Calendar,
   Plus,
@@ -35,6 +36,8 @@ import {
   Filter,
   Send,
   RefreshCw,
+  Search,
+  X,
 } from "lucide-react";
 import type { PropertyMaintenanceTaskWithProperty, TaskListResponse } from "@/types/database";
 import { formatDueDate, getFrequencyLabel, CATEGORIES, PRIORITIES, SKILL_LEVELS } from "@/lib/maintenance";
@@ -86,6 +89,12 @@ export function MaintenanceCalendarClient({ properties }: { properties: Property
   // Modal states
   const [selectedTask, setSelectedTask] = useState<PropertyMaintenanceTaskWithProperty | null>(null);
   const [showRequestDialog, setShowRequestDialog] = useState(false);
+
+  // Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
 
   // Calendar state
   const today = new Date();
@@ -178,11 +187,56 @@ export function MaintenanceCalendarClient({ properties }: { properties: Property
     }
   };
 
+  // Filter function
+  const filterTasks = useCallback((taskList: PropertyMaintenanceTaskWithProperty[]) => {
+    return taskList.filter((task) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = task.title.toLowerCase().includes(query);
+        const matchesDescription = task.description?.toLowerCase().includes(query);
+        const matchesProperty = task.property?.nickname?.toLowerCase().includes(query) ||
+          task.property?.address_line1?.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesDescription && !matchesProperty) {
+          return false;
+        }
+      }
+
+      // Category filter
+      if (categoryFilter !== "all" && task.category !== categoryFilter) {
+        return false;
+      }
+
+      // Priority filter
+      if (priorityFilter !== "all" && task.priority !== priorityFilter) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [searchQuery, categoryFilter, priorityFilter]);
+
+  // Filtered task lists
+  const filteredOverdue = tasks ? filterTasks(tasks.overdue) : [];
+  const filteredDueSoon = tasks ? filterTasks(tasks.due_soon) : [];
+  const filteredUpcoming = tasks ? filterTasks(tasks.upcoming) : [];
+  const filteredCompleted = tasks ? filterTasks(tasks.completed) : [];
+
   const allTasks = tasks ? [
     ...tasks.overdue,
     ...tasks.due_soon,
     ...tasks.upcoming,
   ] : [];
+
+  const allFilteredTasks = [...filteredOverdue, ...filteredDueSoon, ...filteredUpcoming];
+
+  const hasActiveFilters = searchQuery || categoryFilter !== "all" || priorityFilter !== "all";
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setCategoryFilter("all");
+    setPriorityFilter("all");
+  };
 
   const getSelectedTasksForRequest = () => {
     return allTasks.filter((t) => selectedTasks.has(t.id));
@@ -296,6 +350,85 @@ export function MaintenanceCalendarClient({ properties }: { properties: Property
         </div>
       )}
 
+      {/* Search and Filters */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search Input */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search tasks..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Filter Toggle */}
+          <Button
+            variant={showFilters ? "secondary" : "outline"}
+            onClick={() => setShowFilters(!showFilters)}
+            className="shrink-0"
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+            {hasActiveFilters && (
+              <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                {[categoryFilter !== "all", priorityFilter !== "all"].filter(Boolean).length}
+              </Badge>
+            )}
+          </Button>
+        </div>
+
+        {/* Filter Dropdowns */}
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/50 rounded-lg">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.value} value={cat.value}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Priorities</SelectItem>
+                {PRIORITIES.map((pri) => (
+                  <SelectItem key={pri.value} value={pri.value}>
+                    {pri.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-1" />
+                Clear Filters
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Actions Bar */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -329,6 +462,12 @@ export function MaintenanceCalendarClient({ properties }: { properties: Property
               Generate Plan
             </Button>
           )}
+          <Button variant="outline" asChild>
+            <a href="/app/calendar/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task
+            </a>
+          </Button>
         </div>
       </div>
 
@@ -368,45 +507,45 @@ export function MaintenanceCalendarClient({ properties }: { properties: Property
             <CardContent className="pt-4">
               <TabsContent value="overdue" className="mt-0">
                 <TaskList
-                  tasks={tasks?.overdue || []}
+                  tasks={filteredOverdue}
                   selectedTasks={selectedTasks}
                   onSelect={handleTaskSelect}
-                  onSelectAll={() => handleSelectAllInTab(tasks?.overdue || [])}
+                  onSelectAll={() => handleSelectAllInTab(filteredOverdue)}
                   onTaskClick={setSelectedTask}
-                  emptyMessage="No overdue tasks"
+                  emptyMessage={hasActiveFilters ? "No matching tasks" : "No overdue tasks"}
                   emptyIcon={CheckCircle2}
                 />
               </TabsContent>
               <TabsContent value="due" className="mt-0">
                 <TaskList
-                  tasks={tasks?.due_soon || []}
+                  tasks={filteredDueSoon}
                   selectedTasks={selectedTasks}
                   onSelect={handleTaskSelect}
-                  onSelectAll={() => handleSelectAllInTab(tasks?.due_soon || [])}
+                  onSelectAll={() => handleSelectAllInTab(filteredDueSoon)}
                   onTaskClick={setSelectedTask}
-                  emptyMessage="No tasks due this week"
+                  emptyMessage={hasActiveFilters ? "No matching tasks" : "No tasks due this week"}
                   emptyIcon={Clock}
                 />
               </TabsContent>
               <TabsContent value="upcoming" className="mt-0">
                 <TaskList
-                  tasks={tasks?.upcoming || []}
+                  tasks={filteredUpcoming}
                   selectedTasks={selectedTasks}
                   onSelect={handleTaskSelect}
-                  onSelectAll={() => handleSelectAllInTab(tasks?.upcoming || [])}
+                  onSelectAll={() => handleSelectAllInTab(filteredUpcoming)}
                   onTaskClick={setSelectedTask}
-                  emptyMessage="No upcoming tasks"
+                  emptyMessage={hasActiveFilters ? "No matching tasks" : "No upcoming tasks"}
                   emptyIcon={Calendar}
                 />
               </TabsContent>
               <TabsContent value="completed" className="mt-0">
                 <TaskList
-                  tasks={tasks?.completed || []}
+                  tasks={filteredCompleted}
                   selectedTasks={selectedTasks}
                   onSelect={handleTaskSelect}
-                  onSelectAll={() => handleSelectAllInTab(tasks?.completed || [])}
+                  onSelectAll={() => handleSelectAllInTab(filteredCompleted)}
                   onTaskClick={setSelectedTask}
-                  emptyMessage="No completed tasks"
+                  emptyMessage={hasActiveFilters ? "No matching tasks" : "No completed tasks"}
                   emptyIcon={CheckCircle2}
                   showCompletedDate
                 />
@@ -431,7 +570,7 @@ export function MaintenanceCalendarClient({ properties }: { properties: Property
           </CardHeader>
           <CardContent>
             <CalendarView
-              tasks={allTasks}
+              tasks={allFilteredTasks}
               month={calendarMonth}
               year={calendarYear}
               onTaskClick={setSelectedTask}
