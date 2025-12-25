@@ -203,14 +203,14 @@ export const DEFAULT_CONFIG: ConfigTypeMap = {
     other: { min_photos: 1, video_required: false, emergency_exception: true },
   },
   feature_flags: {
-    // AI Features (disabled by default until implemented)
-    ai_intake_enabled: true, // Already has placeholder implementation
-    ai_media_quality_enabled: false,
-    ai_provider_copilot_enabled: false,
-    ai_admin_triage_enabled: false,
-    ai_crm_copilot_enabled: false,
-    ai_maintenance_coach_enabled: false,
-    ai_sponsor_copy_enabled: false,
+    // AI Features - all enabled
+    ai_intake_enabled: true,
+    ai_media_quality_enabled: true,
+    ai_provider_copilot_enabled: true,
+    ai_admin_triage_enabled: true,
+    ai_crm_copilot_enabled: true,
+    ai_maintenance_coach_enabled: true,
+    ai_sponsor_copy_enabled: true,
     // Platform Features
     sponsor_tiles_enabled: true,
     marketplace_payments_enabled: true,
