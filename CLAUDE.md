@@ -367,6 +367,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `src/lib/stripe/` | Stripe integration (Connect, payments, subscriptions) |
 | `src/lib/ai/` | AI gateway, task definitions, provider routing |
 | `src/lib/support-chat/` | Support chatbot: identity flow, RAG, tickets, analytics |
+| `src/lib/push/` | Web push notifications (VAPID, service worker) |
+| `src/lib/sms/` | SMS notifications via Twilio |
+| `src/lib/email/` | Email notifications via Resend |
 | `src/types/database.ts` | Database schema types |
 | `next.config.ts` | Security headers, image domains |
 | `src/app/layout.tsx` | Root layout, metadata, fonts |
@@ -397,6 +400,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 | `/api/cron/provider-qualification` | Weekly | Check providers against Preferred tier thresholds |
 | `/api/cron/referral-qualification` | Daily | Qualify referrals, award free sponsor years |
 | `/api/cron/ai-cleanup` | Daily | Clean up old AI data per retention policy |
+| `/api/cron/task-notifications` | Daily 8 AM | Send email, push, SMS for overdue/due-soon tasks |
 
 All cron jobs require `Authorization: Bearer $CRON_SECRET` header.
 
@@ -417,6 +421,31 @@ Edit `src/content/site.ts` - it contains all pricing, FAQs, services, testimonia
 Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ## Recent Changes Log
+
+### 2025-12-25 (Push Notifications & SMS)
+- **Web Push Notifications**: Full implementation with VAPID keys
+  - Service worker (`public/sw.js`) for background notifications
+  - Server library (`src/lib/push/`) using web-push package
+  - Client library for subscription management and permission handling
+  - `push_subscriptions` table with RLS policies
+  - API routes: `/api/push/subscribe`, `/api/push/test`
+  - React hook `usePushNotifications()` for UI integration
+  - UI component `PushNotificationSettings` for enable/disable toggle
+- **SMS Notifications**: Twilio integration
+  - SMS library (`src/lib/sms/`) with message templates
+  - Phone number formatting (E.164) and validation
+  - Pre-built templates: task reminders, bookings, provider notifications
+  - SMS is opt-in only (`sms_enabled: true` in preferences)
+  - Only sent for overdue tasks to avoid spam
+- **Multi-Channel Task Notifications**: Updated cron job
+  - Email digest (existing)
+  - Push notifications for due-soon and overdue tasks
+  - SMS for overdue tasks only (opt-in)
+  - In-app notifications for overdue tasks
+  - Dedup keys prevent duplicate notifications
+- **Environment Variables**: Added to `.env.example`
+  - `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` (push)
+  - `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` (SMS)
 
 ### 2025-12-24 (Support Chatbot Implementation)
 - **Production-Ready Support Chatbot**: Full implementation with three contexts
@@ -589,4 +618,4 @@ Edit `next.config.ts` → `securityHeaders` → `Content-Security-Policy`
 
 ---
 
-*Last updated: 2025-12-24 (Support Chatbot Implementation)*
+*Last updated: 2025-12-25 (Push Notifications & SMS)*

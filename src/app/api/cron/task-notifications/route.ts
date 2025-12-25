@@ -1,13 +1,13 @@
 /**
  * Maintenance Task Notifications Cron Job
  *
- * Sends daily email digests for upcoming and overdue maintenance tasks.
+ * Sends daily email digests, push notifications, and SMS for upcoming and overdue maintenance tasks.
  * Should be run daily at 8 AM via external cron.
  *
  * Logic:
  * 1. Find users with tasks due in next 3 days or overdue
  * 2. Check notification preferences
- * 3. Send email digest and create in-app notifications
+ * 3. Send email digest, push notifications, SMS, and create in-app notifications
  * 4. Mark tasks as notified
  */
 
@@ -15,6 +15,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { sendEmail } from "@/lib/email";
 import { taskDigestEmail } from "@/lib/email/templates";
+import { sendPushNotification, isPushConfigured } from "@/lib/push";
+import { sendSms, isSmsConfigured, smsTemplates } from "@/lib/sms";
 
 // Verify cron secret to prevent unauthorized access
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -41,11 +43,14 @@ interface TaskForNotification {
 interface UserForNotification {
   profile_id: string;
   email: string;
+  phone: string | null;
   full_name: string;
   notification_preferences: {
     maintenance_reminders?: boolean;
     maintenance_frequency?: "daily" | "weekly" | "never";
     email_enabled?: boolean;
+    push_enabled?: boolean;
+    sms_enabled?: boolean;
   };
   overdue_count: number;
   due_soon_count: number;
@@ -63,6 +68,10 @@ export async function GET(request: NextRequest) {
     usersProcessed: 0,
     emailsSent: 0,
     emailsFailed: 0,
+    pushSent: 0,
+    pushFailed: 0,
+    smsSent: 0,
+    smsFailed: 0,
     inAppCreated: 0,
     tasksMarked: 0,
     errors: [] as string[],
@@ -95,9 +104,11 @@ export async function GET(request: NextRequest) {
     // 2. Process each user
     for (const user of users as UserForNotification[]) {
       try {
-        // Skip if email notifications disabled
+        // Check notification preferences
         const prefs = user.notification_preferences || {};
         const emailEnabled = prefs.email_enabled !== false;
+        const pushEnabled = prefs.push_enabled !== false && isPushConfigured();
+        const smsEnabled = prefs.sms_enabled === true && isSmsConfigured() && !!user.phone;
 
         // Get tasks for this user
         const { data: tasks, error: tasksError } = await supabaseAdmin.rpc(
@@ -166,6 +177,120 @@ export async function GET(request: NextRequest) {
           } else {
             results.emailsFailed++;
             results.errors.push(`Email to ${user.email}: ${emailResult.error}`);
+          }
+        }
+
+        // Send push notifications if enabled
+        if (pushEnabled) {
+          // Get user's push subscriptions
+          const { data: pushSubs } = await supabaseAdmin
+            .from("push_subscriptions")
+            .select("endpoint, p256dh_key, auth_key")
+            .eq("profile_id", user.profile_id)
+            .eq("is_active", true);
+
+          if (pushSubs && pushSubs.length > 0) {
+            // Send a summary push notification
+            const taskCount = typedTasks.length;
+            const overdueCount = overdueTasks.length;
+
+            const pushPayload = {
+              title: overdueCount > 0
+                ? `${overdueCount} Overdue Task${overdueCount > 1 ? "s" : ""}`
+                : `${taskCount} Task${taskCount > 1 ? "s" : ""} Due Soon`,
+              body: overdueCount > 0
+                ? `You have ${overdueCount} overdue and ${dueSoonTasks.length} upcoming maintenance tasks.`
+                : `You have ${taskCount} maintenance task${taskCount > 1 ? "s" : ""} due in the next few days.`,
+              url: "/app/calendar",
+              tag: `task-digest-${new Date().toISOString().split("T")[0]}`,
+              requireInteraction: overdueCount > 0,
+            };
+
+            for (const sub of pushSubs) {
+              try {
+                const pushResult = await sendPushNotification(
+                  {
+                    endpoint: sub.endpoint,
+                    keys: { p256dh: sub.p256dh_key, auth: sub.auth_key },
+                  },
+                  pushPayload
+                );
+
+                if (pushResult.success) {
+                  results.pushSent++;
+                } else {
+                  results.pushFailed++;
+                  // Mark subscription as errored or deactivate if expired
+                  if (pushResult.error === "subscription_expired") {
+                    await supabaseAdmin.rpc("deactivate_push_subscription", {
+                      p_endpoint: sub.endpoint,
+                    });
+                  } else {
+                    await supabaseAdmin.rpc("mark_push_subscription_error", {
+                      p_endpoint: sub.endpoint,
+                    });
+                  }
+                }
+              } catch (pushError) {
+                results.pushFailed++;
+                console.error(`Push notification error:`, pushError);
+              }
+            }
+
+            // Log push notification
+            await supabaseAdmin.from("notification_log").insert({
+              profile_id: user.profile_id,
+              type: "task_digest",
+              channel: "push",
+              subject: pushPayload.title,
+              body_preview: pushPayload.body,
+              status: "sent",
+              metadata: {
+                taskIds: typedTasks.map((t) => t.id),
+                overdueCount: overdueTasks.length,
+                dueSoonCount: dueSoonTasks.length,
+              },
+            });
+          }
+        }
+
+        // Send SMS if enabled (only for overdue tasks to avoid spam)
+        if (smsEnabled && user.phone && overdueTasks.length > 0) {
+          try {
+            // Create SMS message
+            const smsBody = overdueTasks.length === 1
+              ? smsTemplates.taskOverdue(
+                  overdueTasks[0].title,
+                  overdueTasks[0].property_nickname || overdueTasks[0].property_address || "your property"
+                )
+              : `RegularUpkeep: You have ${overdueTasks.length} overdue maintenance tasks. View at app.regularupkeep.com/app/calendar`;
+
+            const smsResult = await sendSms(user.phone, smsBody);
+
+            if (smsResult.success) {
+              results.smsSent++;
+
+              // Log SMS notification
+              await supabaseAdmin.from("notification_log").insert({
+                profile_id: user.profile_id,
+                type: "task_overdue",
+                channel: "sms",
+                subject: "Overdue Tasks",
+                body_preview: smsBody.substring(0, 100),
+                status: "sent",
+                metadata: {
+                  taskIds: overdueTasks.map((t) => t.id),
+                  messageId: smsResult.messageId,
+                },
+                dedup_key: `sms_overdue_${user.profile_id}_${new Date().toISOString().split("T")[0]}`,
+              });
+            } else {
+              results.smsFailed++;
+              results.errors.push(`SMS to ${user.phone}: ${smsResult.error}`);
+            }
+          } catch (smsError) {
+            results.smsFailed++;
+            console.error(`SMS error for user ${user.profile_id}:`, smsError);
           }
         }
 
