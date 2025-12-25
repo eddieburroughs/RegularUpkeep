@@ -297,28 +297,37 @@ export default function NewRequestPage() {
       }
 
       // Create service request with AI data if available
+      // Map urgency: emergency toggle → 'emergency', otherwise use priority mapping
+      const urgencyValue = isEmergency
+        ? "emergency"
+        : priority === "high"
+        ? "urgent"
+        : priority === "low"
+        ? "flexible"
+        : "standard";
+
       const serviceRequestData = {
         id: requestId,
         customer_id: customer.id,
         property_id: propertyId,
         category: aiIntakeResult?.classification?.suggestedCategory || category,
+        title: `${serviceCategories.find(c => c.value === category)?.label || category} - ${description.slice(0, 50)}`,
         description,
-        is_emergency: isEmergency,
-        scheduled_date: scheduledDate,
-        scheduled_time: scheduledTime,
-        priority: isEmergency ? "urgent" : priority,
-        status: "pending",
-        media_urls: media.map((m) => m.url),
-        service_address: `${selectedProperty.address_line1}, ${selectedProperty.city}, ${selectedProperty.state} ${selectedProperty.postal_code}`,
+        urgency: urgencyValue,
+        status: "submitted",
+        photos: media.filter((m) => m.type === "photo").map((m) => m.url),
+        videos: media.filter((m) => m.type === "video").map((m) => m.url),
+        media_requirements_met: meetsMediaRequirements,
+        emergency_media_exception: isEmergency && hasEmergencyAlternative,
+        preferred_date: scheduledDate,
+        preferred_time_start: scheduledTime,
+        flexible_scheduling: priority === "low",
+        submitted_at: new Date().toISOString(),
         // AI-generated data
         ai_summary: aiIntakeResult?.classification?.summary || null,
         ai_processing_status: aiIntakeResult ? "complete" : (aiFallbackUsed ? "fallback" : null),
         ai_follow_up_answers: aiIntakeResult?.answers || null,
         ai_provider_brief: aiIntakeResult?.providerBrief || null,
-        // Emergency alternative data
-        emergency_voice_note_url: voiceNoteUrl,
-        emergency_voice_note_duration: voiceNoteDuration > 0 ? voiceNoteDuration : null,
-        emergency_checklist_answers: Object.keys(emergencyChecklistAnswers).length > 0 ? emergencyChecklistAnswers : null,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
