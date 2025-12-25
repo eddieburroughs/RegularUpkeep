@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
-import type { Property, MaintenanceCategory, MaintenancePriority } from "@/types/database";
+import type { Property, MaintenanceCategory, MaintenancePriority, MaintenanceFrequencyType, MaintenanceSkillLevel } from "@/types/database";
 
 const categories: { value: MaintenanceCategory; label: string }[] = [
   { value: "hvac", label: "HVAC" },
@@ -33,6 +33,21 @@ const priorities: { value: MaintenancePriority; label: string }[] = [
   { value: "low", label: "Low" },
 ];
 
+const frequencyTypes: { value: MaintenanceFrequencyType; label: string }[] = [
+  { value: "one_time", label: "One Time" },
+  { value: "weekly", label: "Weekly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "seasonal", label: "Seasonal" },
+  { value: "annual", label: "Annual" },
+  { value: "multi_year", label: "Multi-Year" },
+];
+
+const skillLevels: { value: MaintenanceSkillLevel; label: string }[] = [
+  { value: "diy", label: "DIY" },
+  { value: "pro_recommended", label: "Pro Recommended" },
+  { value: "pro_required", label: "Pro Required" },
+];
+
 export default function NewTaskPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -44,15 +59,17 @@ export default function NewTaskPage() {
   const defaultDueDate = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   const [formData, setFormData] = useState({
-    name: "",
+    title: "",
     description: "",
     property_id: "",
     category: "other" as MaintenanceCategory,
     priority: "normal" as MaintenancePriority,
-    due_date: defaultDueDate,
-    due_time: "",
+    next_due_date: defaultDueDate,
+    frequency_type: "one_time" as MaintenanceFrequencyType,
+    frequency_interval: 1,
+    skill_level: "diy" as MaintenanceSkillLevel,
     instructions: "",
-    estimated_cost: "",
+    estimated_minutes: 30,
   });
 
   useEffect(() => {
@@ -84,23 +101,31 @@ export default function NewTaskPage() {
       return;
     }
 
+    if (!formData.title.trim()) {
+      setError("Please enter a task title");
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
     const insertData = {
-      name: formData.name,
+      title: formData.title.trim(),
       description: formData.description || null,
       property_id: formData.property_id,
       category: formData.category,
       priority: formData.priority,
-      due_date: formData.due_date,
-      due_time: formData.due_time || null,
+      next_due_date: formData.next_due_date,
+      frequency_type: formData.frequency_type,
+      frequency_interval: formData.frequency_interval,
+      skill_level: formData.skill_level,
       instructions: formData.instructions || null,
-      estimated_cost_cents: formData.estimated_cost ? Math.round(parseFloat(formData.estimated_cost) * 100) : null,
-      status: "scheduled",
+      estimated_minutes: formData.estimated_minutes,
+      status: "active",
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: task, error: createError } = await (supabase as any)
-      .from("maintenance_tasks")
+      .from("property_maintenance_tasks")
       .insert(insertData)
       .select()
       .single();
@@ -114,8 +139,13 @@ export default function NewTaskPage() {
     router.push(`/app/calendar/${task.id}`);
   };
 
-  const updateField = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const updateField = (field: string, value: string | number) => {
+    // Handle numeric fields
+    if (field === "estimated_minutes" || field === "frequency_interval") {
+      setFormData((prev) => ({ ...prev, [field]: parseInt(value as string) || 1 }));
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }
   };
 
   return (
@@ -150,12 +180,12 @@ export default function NewTaskPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">Task Name *</Label>
+              <Label htmlFor="title">Task Title *</Label>
               <Input
-                id="name"
+                id="title"
                 placeholder="e.g., Change HVAC filter"
-                value={formData.name}
-                onChange={(e) => updateField("name", e.target.value)}
+                value={formData.title}
+                onChange={(e) => updateField("title", e.target.value)}
                 required
               />
             </div>
@@ -235,23 +265,64 @@ export default function NewTaskPage() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="due_date">Due Date *</Label>
+                <Label htmlFor="next_due_date">Due Date *</Label>
                 <Input
-                  id="due_date"
+                  id="next_due_date"
                   type="date"
-                  value={formData.due_date}
-                  onChange={(e) => updateField("due_date", e.target.value)}
+                  value={formData.next_due_date}
+                  onChange={(e) => updateField("next_due_date", e.target.value)}
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="due_time">Due Time (optional)</Label>
+                <Label htmlFor="frequency_type">Frequency</Label>
+                <Select
+                  value={formData.frequency_type}
+                  onValueChange={(value) => updateField("frequency_type", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {frequencyTypes.map((freq) => (
+                      <SelectItem key={freq.value} value={freq.value}>
+                        {freq.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="skill_level">Skill Level</Label>
+                <Select
+                  value={formData.skill_level}
+                  onValueChange={(value) => updateField("skill_level", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {skillLevels.map((skill) => (
+                      <SelectItem key={skill.value} value={skill.value}>
+                        {skill.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="estimated_minutes">Estimated Time (minutes)</Label>
                 <Input
-                  id="due_time"
-                  type="time"
-                  value={formData.due_time}
-                  onChange={(e) => updateField("due_time", e.target.value)}
+                  id="estimated_minutes"
+                  type="number"
+                  min="1"
+                  value={formData.estimated_minutes}
+                  onChange={(e) => updateField("estimated_minutes", e.target.value)}
                 />
               </div>
             </div>
@@ -276,25 +347,6 @@ export default function NewTaskPage() {
                 onChange={(e) => updateField("instructions", e.target.value)}
                 rows={3}
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="estimated_cost">Estimated Cost (optional)</Label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                  $
-                </span>
-                <Input
-                  id="estimated_cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="0.00"
-                  className="pl-7"
-                  value={formData.estimated_cost}
-                  onChange={(e) => updateField("estimated_cost", e.target.value)}
-                />
-              </div>
             </div>
 
             <div className="flex gap-3 pt-4">
