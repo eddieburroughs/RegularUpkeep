@@ -63,6 +63,14 @@ const steps = [
     required: false, // Optional - may not be configured
   },
   {
+    name: 'test:rls',
+    displayName: 'RLS Security Tests',
+    command: 'npm',
+    args: ['run', 'test:rls'],
+    required: false, // Optional - requires real Supabase credentials
+    envCheck: ['SUPABASE_TEST_URL', 'SUPABASE_TEST_SERVICE_ROLE_KEY'], // Skip if not configured
+  },
+  {
     name: 'test:security',
     displayName: 'Security Checks',
     command: 'npm',
@@ -153,6 +161,23 @@ async function checkScriptExists(scriptName) {
 async function runStep(step) {
   log('');
   log(`${colors.cyan}━━━ ${step.displayName} ━━━${colors.reset}`);
+
+  // Check if required environment variables are set
+  if (step.envCheck && step.envCheck.length > 0) {
+    const missing = step.envCheck.filter(env => !process.env[env]);
+    if (missing.length > 0) {
+      log(`  ${colors.yellow}Skipping: Missing ${missing.join(', ')}${colors.reset}`);
+      results.push({
+        name: step.displayName,
+        step: step.name,
+        status: 'SKIP',
+        duration: 0,
+        required: step.required,
+        error: `Missing environment variables: ${missing.join(', ')}`,
+      });
+      return true; // Don't fail on skip
+    }
+  }
 
   const result = await runCommand(step.command, step.args);
 
