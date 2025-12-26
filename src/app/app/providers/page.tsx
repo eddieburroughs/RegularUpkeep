@@ -72,6 +72,9 @@ export default async function ProvidersPage({
   const defaultTab = params.tab || "my-providers";
   const supabase = await createClient();
 
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+
   // Get user's properties
   interface PropertyMemberWithProperty {
     property_id: string;
@@ -93,6 +96,7 @@ export default async function ProvidersPage({
       )
     `
     )
+    .eq("user_id", user?.id || "")
     .order("created_at", { ascending: true })) as { data: PropertyMemberWithProperty[] | null; error: unknown };
 
   const properties: PropertyWithLocation[] = (propertyMembers || [])
@@ -120,6 +124,7 @@ export default async function ProvidersPage({
       )
     `
     )
+    .eq("homeowner_user_id", user?.id || "")
     .order("created_at", { ascending: false })
     .limit(50);
 
