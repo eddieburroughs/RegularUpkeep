@@ -4,6 +4,10 @@
 
 set -e
 
+# Disable ANSI colors in child processes (prevents numeric comparison issues)
+export FORCE_COLOR=0
+export NO_COLOR=1
+
 # Configuration
 PROJECT_DIR="/root/RegularUpkeep-app"
 LOG_DIR="$PROJECT_DIR/logs/security"
@@ -67,11 +71,16 @@ try {
 }
 " 2>/dev/null || echo '{"total":0,"critical":0,"high":0,"moderate":0,"low":0}')
 
-AUDIT_CRITICAL=$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).critical)")
-AUDIT_HIGH=$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).high)")
-AUDIT_MODERATE=$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).moderate)")
-AUDIT_LOW=$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).low)")
-AUDIT_TOTAL=$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).total)")
+# Strip ANSI color codes for numeric comparisons
+strip_ansi() {
+    echo "$1" | sed 's/\x1b\[[0-9;]*m//g' | tr -d '[:space:]'
+}
+
+AUDIT_CRITICAL=$(strip_ansi "$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).critical)")")
+AUDIT_HIGH=$(strip_ansi "$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).high)")")
+AUDIT_MODERATE=$(strip_ansi "$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).moderate)")")
+AUDIT_LOW=$(strip_ansi "$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).low)")")
+AUDIT_TOTAL=$(strip_ansi "$(echo "$AUDIT_VULNS" | node -e "console.log(JSON.parse(require('fs').readFileSync(0,'utf8')).total)")")
 
 if [ "$AUDIT_CRITICAL" -gt 0 ] || [ "$AUDIT_HIGH" -gt 0 ]; then
     log "${RED}VULNERABILITIES FOUND:${NC}"
@@ -102,8 +111,8 @@ try {
 } catch(e) { console.log('0,0'); }
 " 2>/dev/null || echo "0,0")
 
-LINT_ERRORS=$(echo "$ESLINT_ERRORS" | cut -d',' -f1)
-LINT_WARNINGS=$(echo "$ESLINT_ERRORS" | cut -d',' -f2)
+LINT_ERRORS=$(strip_ansi "$(echo "$ESLINT_ERRORS" | cut -d',' -f1)")
+LINT_WARNINGS=$(strip_ansi "$(echo "$ESLINT_ERRORS" | cut -d',' -f2)")
 
 if [ "$LINT_ERRORS" -gt 0 ]; then
     log "${RED}ESLint Errors: $LINT_ERRORS${NC}"
@@ -219,7 +228,7 @@ TOTAL_ISSUES=$((TOTAL_ISSUES + SQL_ISSUES + XSS_ISSUES + EVAL_ISSUES + SECRET_IS
 log_header "5. DEPENDENCY CHECK - Unused Dependencies"
 
 DEPCHECK_OUTPUT=$(npx depcheck --json 2>/dev/null || echo '{"dependencies":[],"devDependencies":[]}')
-UNUSED_DEPS=$(echo "$DEPCHECK_OUTPUT" | node -e "
+UNUSED_DEPS=$(strip_ansi "$(echo "$DEPCHECK_OUTPUT" | node -e "
 const data = require('fs').readFileSync(0, 'utf8');
 try {
     const json = JSON.parse(data);
@@ -227,7 +236,7 @@ try {
     const devDeps = (json.devDependencies || []).length;
     console.log(deps + devDeps);
 } catch(e) { console.log(0); }
-" 2>/dev/null || echo "0")
+" 2>/dev/null || echo "0")")
 
 if [ "$UNUSED_DEPS" -gt 0 ]; then
     log "${YELLOW}Unused dependencies found: $UNUSED_DEPS${NC}"

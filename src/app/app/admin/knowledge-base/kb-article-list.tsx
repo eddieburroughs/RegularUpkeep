@@ -105,7 +105,11 @@ export function KBArticleList() {
   };
 
   useEffect(() => {
-    fetchArticles();
+    // Use IIFE to call async function (React 19 pattern)
+    (async () => {
+      await fetchArticles();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, visibilityFilter]);
 
   const handleSearch = () => {

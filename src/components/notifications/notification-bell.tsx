@@ -53,7 +53,9 @@ export function NotificationBell() {
   }, []);
 
   useEffect(() => {
-    fetchNotifications();
+    (async () => {
+      await fetchNotifications();
+    })();
 
     // Set up realtime subscription
     const supabase = createClient();

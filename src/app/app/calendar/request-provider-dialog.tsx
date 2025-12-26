@@ -340,7 +340,7 @@ export function RequestProviderDialog({
             </div>
 
             <p className="text-sm text-center text-muted-foreground">
-              We'll match you with a qualified provider and notify you when they respond.
+              We&apos;ll match you with a qualified provider and notify you when they respond.
             </p>
 
             <DialogFooter className="mt-4">

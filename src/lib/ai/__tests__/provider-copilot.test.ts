@@ -37,7 +37,8 @@ describe("Provider Estimate Draft", () => {
       const task = getTaskDefinition("PROVIDER_ESTIMATE_DRAFT");
       expect(task).toBeDefined();
       expect(task?.taskType).toBe("PROVIDER_ESTIMATE_DRAFT");
-      expect(task?.preferredModel).toBe("gpt-4o");
+      // Hybrid AI mode: Claude for long-form text generation
+      expect(task?.preferredModel).toBe("claude-sonnet-4-5-20250929");
       expect(task?.allowedActors).toContain("provider");
       expect(task?.allowedActors).toContain("system");
     });
@@ -207,7 +208,8 @@ describe("Provider Message Draft", () => {
       const task = getTaskDefinition("PROVIDER_MESSAGE_DRAFT");
       expect(task).toBeDefined();
       expect(task?.taskType).toBe("PROVIDER_MESSAGE_DRAFT");
-      expect(task?.preferredModel).toBe("gpt-4o-mini");
+      // Hybrid AI mode: Claude Haiku for fast message drafts
+      expect(task?.preferredModel).toBe("claude-haiku-4-5-20251001");
       expect(task?.maxTokens).toBe(600);
     });
   });

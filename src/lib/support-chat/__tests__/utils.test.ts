@@ -30,38 +30,46 @@ import {
 
 describe("validateSupportCode", () => {
   it("validates correct support codes", () => {
-    expect(validateSupportCode("RU-ABC123-XY89")).toBe(true);
+    // Crockford base32: A-HJ-NP-Z (no I,L,O) and 2-9 (no 0,1)
+    expect(validateSupportCode("RU-ABC234-XY89")).toBe(true);
     expect(validateSupportCode("RU-DEFGH2-WZ45")).toBe(true);
-    expect(validateSupportCode("ru-abc123-xy89")).toBe(true); // case insensitive
+    expect(validateSupportCode("ru-abc234-xy89")).toBe(true); // case insensitive
   });
 
   it("rejects invalid support codes", () => {
-    expect(validateSupportCode("RU-123456-1234")).toBe(false); // all numbers
-    expect(validateSupportCode("XX-ABC123-XY89")).toBe(false); // wrong prefix
+    // Note: All-digit codes are valid in Crockford base32 (2-9 allowed)
+    expect(validateSupportCode("XX-ABC234-XY89")).toBe(false); // wrong prefix
     expect(validateSupportCode("RU-ABC-XY89")).toBe(false); // too short
-    expect(validateSupportCode("RUABC123XY89")).toBe(false); // no dashes
+    expect(validateSupportCode("RUABC234XY89")).toBe(false); // no dashes
     expect(validateSupportCode("")).toBe(false);
+    expect(validateSupportCode("RU-ABCDEFGHIJ-WXYZ")).toBe(false); // too long
   });
 
-  it("rejects codes with ambiguous characters", () => {
+  it("rejects codes with ambiguous characters (0, 1, I, L, O)", () => {
     expect(validateSupportCode("RU-ABCIO1-XY89")).toBe(false); // I, O, 1 not allowed
+    expect(validateSupportCode("RU-ABC123-XY89")).toBe(false); // 1 not allowed
   });
 });
 
 describe("normalizeSupportCode", () => {
   it("normalizes to uppercase", () => {
-    expect(normalizeSupportCode("ru-abc123-xy89")).toBe("RU-ABC123-XY89");
+    expect(normalizeSupportCode("ru-abc234-xy89")).toBe("RU-ABC234-XY89");
   });
 
   it("trims whitespace", () => {
-    expect(normalizeSupportCode("  RU-ABC123-XY89  ")).toBe("RU-ABC123-XY89");
+    expect(normalizeSupportCode("  RU-ABC234-XY89  ")).toBe("RU-ABC234-XY89");
   });
 });
 
 describe("maskEmail", () => {
   it("masks email addresses", () => {
     expect(maskEmail("john.doe@example.com")).toBe("j***@e***.com");
-    expect(maskEmail("a@b.co")).toBe("a***@b***.co");
+    expect(maskEmail("test@domain.org")).toBe("t***@d***.org");
+  });
+
+  it("preserves single-char parts (nothing to hide)", () => {
+    // Single char local/domain parts aren't masked further
+    expect(maskEmail("a@b.co")).toBe("a@b.co");
   });
 
   it("handles null input", () => {
@@ -210,12 +218,18 @@ describe("determineCategory", () => {
 
 describe("extractSupportCode", () => {
   it("extracts valid support codes", () => {
-    expect(extractSupportCode("My code is RU-ABC123-XY89")).toBe("RU-ABC123-XY89");
-    expect(extractSupportCode("ru-abc123-xy89 is my code")).toBe("RU-ABC123-XY89");
+    // Uses Crockford base32 chars: A-HJ-NP-Z (no I,L,O) and 2-9 (no 0,1)
+    expect(extractSupportCode("My code is RU-ABC234-XY89")).toBe("RU-ABC234-XY89");
+    expect(extractSupportCode("ru-abc234-xy89 is my code")).toBe("RU-ABC234-XY89");
   });
 
   it("returns null for no match", () => {
     expect(extractSupportCode("No code here")).toBe(null);
+  });
+
+  it("returns null for codes with invalid characters (0, 1, I, L, O)", () => {
+    // These contain 1 which is not in the valid charset
+    expect(extractSupportCode("RU-ABC123-XY89")).toBe(null);
   });
 });
 

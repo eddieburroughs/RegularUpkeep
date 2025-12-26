@@ -4,6 +4,11 @@
  * "Open Items" inbox for managing support tickets.
  */
 
+// Helper to calculate date range for queries (extracted to module scope)
+function getOneWeekAgo(): string {
+  return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+}
+
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +51,7 @@ export default async function AdminSupportPage() {
   }
 
   // Fetch ticket stats
+  const oneWeekAgo = getOneWeekAgo();
   const [openResult, inProgressResult, resolvedResult, urgentResult] = await Promise.all([
     supabase
       .from("support_tickets")
@@ -59,7 +65,7 @@ export default async function AdminSupportPage() {
       .from("support_tickets")
       .select("id", { count: "exact", head: true })
       .eq("status", "resolved")
-      .gte("resolved_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()),
+      .gte("resolved_at", oneWeekAgo),
     supabase
       .from("support_tickets")
       .select("id", { count: "exact", head: true })

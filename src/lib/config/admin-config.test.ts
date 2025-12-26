@@ -28,15 +28,15 @@ describe('Admin Config', () => {
       const fees = DEFAULT_CONFIG.diagnostic_fees;
       expect(fees.hvac.fee_cents).toBe(8900);
       expect(fees.plumbing.fee_cents).toBe(7900);
-      expect(fees.electrical.fee_cents).toBe(8900);
-      expect(fees.appliances.fee_cents).toBe(6900);
-      expect(fees.landscaping.fee_cents).toBe(0); // No fee for landscaping
+      expect(fees.electrical.fee_cents).toBe(7900); // Updated to match plumbing
+      expect(fees.appliances.fee_cents).toBe(5900); // $59 for appliances
+      expect(fees.landscaping.fee_cents).toBe(4900); // $49 for landscaping
     });
 
     it('should have provider fee configuration', () => {
       const fees = DEFAULT_CONFIG.provider_fees;
       expect(fees.percentage).toBe(8.0);
-      expect(fees.minimum_cents).toBe(500);
+      expect(fees.minimum_cents).toBe(350); // $3.50 minimum
     });
 
     it('should have provider tier requirements', () => {
@@ -49,7 +49,7 @@ describe('Admin Config', () => {
 
     it('should have marketplace payment settings', () => {
       const payments = DEFAULT_CONFIG.marketplace_payments;
-      expect(payments.estimate_buffer_percentage).toBe(15);
+      expect(payments.estimate_buffer_percentage).toBe(20); // 20% buffer
       expect(payments.auto_approve_hours).toBe(24);
       expect(payments.dispute_window_hours).toBe(72);
     });

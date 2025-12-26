@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -259,10 +260,10 @@ export function MaintenanceCalendarClient({ properties }: { properties: Property
               Add a property to start tracking maintenance tasks
             </p>
             <Button asChild>
-              <a href="/app/properties/new">
+              <Link href="/app/properties/new">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Property
-              </a>
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -463,10 +464,10 @@ export function MaintenanceCalendarClient({ properties }: { properties: Property
             </Button>
           )}
           <Button variant="outline" asChild>
-            <a href="/app/calendar/new">
+            <Link href="/app/calendar/new">
               <Plus className="h-4 w-4 mr-2" />
               Add Task
-            </a>
+            </Link>
           </Button>
         </div>
       </div>

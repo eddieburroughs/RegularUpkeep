@@ -9,7 +9,7 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
-import type { LookupResult } from "@/types/database";
+import type { LookupResult, UserRole } from "@/types/database";
 import { validateSupportCode, normalizeSupportCode, maskEmail, maskPhone, hashForLog, extractSupportCode, extractEmail, extractPhone, extractName, isSkipMessage, isAffirmative, isNegative } from "./utils";
 
 // Local type for identity verification state machine
@@ -301,23 +301,29 @@ async function handleFallbackPendingState(
   }
 
   // Found - verify
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = lookupResult as any;
-  const maskedEmail = result.masked_email || maskEmail(result.email);
-  const maskedPhone = result.masked_phone || maskPhone(result.phone);
+  const maskedEmail = maskEmail(lookupResult.email);
+  const maskedPhone = maskPhone(lookupResult.phone);
+
+  // Transform to LookupResult format
+  const typedLookupResult: LookupResult = {
+    user_id: lookupResult.user_id,
+    masked_email: maskedEmail,
+    masked_phone: maskedPhone,
+    role: lookupResult.role as UserRole,
+  };
 
   return {
     context: {
       ...context,
       state: "verified",
-      userId: result.user_id,
+      userId: lookupResult.user_id,
       maskedEmail,
       maskedPhone,
-      fullName: result.full_name || name || undefined,
+      fullName: lookupResult.full_name || name || undefined,
     },
     response: `I found your account (${maskedEmail || maskedPhone}). How can I help you today?`,
     shouldContinue: true,
-    lookupResult,
+    lookupResult: typedLookupResult,
   };
 }
 
@@ -353,12 +359,18 @@ async function lookupByCode(code: string): Promise<any> {
 /**
  * Lookup user by email or phone
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function lookupByContact(
   email: string | null,
   phone: string | null,
   name: string | null
-): Promise<any> {
+): Promise<{
+  user_id: string;
+  email: string | null;
+  phone: string | null;
+  full_name: string | null;
+  support_code: string | null;
+  role: string | null;
+} | null> {
   const supabase = await createClient();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

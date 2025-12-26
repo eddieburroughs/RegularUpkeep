@@ -328,7 +328,7 @@ export function TaskDetailModal({
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">
-                This will record today's date and schedule the next due date automatically
+                This will record today&apos;s date and schedule the next due date automatically
               </p>
             </div>
           </TabsContent>

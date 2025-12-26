@@ -112,7 +112,10 @@ export function TicketList({ status, adminId }: TicketListProps) {
   };
 
   useEffect(() => {
-    fetchTickets();
+    (async () => {
+      await fetchTickets();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, priorityFilter, categoryFilter]);
 
   const handleAssign = async (ticketId: string) => {

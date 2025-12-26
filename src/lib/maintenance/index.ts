@@ -44,7 +44,7 @@ export function computeNextDueDate(
     case "seasonal":
       if (suggestedMonths && suggestedMonths.length > 0) {
         const currentMonth = date.getMonth() + 1; // 1-indexed
-        let year = date.getFullYear();
+        const year = date.getFullYear();
 
         // Find next suggested month
         const nextMonth = suggestedMonths.find((m) => m > currentMonth);

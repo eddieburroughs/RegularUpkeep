@@ -218,13 +218,14 @@ export async function getDailyVolume(
     const startOfDay = `${dateStr}T00:00:00.000Z`;
     const endOfDay = `${dateStr}T23:59:59.999Z`;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [convResult, msgResult] = await Promise.all([
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any)
         .from("conversations")
         .select("id", { count: "exact", head: true })
         .gte("created_at", startOfDay)
         .lte("created_at", endOfDay),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (supabase as any)
         .from("support_messages")
         .select("id", { count: "exact", head: true })

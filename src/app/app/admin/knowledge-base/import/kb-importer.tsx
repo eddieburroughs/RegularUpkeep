@@ -288,7 +288,7 @@ export function KBImporter() {
             <CardContent className="text-sm text-muted-foreground">
               <p>
                 The handbook files in <code>docs/</code> contain KB chunks in JSON format.
-                Look for the "Chatbot KB Add-On" sections with JSON exports.
+                Look for the &quot;Chatbot KB Add-On&quot; sections with JSON exports.
               </p>
               <p className="mt-2">
                 For bulk import, use the CLI script:{" "}
