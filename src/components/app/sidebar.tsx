@@ -13,6 +13,7 @@ import {
   FolderOpen,
   CreditCard,
   LogOut,
+  Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -25,6 +26,7 @@ const navigation = [
   { name: "History", href: "/app/requests", icon: ClipboardList },
   { name: "Messages", href: "/app/messages", icon: MessageSquare },
   { name: "Binder", href: "/app/binder", icon: FolderOpen },
+  { name: "Providers", href: "/app/providers", icon: Users },
   { name: "Billing", href: "/app/billing", icon: CreditCard },
 ];
 

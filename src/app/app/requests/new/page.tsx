@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,8 @@ import {
   Sparkles,
   Mic,
   ClipboardList,
+  Building2,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import type { Property } from "@/types/database";
@@ -71,12 +73,40 @@ const serviceCategories = [
   { value: "other", label: "Other" },
 ];
 
+// Pre-selected provider from URL
+interface SelectedProvider {
+  id: string;
+  name: string;
+}
+
 export default function NewRequestPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertiesLoading, setPropertiesLoading] = useState(true);
+
+  // Pre-selected provider from My Providers
+  const [selectedProvider, setSelectedProvider] = useState<SelectedProvider | null>(null);
+
+  // Initialize from URL params
+  useEffect(() => {
+    const providerId = searchParams.get("providerId");
+    const providerName = searchParams.get("providerName");
+    const urlCategory = searchParams.get("category");
+    const urlPropertyId = searchParams.get("propertyId");
+
+    if (providerId && providerName) {
+      setSelectedProvider({ id: providerId, name: providerName });
+    }
+    if (urlCategory) {
+      setCategory(urlCategory);
+    }
+    if (urlPropertyId) {
+      setPropertyId(urlPropertyId);
+    }
+  }, [searchParams]);
 
   // Form state
   const [propertyId, setPropertyId] = useState("");
@@ -310,11 +340,14 @@ export default function NewRequestPage() {
         id: requestId,
         customer_id: customer.id,
         property_id: propertyId,
+        // Direct provider assignment if coming from My Providers
+        provider_id: selectedProvider?.id || null,
+        assignment_type: selectedProvider ? "direct" : "dispatch",
         category: aiIntakeResult?.classification?.suggestedCategory || category,
         title: `${serviceCategories.find(c => c.value === category)?.label || category} - ${description.slice(0, 50)}`,
         description,
         urgency: urgencyValue,
-        status: "submitted",
+        status: selectedProvider ? "assigned" : "submitted", // Skip dispatch if provider is pre-selected
         photos: media.filter((m) => m.type === "photo").map((m) => m.url),
         videos: media.filter((m) => m.type === "video").map((m) => m.url),
         media_requirements_met: meetsMediaRequirements,
@@ -361,6 +394,40 @@ export default function NewRequestPage() {
           </p>
         </div>
       </div>
+
+      {/* Pre-selected Provider Banner */}
+      {selectedProvider && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                  <Building2 className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="font-medium">Requesting service from:</p>
+                  <p className="text-lg font-semibold text-green-700">
+                    {selectedProvider.name}
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedProvider(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Change
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2">
+              Your request will be sent directly to this provider, skipping the normal dispatch process.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {error && (
         <Alert variant="destructive">

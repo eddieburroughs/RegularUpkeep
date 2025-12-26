@@ -2253,6 +2253,7 @@ export interface FeatureFlagsConfig {
   marketplace_payments_enabled: boolean;
   provider_crm_enabled: boolean;
   realtor_referral_enabled: boolean;
+  google_provider_discovery: boolean;
 }
 
 export interface AIOperationsConfig {

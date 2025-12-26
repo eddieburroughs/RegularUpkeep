@@ -216,6 +216,7 @@ export const DEFAULT_CONFIG: ConfigTypeMap = {
     marketplace_payments_enabled: true,
     provider_crm_enabled: true,
     realtor_referral_enabled: true,
+    google_provider_discovery: true,
   },
   ai_operations: {
     rate_limits: {
