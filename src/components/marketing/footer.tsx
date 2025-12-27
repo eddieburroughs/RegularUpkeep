@@ -14,11 +14,11 @@ export function Footer() {
           <div className="lg:col-span-2">
             <Link href="/" className="inline-block">
               <Image
-                src={brand.logo}
+                src="/images/regularupkeep-logo!.png"
                 alt={`${brand.name} logo`}
-                width={180}
+                width={200}
                 height={40}
-                className="h-8 w-auto brightness-0 invert"
+                className="h-10 w-auto"
               />
             </Link>
             <p className="mt-4 text-sm text-white/80 max-w-md">
