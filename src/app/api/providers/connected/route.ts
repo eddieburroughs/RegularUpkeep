@@ -25,7 +25,7 @@ interface ConnectedProvider {
   property: {
     id: string;
     nickname: string | null;
-    address: string;
+    address_line1: string;
     city: string;
     state: string;
   } | null;
@@ -50,7 +50,7 @@ interface InviteWithProvider {
   property: {
     id: string;
     nickname: string | null;
-    address: string;
+    address_line1: string;
     city: string;
     state: string;
   } | null;
@@ -90,7 +90,7 @@ export async function GET() {
       property:properties (
         id,
         nickname,
-        address,
+        address_line1,
         city,
         state
       )

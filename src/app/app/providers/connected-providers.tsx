@@ -40,7 +40,7 @@ interface ConnectedProvider {
   property: {
     id: string;
     nickname: string | null;
-    address: string;
+    address_line1: string;
     city: string;
     state: string;
   } | null;
@@ -241,7 +241,7 @@ export function ConnectedProviders() {
                     {provider.property && (
                       <p className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                         <MapPin className="h-3 w-3" />
-                        Connected for {provider.property.nickname || provider.property.address}
+                        Connected for {provider.property.nickname || provider.property.address_line1}
                       </p>
                     )}
                   </div>

@@ -23,7 +23,7 @@ import { InviteDialog } from "./invite-dialog";
 type PropertyWithLocation = {
   id: string;
   nickname: string | null;
-  address: string;
+  address_line1: string;
   city: string;
   state: string;
   lat: number | null;
@@ -140,7 +140,7 @@ export function ProviderSearch({ properties }: ProviderSearchProps) {
                 <SelectContent>
                   {properties.map((property) => (
                     <SelectItem key={property.id} value={property.id}>
-                      {property.nickname || property.address}
+                      {property.nickname || property.address_line1}
                       {!property.lat && (
                         <span className="text-muted-foreground text-xs ml-2">
                           (needs geocoding)

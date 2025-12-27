@@ -38,7 +38,7 @@ type ProviderResult = {
 type PropertyData = {
   id: string;
   nickname: string | null;
-  address: string;
+  address_line1: string;
   city: string;
   state: string;
 };
@@ -168,7 +168,7 @@ export function InviteDialog({
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               For {serviceType.replace("_", " ")} at{" "}
-              {property.nickname || property.address}
+              {property.nickname || property.address_line1}
             </p>
           </div>
 

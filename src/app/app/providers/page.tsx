@@ -17,7 +17,7 @@ import { ConnectedProviders } from "./connected-providers";
 type PropertyWithLocation = {
   id: string;
   nickname: string | null;
-  address: string;
+  address_line1: string;
   city: string;
   state: string;
   lat: number | null;
@@ -37,7 +37,7 @@ type InviteWithLead = {
   } | null;
   property: {
     nickname: string | null;
-    address: string;
+    address_line1: string;
   } | null;
 };
 
@@ -88,7 +88,7 @@ export default async function ProvidersPage({
       properties:properties (
         id,
         nickname,
-        address,
+        address_line1,
         city,
         state,
         lat,
@@ -120,7 +120,7 @@ export default async function ProvidersPage({
       ),
       property:properties (
         nickname,
-        address
+        address_line1
       )
     `
     )
@@ -257,7 +257,7 @@ export default async function ProvidersPage({
                                 <span>·</span>
                                 <span>
                                   {invite.property.nickname ||
-                                    invite.property.address}
+                                    invite.property.address_line1}
                                 </span>
                               </>
                             )}
