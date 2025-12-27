@@ -61,6 +61,10 @@ export type AIJobStatus = "queued" | "processing" | "success" | "failed" | "cach
 export type AIPolicySeverity = "info" | "warning" | "critical";
 export type AIFeedbackRating = "up" | "down";
 
+// Property Systems
+export type SystemType = "hvac" | "heating" | "cooling" | "water_heater" | "electrical" | "plumbing" | "roof" | "appliance" | "pool_spa" | "security" | "garage" | "irrigation" | "solar" | "septic" | "well" | "fireplace" | "other";
+export type SystemCondition = "excellent" | "good" | "fair" | "poor" | "unknown";
+
 export interface Database {
   public: {
     Tables: {
@@ -212,6 +216,101 @@ export interface Database {
           is_active?: boolean;
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      property_systems: {
+        Row: {
+          id: string;
+          property_id: string;
+          system_type: SystemType;
+          name: string;
+          location: string | null;
+          brand: string | null;
+          model: string | null;
+          serial_number: string | null;
+          filter_size: string | null;
+          filter_type: string | null;
+          refrigerant_type: string | null;
+          tonnage: number | null;
+          btu_rating: number | null;
+          tank_size_gallons: number | null;
+          fuel_type: string | null;
+          install_date: string | null;
+          manufacture_date: string | null;
+          warranty_expiry: string | null;
+          last_service_date: string | null;
+          next_service_date: string | null;
+          condition: SystemCondition;
+          is_active: boolean;
+          notes: string | null;
+          photo_url: string | null;
+          manual_url: string | null;
+          warranty_doc_url: string | null;
+          created_at: string;
+          updated_at: string;
+          created_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          property_id: string;
+          system_type: SystemType;
+          name: string;
+          location?: string | null;
+          brand?: string | null;
+          model?: string | null;
+          serial_number?: string | null;
+          filter_size?: string | null;
+          filter_type?: string | null;
+          refrigerant_type?: string | null;
+          tonnage?: number | null;
+          btu_rating?: number | null;
+          tank_size_gallons?: number | null;
+          fuel_type?: string | null;
+          install_date?: string | null;
+          manufacture_date?: string | null;
+          warranty_expiry?: string | null;
+          last_service_date?: string | null;
+          next_service_date?: string | null;
+          condition?: SystemCondition;
+          is_active?: boolean;
+          notes?: string | null;
+          photo_url?: string | null;
+          manual_url?: string | null;
+          warranty_doc_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          property_id?: string;
+          system_type?: SystemType;
+          name?: string;
+          location?: string | null;
+          brand?: string | null;
+          model?: string | null;
+          serial_number?: string | null;
+          filter_size?: string | null;
+          filter_type?: string | null;
+          refrigerant_type?: string | null;
+          tonnage?: number | null;
+          btu_rating?: number | null;
+          tank_size_gallons?: number | null;
+          fuel_type?: string | null;
+          install_date?: string | null;
+          manufacture_date?: string | null;
+          warranty_expiry?: string | null;
+          last_service_date?: string | null;
+          next_service_date?: string | null;
+          condition?: SystemCondition;
+          is_active?: boolean;
+          notes?: string | null;
+          photo_url?: string | null;
+          manual_url?: string | null;
+          warranty_doc_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+          created_by?: string | null;
         };
       };
       property_members: {

@@ -11,9 +11,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowLeft, Loader2, Pencil, Trash2, Home, MapPin, Calendar, Wrench, Clock } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Trash2, Home, MapPin, Calendar, Wrench, Clock, Settings2 } from "lucide-react";
 import Link from "next/link";
 import type { Property, PropertyType, MaintenanceTask } from "@/types/database";
+import { PropertySystems } from "@/components/app/property-systems";
 
 const propertyTypes: { value: PropertyType; label: string }[] = [
   { value: "single_family", label: "Single Family Home" },
@@ -460,6 +461,9 @@ export function PropertyDetails({ property, tasks, bookings }: PropertyDetailsPr
               )}
             </CardContent>
           </Card>
+
+          {/* Systems Card */}
+          <PropertySystems propertyId={property.id} />
         </div>
 
         {/* Sidebar */}
@@ -562,6 +566,17 @@ export function PropertyDetails({ property, tasks, bookings }: PropertyDetailsPr
                   <Calendar className="mr-2 h-4 w-4" />
                   Maintenance Calendar
                 </Link>
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => {
+                  const systemsCard = document.querySelector('[data-systems-card]');
+                  systemsCard?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                <Settings2 className="mr-2 h-4 w-4" />
+                Manage Systems
               </Button>
             </CardContent>
           </Card>
