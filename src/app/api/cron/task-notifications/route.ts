@@ -38,6 +38,12 @@ interface TaskForNotification {
   property_nickname: string | null;
   property_address: string | null;
   is_overdue: boolean;
+  // Equipment details
+  system_id: string | null;
+  equipment_brand: string | null;
+  equipment_model: string | null;
+  filter_size: string | null;
+  enriched_title: string;
 }
 
 interface UserForNotification {
@@ -130,7 +136,7 @@ export async function GET(request: NextRequest) {
             userName: user.full_name || "there",
             overdueTasks: overdueTasks.map((t) => ({
               id: t.id,
-              title: t.title,
+              title: t.enriched_title || t.title, // Use enriched title with equipment details
               category: t.category,
               priority: t.priority,
               next_due_date: t.next_due_date,
@@ -139,7 +145,7 @@ export async function GET(request: NextRequest) {
             })),
             dueSoonTasks: dueSoonTasks.map((t) => ({
               id: t.id,
-              title: t.title,
+              title: t.enriched_title || t.title, // Use enriched title with equipment details
               category: t.category,
               priority: t.priority,
               next_due_date: t.next_due_date,
@@ -257,10 +263,10 @@ export async function GET(request: NextRequest) {
         // Send SMS if enabled (only for overdue tasks to avoid spam)
         if (smsEnabled && user.phone && overdueTasks.length > 0) {
           try {
-            // Create SMS message
+            // Create SMS message - use enriched title with equipment details
             const smsBody = overdueTasks.length === 1
               ? smsTemplates.taskOverdue(
-                  overdueTasks[0].title,
+                  overdueTasks[0].enriched_title || overdueTasks[0].title,
                   overdueTasks[0].property_nickname || overdueTasks[0].property_address || "your property"
                 )
               : `RegularUpkeep: You have ${overdueTasks.length} overdue maintenance tasks. View at app.regularupkeep.com/app/calendar`;
@@ -299,11 +305,12 @@ export async function GET(request: NextRequest) {
           await supabaseAdmin.from("notifications").insert({
             profile_id: user.profile_id,
             type: "task_overdue",
-            title: `Overdue: ${task.title}`,
+            title: `Overdue: ${task.enriched_title || task.title}`,
             body: `This task at ${task.property_nickname || task.property_address || "your property"} was due on ${new Date(task.next_due_date).toLocaleDateString()}.`,
             data: {
               taskId: task.id,
               propertyId: task.property_id,
+              systemId: task.system_id,
               link: `/app/calendar/${task.id}`,
             },
           });
