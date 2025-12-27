@@ -1,27 +1,29 @@
-import { UserPlus, Bell, CheckCircle } from "lucide-react";
+import Image from "next/image";
 import { howItWorks, type HowItWorksStep } from "@/content/site";
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  UserPlus,
-  Bell,
-  CheckCircle,
+const stepImages: Record<number, string> = {
+  1: "/images/mascot-1-wrench.png",
+  2: "/images/mascot-2-hammer.png",
+  3: "/images/mascot-3-screwdriver.png",
 };
 
 function StepCard({ step }: { step: HowItWorksStep }) {
-  const Icon = iconMap[step.icon] || CheckCircle;
+  const imageSrc = stepImages[step.step] || stepImages[1];
 
   return (
-    <div className="relative flex flex-col items-center text-center">
-      {/* Step number */}
-      <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-        {step.step}
-      </div>
-      {/* Icon */}
-      <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
-        <Icon className="h-10 w-10 text-primary" />
+    <div className="flex flex-col items-center text-center">
+      {/* Mascot Image */}
+      <div className="flex h-40 w-40 items-center justify-center rounded-2xl bg-white p-2">
+        <Image
+          src={imageSrc}
+          alt={`Step ${step.step}`}
+          width={144}
+          height={144}
+          className="h-36 w-auto object-contain"
+        />
       </div>
       {/* Content */}
-      <h3 className="mt-6 text-xl font-semibold">{step.title}</h3>
+      <h3 className="mt-4 text-xl font-semibold">{step.title}</h3>
       <p className="mt-3 text-muted-foreground">{step.description}</p>
     </div>
   );
