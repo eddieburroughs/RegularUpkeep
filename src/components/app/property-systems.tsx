@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,9 +11,11 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Loader2, Plus, Pencil, Trash2, Fan, Droplets, Zap, Flame,
-  ThermometerSun, Home, Wrench, ShieldCheck, Car, Leaf, Sun, CircleDot
+  ThermometerSun, Home, Wrench, ShieldCheck, Car, Leaf, Sun, CircleDot,
+  Camera, Sparkles, CheckCircle2
 } from "lucide-react";
 import type { SystemType, SystemCondition } from "@/types/database";
 
@@ -115,6 +117,10 @@ export function PropertySystems({ propertyId }: PropertySystemsProps) {
   const [editingSystem, setEditingSystem] = useState<PropertySystem | null>(null);
   const [deletingSystem, setDeletingSystem] = useState<PropertySystem | null>(null);
   const [formData, setFormData] = useState(emptyFormData);
+  const [scanning, setScanning] = useState(false);
+  const [scanSuccess, setScanSuccess] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchSystems();
@@ -143,6 +149,8 @@ export function PropertySystems({ propertyId }: PropertySystemsProps) {
   const openAddDialog = () => {
     setEditingSystem(null);
     setFormData(emptyFormData);
+    setScanSuccess(false);
+    setScanError(null);
     setDialogOpen(true);
   };
 
@@ -170,7 +178,84 @@ export function PropertySystems({ propertyId }: PropertySystemsProps) {
       condition: system.condition,
       notes: system.notes || "",
     });
+    setScanSuccess(false);
+    setScanError(null);
     setDialogOpen(true);
+  };
+
+  const handleScanLabel = async (file: File) => {
+    setScanning(true);
+    setScanError(null);
+    setScanSuccess(false);
+
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          // Remove the data URL prefix to get just the base64
+          const base64 = result.split(",")[1];
+          resolve(base64);
+        };
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64 = await base64Promise;
+
+      // Call AI extraction API
+      const res = await fetch("/api/ai/extract-equipment-info", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image_base64: base64 }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to scan label");
+      }
+
+      const extracted = data.extracted;
+
+      // Update form data with extracted values (only non-null values)
+      setFormData((prev) => ({
+        ...prev,
+        system_type: extracted.suggested_system_type || prev.system_type,
+        brand: extracted.brand || prev.brand,
+        model: extracted.model || prev.model,
+        serial_number: extracted.serial_number || prev.serial_number,
+        filter_size: extracted.filter_size || prev.filter_size,
+        filter_type: extracted.filter_type || prev.filter_type,
+        refrigerant_type: extracted.refrigerant_type || prev.refrigerant_type,
+        tonnage: extracted.tonnage?.toString() || prev.tonnage,
+        btu_rating: extracted.btu_rating?.toString() || prev.btu_rating,
+        tank_size_gallons: extracted.tank_size_gallons?.toString() || prev.tank_size_gallons,
+        fuel_type: extracted.fuel_type || prev.fuel_type,
+        manufacture_date: extracted.manufacture_date || prev.manufacture_date,
+        // Auto-generate a name if empty
+        name: prev.name || `${extracted.brand || ""} ${extracted.suggested_system_type || "System"}`.trim(),
+      }));
+
+      setScanSuccess(true);
+      // Clear success message after 3 seconds
+      setTimeout(() => setScanSuccess(false), 3000);
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : "Failed to scan label");
+    } finally {
+      setScanning(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleScanLabel(file);
+    }
   };
 
   const handleSave = async () => {
@@ -467,6 +552,63 @@ export function PropertySystems({ propertyId }: PropertySystemsProps) {
               Enter the details of your home system or equipment
             </DialogDescription>
           </DialogHeader>
+
+          {/* AI Label Scanner */}
+          <div className="border rounded-lg p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <Sparkles className="h-5 w-5 text-purple-600" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-sm">AI Label Scanner</p>
+                <p className="text-xs text-muted-foreground">
+                  Take a photo of the equipment label to auto-fill details
+                </p>
+              </div>
+              <div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={scanning}
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {scanning ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    <>
+                      <Camera className="mr-2 h-4 w-4" />
+                      Scan Label
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+            {scanSuccess && (
+              <Alert className="mt-3 border-green-200 bg-green-50 dark:bg-green-950/30">
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-700 dark:text-green-400">
+                  Label scanned successfully! Review and adjust the extracted details below.
+                </AlertDescription>
+              </Alert>
+            )}
+            {scanError && (
+              <Alert className="mt-3 border-red-200 bg-red-50 dark:bg-red-950/30" variant="destructive">
+                <AlertDescription>{scanError}</AlertDescription>
+              </Alert>
+            )}
+          </div>
 
           <div className="space-y-4 py-4">
             <div className="grid gap-4 sm:grid-cols-2">
