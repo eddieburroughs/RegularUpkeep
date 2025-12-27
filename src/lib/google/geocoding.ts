@@ -116,10 +116,10 @@ export async function reverseGeocode(
 // Property with geocoding fields
 interface PropertyWithGeo {
   id: string;
-  address: string | null;
+  address_line1: string | null;
   city: string | null;
   state: string | null;
-  zip: string | null;
+  postal_code: string | null;
   lat: number | null;
   lng: number | null;
   geocoded_at: string | null;
@@ -131,7 +131,7 @@ export async function geocodeProperty(propertyId: string): Promise<boolean> {
   // Fetch property
   const { data: property, error: fetchError } = (await supabase
     .from("properties")
-    .select("id, address, city, state, zip, lat, lng, geocoded_at")
+    .select("id, address_line1, city, state, postal_code, lat, lng, geocoded_at")
     .eq("id", propertyId)
     .single()) as { data: PropertyWithGeo | null; error: unknown };
 
@@ -151,10 +151,10 @@ export async function geocodeProperty(propertyId: string): Promise<boolean> {
 
   // Build full address string
   const addressParts = [
-    property.address,
+    property.address_line1,
     property.city,
     property.state,
-    property.zip,
+    property.postal_code,
   ].filter(Boolean);
 
   if (addressParts.length === 0) {
@@ -235,7 +235,7 @@ export async function getPropertyLocation(
   // Fetch property
   const { data: property, error } = (await supabase
     .from("properties")
-    .select("lat, lng, address, city, state, zip")
+    .select("lat, lng, address_line1, city, state, postal_code")
     .eq("id", propertyId)
     .single()) as { data: PropertyWithGeo | null; error: unknown };
 
