@@ -77,7 +77,7 @@ export async function GET() {
       responded_at,
       provider_id,
       property_id,
-      provider:providers (
+      provider:providers!external_provider_invites_provider_id_fkey (
         id,
         business_name,
         contact_name,
