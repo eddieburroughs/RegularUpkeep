@@ -23,15 +23,15 @@ function StepCard({ step }: { step: HowItWorksStep }) {
         />
       </div>
       {/* Content */}
-      <h3 className="mt-4 text-xl font-semibold">{step.title}</h3>
-      <p className="mt-3 text-muted-foreground">{step.description}</p>
+      <h3 className="mt-2 text-xl font-semibold">{step.title}</h3>
+      <p className="mt-1 text-muted-foreground">{step.description}</p>
     </div>
   );
 }
 
 export function HowItWorksSection() {
   return (
-    <section className="section-padding bg-muted/30">
+    <section className="py-4 md:py-6 bg-muted/30">
       <div className="container-marketing">
         <div className="grid gap-8 md:grid-cols-3 md:gap-6">
           {howItWorks.map((step) => (
