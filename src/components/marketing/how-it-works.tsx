@@ -33,16 +33,7 @@ export function HowItWorksSection() {
   return (
     <section className="section-padding bg-muted/30">
       <div className="container-marketing">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            How It Works
-          </h2>
-          <p className="mt-3 text-lg text-muted-foreground max-w-2xl mx-auto">
-            Getting started with RegularUpkeep takes just a few minutes. Here&apos;s how we help you stay on top of home maintenance.
-          </p>
-        </div>
-
-        <div className="mt-10 grid gap-8 md:grid-cols-3 md:gap-6">
+        <div className="grid gap-8 md:grid-cols-3 md:gap-6">
           {howItWorks.map((step) => (
             <StepCard key={step.step} step={step} />
           ))}
