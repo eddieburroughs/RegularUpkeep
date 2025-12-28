@@ -2,9 +2,9 @@ import Image from "next/image";
 import { howItWorks, type HowItWorksStep } from "@/content/site";
 
 const stepImages: Record<number, string> = {
-  1: "/images/wht-mascot-1-wrench.png",
-  2: "/images/wht-mascot-2-hammer.png",
-  3: "/images/wht-mascot-3-screwdriver.png",
+  1: "/images/trns-mascot-1-wrench.png",
+  2: "/images/trns-mascot-2-hammer.png",
+  3: "/images/trns-mascot-3-screwdriver.png",
 };
 
 function StepCard({ step }: { step: HowItWorksStep }) {

@@ -14,7 +14,7 @@ export default function HomePage() {
       <Hero
         title={`Home Maintenance, Simplified.`}
         subtitle={`${brand.tagline}. Get smart reminders, connect with trusted providers, and let our concierge team handle the coordination. Stop worrying about what you're forgetting.`}
-        image="/images/wht-mascot-wave.png"
+        image="/images/trns-mascot-wave.png"
         imageAlt="RegularUpkeep mascot - your home maintenance helper"
       />
       <HowItWorksSection />

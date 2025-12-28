@@ -7,6 +7,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -230,14 +231,18 @@ export function ChatWidget({
   if (!isOpen) {
     return (
       <div className={`fixed bottom-4 sm:bottom-6 ${positionClasses} z-50`}>
-        <Button
+        <button
           onClick={() => setIsOpen(true)}
-          size="lg"
-          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all"
+          className="h-20 w-20 transition-transform hover:scale-110 cursor-pointer"
         >
-          <MessageCircle className="h-6 w-6" />
-          <span className="sr-only">Open support chat</span>
-        </Button>
+          <Image
+            src="/images/trns-mascot-questions.png"
+            alt="Open support chat"
+            width={80}
+            height={80}
+            className="h-full w-full object-contain drop-shadow-lg"
+          />
+        </button>
       </div>
     );
   }
