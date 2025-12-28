@@ -66,18 +66,7 @@ export function ServicesSection() {
   return (
     <section className="section-padding">
       <div className="container-marketing">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Services We Help You Manage
-          </h2>
-          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-            From routine maintenance to unexpected repairs, we help you stay organized and connected to quality providers.
-          </p>
-        </div>
-
-        <div className="mt-12">
-          <ServicesGrid />
-        </div>
+        <ServicesGrid />
 
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Service availability varies by location. We work with vetted local professionals in your area.

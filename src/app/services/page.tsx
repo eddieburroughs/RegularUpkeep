@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageHeader, ServicesSection, CtaBand , MarketingLayout } from "@/components/marketing";
+import { Hero, ServicesSection, CtaBand , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -11,9 +11,12 @@ export default function ServicesPage() {
   return (
     <MarketingLayout>
     <>
-      <PageHeader
+      <Hero
         title="Services We Help You Manage"
         subtitle="From routine maintenance to unexpected repairs, we help you stay organized and connected to quality providers in your area."
+        image="/images/hero-4-image.png"
+        imageAlt="Home maintenance services"
+        showCtas={false}
       />
 
       <ServicesSection />
