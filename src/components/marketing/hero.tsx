@@ -46,8 +46,8 @@ export function Hero({ title, subtitle, showCtas = true, centered = false, image
               <Image
                 src={image}
                 alt={imageAlt}
-                width={400}
-                height={400}
+                width={800}
+                height={800}
                 className="h-full w-auto max-h-64 object-contain"
                 priority
               />
