@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowRight, Calendar, Users, Headphones, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { PageHeader, HowItWorksSection, CtaBand , MarketingLayout } from "@/components/marketing";
+import { Hero, HowItWorksSection, CtaBand , MarketingLayout } from "@/components/marketing";
 import { brand } from "@/content/site";
 
 export const metadata: Metadata = {
@@ -66,9 +66,12 @@ export default function HowItWorksPage() {
   return (
     <MarketingLayout>
     <>
-      <PageHeader
+      <Hero
         title="How RegularUpkeep Works"
         subtitle="We make home maintenance simple with smart scheduling, trusted providers, and hands-on help when you need it."
+        image="/images/hero-2-image.png"
+        imageAlt="Home maintenance made simple"
+        showCtas={false}
       />
 
       <HowItWorksSection />
