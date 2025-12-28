@@ -23,8 +23,8 @@ function FeatureCard({ feature }: { feature: Feature }) {
 
   return (
     <Card className="border-border/50 bg-card/50 backdrop-blur transition-colors hover:border-primary/20 hover:bg-card">
-      <CardContent className="pt-6">
-        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+      <CardContent className="pt-6 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mx-auto">
           <Icon className="h-6 w-6 text-primary" />
         </div>
         <h3 className="mt-4 text-lg font-semibold">{feature.title}</h3>

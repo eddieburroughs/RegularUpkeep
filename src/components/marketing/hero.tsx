@@ -18,8 +18,8 @@ export function Hero({ title, subtitle, showCtas = true, centered = false, image
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-[#0178C7]/5 via-background to-background">
-      <div className="container-marketing py-6 md:py-8">
-        <div className={hasImage ? "grid gap-8 lg:grid-cols-2 lg:gap-12 items-stretch" : ""}>
+      <div className="container-marketing py-6 md:py-8 !px-8 sm:!px-12 lg:!px-16">
+        <div className={hasImage ? "grid gap-8 lg:grid-cols-[2fr_1fr] lg:gap-12 items-stretch" : ""}>
           <div className={`${hasImage ? "flex flex-col justify-center" : `max-w-3xl ${centered ? "mx-auto text-center" : ""}`}`}>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl text-balance">
               {title}
