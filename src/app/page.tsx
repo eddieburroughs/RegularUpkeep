@@ -17,8 +17,8 @@ export default function HomePage() {
         image="/images/hero-image.png"
         imageAlt="Home maintenance made simple"
       />
-      <HowItWorksSection />
       <FeatureGrid />
+      <HowItWorksSection />
       <FaqSection />
       <CtaBand
         title="Take control of your home maintenance"
