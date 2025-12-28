@@ -233,13 +233,13 @@ export function ChatWidget({
       <div className={`fixed bottom-4 sm:bottom-6 ${positionClasses} z-50`}>
         <button
           onClick={() => setIsOpen(true)}
-          className="h-20 w-20 transition-transform hover:scale-110 cursor-pointer"
+          className="h-[100px] w-[100px] transition-transform hover:scale-110 cursor-pointer"
         >
           <Image
             src="/images/trns-mascot-questions.png"
             alt="Open support chat"
-            width={80}
-            height={80}
+            width={100}
+            height={100}
             className="h-full w-full object-contain drop-shadow-lg"
           />
         </button>
