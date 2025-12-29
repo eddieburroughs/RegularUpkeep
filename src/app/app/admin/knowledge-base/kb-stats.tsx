@@ -10,14 +10,6 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 type VisibilityStats = {
   visibility: string;
@@ -36,9 +28,8 @@ export function KBStats() {
   const [avgChunksPerArticle, setAvgChunksPerArticle] = useState(0);
   const [totalTokens, setTotalTokens] = useState(0);
 
-  const supabase = createClient();
-
   useEffect(() => {
+    const supabase = createClient();
     const fetchStats = async () => {
       setLoading(true);
 

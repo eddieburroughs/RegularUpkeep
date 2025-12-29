@@ -9,7 +9,6 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import {
   SYSTEM_PROMPT,
   INTENTS,
-  INTENT_TO_CATEGORY,
   RAG_CONFIG,
 } from "@/lib/support-chat/constants";
 import {
@@ -31,14 +30,11 @@ import {
 } from "@/lib/support-chat/tickets";
 import {
   hashToken,
-  validateSupportCode,
   detectSensitiveData,
-  redactSensitiveData,
   determineCategory,
   determinePriority,
   isHumanRequest,
   truncate,
-  roleToKBVisibility,
 } from "@/lib/support-chat/utils";
 import type { UserRole, ConversationChannel } from "@/types/database";
 
@@ -92,7 +88,7 @@ export async function POST(request: NextRequest) {
     const { userId, userRole } = await getUserContext(authClient, supabase, publicToken);
 
     // Get or create conversation
-    const { conversation, isNew } = await getOrCreateConversation(
+    const { conversation } = await getOrCreateConversation(
       supabase,
       conversationId,
       userId,
@@ -212,7 +208,8 @@ type ConversationState = {
 async function getUserContext(
   authClient: Awaited<ReturnType<typeof createClient>>,
   serviceClient: ReturnType<typeof createServiceClient>,
-  publicToken?: string
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _publicToken?: string
 ): Promise<{ userId?: string; userRole?: UserRole }> {
   const {
     data: { user },

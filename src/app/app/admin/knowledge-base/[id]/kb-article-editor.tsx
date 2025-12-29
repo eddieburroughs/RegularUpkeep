@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Save, ArrowLeft, Plus, X, Eye, RefreshCw } from "lucide-react";
+import { Save, ArrowLeft, Plus, X, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 type Article = {

@@ -96,7 +96,8 @@ export async function GET(request: NextRequest) {
 }
 
 // Also support POST for manual triggers from admin dashboard
-export async function POST(request: NextRequest) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function POST(_request: NextRequest) {
   const supabase = await createClient();
 
   // Verify admin auth

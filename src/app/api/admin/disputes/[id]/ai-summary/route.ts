@@ -346,7 +346,8 @@ export async function GET(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { id: disputeId } = await params;
+  // Note: disputeId extracted but not currently used in GET query - filtering by task_type only
+  await params; // Consume params to avoid build warnings
 
   try {
     // Verify user is an admin

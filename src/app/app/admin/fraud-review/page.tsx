@@ -15,7 +15,6 @@ import {
   CheckCircle,
   Clock,
   Shield,
-  Users,
   XCircle,
 } from "lucide-react";
 import { FraudReviewList } from "@/components/admin/fraud-review-list";

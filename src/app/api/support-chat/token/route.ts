@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generatePublicToken, hashToken } from "@/lib/support-chat/utils";
-import { TOKEN_EXPIRY_HOURS, RATE_LIMIT } from "@/lib/support-chat/constants";
+import { TOKEN_EXPIRY_HOURS } from "@/lib/support-chat/constants";
 
 /**
  * POST /api/support-chat/token

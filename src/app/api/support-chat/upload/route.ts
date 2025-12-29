@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     const filename = `support/${conversationId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("uploads")
       .upload(filename, file, {
         contentType: file.type,

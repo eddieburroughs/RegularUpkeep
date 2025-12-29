@@ -360,7 +360,7 @@ export async function GET(request: NextRequest) {
       pendingReviews: pendingCount || 0,
       recentRuns: runs || [],
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { status: "error", error: "Failed to get status" },
       { status: 500 }

@@ -106,9 +106,6 @@ export async function POST(
       return NextResponse.json({ error: "Provider not found" }, { status: 404 });
     }
 
-    // Get provider metrics
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
     // Get all bookings for this provider
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: bookingsData } = await (supabase as any)
