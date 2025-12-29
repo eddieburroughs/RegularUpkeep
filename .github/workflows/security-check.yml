@@ -127,9 +127,9 @@ jobs:
             echo "✅ No hardcoded secrets detected" >> $GITHUB_STEP_SUMMARY
           fi
 
-          # Service Role Key Check
+          # Service Role Key Check (excludes env var checks, error messages, and test files)
           echo "### Service Role Key Exposure" >> $GITHUB_STEP_SUMMARY
-          SERVICE_KEY=$(grep -r "service_role\|serviceRole\|SUPABASE_SERVICE" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "\.env" | wc -l || echo "0")
+          SERVICE_KEY=$(grep -r "service_role\|serviceRole\|SUPABASE_SERVICE" src/ --include="*.ts" --include="*.tsx" 2>/dev/null | grep -v "\.env\|process\.env\|Error(\|test/\|\.test\." | wc -l || echo "0")
           if [ "$SERVICE_KEY" -gt 0 ]; then
             echo "❌ Found $SERVICE_KEY service role key references in code" >> $GITHUB_STEP_SUMMARY
             echo "::error::Found service role key references in code"
